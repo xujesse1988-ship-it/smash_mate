@@ -35,48 +35,57 @@
 ```
 server/                        # 后端
 ├── modules/
-│   ├── {module-a}/
-│   │   ├── controller.ts
-│   │   ├── service.ts
-│   │   ├── repository.ts
-│   │   ├── types.ts
-│   │   └── index.ts
-│   └── {module-b}/
-│       └── ...
+│   ├── user/                  # 用户注册/登录、认证、资料管理、教练角色
+│   ├── activity/              # 约球活动全生命周期
+│   ├── coaching/              # 教练资料、团课、私教
+│   ├── match-record/          # 战绩录入、删除、统计
+│   ├── venue/                 # 球馆数据、城市管理
+│   ├── notification/          # 站内通知
+│   └── review/                # 教练评价评分
+│   （每个模块内部：controller.ts / service.ts / repository.ts / types.ts / index.ts）
 ├── infra/
-│   ├── database.ts
-│   ├── config.ts
-│   ├── logger.ts
-│   ├── error-handler.ts
-│   └── response.ts
+│   ├── database.ts            # Prisma 客户端
+│   ├── config.ts              # 配置
+│   ├── logger.ts              # 日志
+│   ├── auth.ts                # JWT 认证中间件
+│   ├── admin-auth.ts          # 管理员认证中间件
+│   ├── error-handler.ts       # 全局错误处理
+│   ├── response.ts            # 标准响应格式
+│   └── scheduler.ts           # 定时任务调度
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
 └── app.ts
 
 web/                           # 前端 SPA
-├── features/                  # 按业务域组织
-│   ├── {feature-a}/
-│   │   ├── pages/             # 页面组件
-│   │   ├── components/        # feature 私有组件
-│   │   ├── hooks/             # feature 私有 hooks
-│   │   └── api/               # feature 私有 API 调用
-│   └── {feature-b}/
-│       └── ...
+├── features/
+│   ├── auth/                  # 注册/登录
+│   ├── activity/              # 约球列表、发起约球、活动详情
+│   ├── coaching/              # 教练列表、教练主页、团课详情、私教预约、课程管理
+│   ├── match-record/          # 战绩录入、战绩历史
+│   ├── profile/               # 个人主页、资料编辑、设置
+│   └── notification/          # 通知列表
+│   （每个 feature 内部：pages/ / components/ / hooks/ / api/）
 ├── shared/                    # 共享组件、hooks、工具函数、类型
-├── stores/                    # 全局状态管理
-├── routes.ts                  # 统一路由
+├── stores/                    # 全局状态管理（Zustand）
+├── routes.ts
 └── main.tsx
 
-admin/                         # 管理后台（结构同 web/）
-└── ...
+admin/                         # 管理后台
+├── features/
+│   ├── auth/                  # 管理员登录
+│   └── venue-management/      # 城市管理、球馆管理
+├── shared/
+├── stores/
+├── routes.ts
+└── main.tsx
 
 tests/
-├── contracts/                 # 契约测试（按模块组织，前端按 feature 子目录）
+├── contracts/                 # 契约测试（按后端模块组织）
 ├── unit/                      # 单元测试（按模块组织）
 ├── integration/               # 集成测试
-│   ├── {module-a}/            # L1: 后端模块内集成
-│   ├── {module-b}/
-│   ├── {frontend-module}/     # L1: 前端按 feature 子目录
-│   │   ├── {feature-a}/
-│   │   └── {feature-b}/
+│   ├── {module}/              # L1: 后端模块内集成
+│   ├── web-app/{feature}/     # L1: 前端按 feature 子目录
 │   └── paths/                 # L2: 关键路径集成
 ├── e2e/                       # E2E 测试（按用户流程）
 └── fixtures/                  # 共享测试数据（工厂函数，非硬编码）
@@ -90,8 +99,14 @@ tests/
 ## 架构约定
 - 后端模块间依赖单向，禁止循环
 - 后端分层：controller → service → repository，不跳层
+- 后端模块依赖分层：基础层（user, venue, notification）→ 中间层（activity, coaching）→ 上层（match-record, review）；只能上层调用下层，不可反向
+- 模块间通过 Service 层方法直接调用，不使用事件总线
+- 通知创建失败不阻塞主流程，记录 error 日志后继续
 - 前端按 feature 组织代码，通过 api/ 层调用后端，组件不直接发请求
 - 前端状态：页面内用 useState，跨页面用 Zustand，服务端数据用 TanStack Query
+- 战绩来源使用多态关联（sourceType + sourceId），不使用多个 nullable 外键
+- 教练平均评分由 review 模块实时计算，coaching 不存冗余字段
+- 活动/课程状态流转使用定时任务轮询（每分钟），不使用延迟队列
 
 ## 日志约定
 - 使用 infra/logger.ts 提供的 logger，禁止直接 console.log
@@ -116,6 +131,13 @@ tests/
 
 - 不要修改契约测试代码（仅限 Implementer agent）
 - 不要修改其他模块目录下的文件（仅限 Implementer agent）
+- 不要引入事件总线、消息队列等异步通信机制（一期不需要）
+- 不要在 coaching 模块中存储教练评分冗余字段（由 review 模块实时计算）
+- 不要让下层模块依赖上层模块（如 user 不可依赖 activity，activity 不可依赖 match-record）
+- 不要在 controller 层直接操作数据库，必须通过 service → repository 链路
+- 不要在业务模块中直接使用 console.log，必须使用 infra/logger.ts
+- 不要在日志中记录敏感信息（手机号全文、验证码、JWT token）
+- 不要为活动/课程状态流转引入延迟队列或定时器，统一使用定时任务轮询
 
 ## 阻塞与错误处理
 遇到以下情况时，停止当前工作并通过 `gh issue comment` 报告：

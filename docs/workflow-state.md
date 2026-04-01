@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 2
-substep:
+substep: review
 
 ## 当前模块
 module:
@@ -13,14 +13,29 @@ feature:
 | 模块 | 类型 | 设计 | 契约测试 | 实现 | Task Review | 模块 Review | L2 集成测试 |
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | | N/A | N/A | N/A |
+| user | 后端 | | | | | | |
+| venue | 后端 | | | | | | |
+| notification | 后端 | | | | | | |
+| activity | 后端 | | | | | | |
+| coaching | 后端 | | | | | | |
+| match-record | 后端 | | | | | | |
+| review | 后端 | | | | | | |
+| web-app/auth | 前端 | | | | | | |
+| web-app/activity | 前端 | | | | | | |
+| web-app/coaching | 前端 | | | | | | |
+| web-app/match-record | 前端 | | | | | | |
+| web-app/profile | 前端 | | | | | | |
+| web-app/notification | 前端 | | | | | | |
+| admin | 前端 | | | | | | |
 
 > **填写规则**：
 > - **infra**：只跟踪"实现"列，其余标 `N/A`（infra 设计在 architecture.md 中，无契约测试、无独立模块 Review、无 L2 集成测试）
 > - **后端模块**：每个模块一行，所有列均适用
-> - **前端模块**：按 feature 粒度拆行（如 `web-app/auth`、`web-app/product`），以匹配 feature 级设计文档和测试粒度；"模块 Review"和"L2 集成测试"仅在该前端模块的最后一个 feature 行标记
+> - **前端模块**：按 feature 粒度拆行（如 `web-app/auth`、`web-app/activity`），以匹配 feature 级设计文档和测试粒度；"模块 Review"和"L2 集成测试"仅在该前端模块的最后一个 feature 行标记
 > - 如果 admin 页面较少未拆 feature，保留为一行
 
 ## 迭代
 current_milestone:
 
 ## 备注
+architecture.md 已完成，等待技术负责人 Review。
