@@ -301,9 +301,21 @@
 学员请求 POST /api/private-lessons/book
   → coaching.Controller
   → coaching.Service 校验时间段可用、球馆选择合法
-  → coaching.Repository 创建预约记录
-  → 调用 notification.Service.create() 通知教练和学员
+  → coaching.Repository 创建预约记录、标记时间段为已预约
+  → 调用 notification.Service.create() 通知教练（有新预约）
+  → 调用 notification.Service.create() 通知学员（预约成功确认）
   → 返回成功
+
+学员请求 POST /api/private-lessons/:id/cancel
+  → coaching.Controller
+  → coaching.Service 校验预约存在、取消权限
+  → coaching.Repository 更新预约状态为已取消、释放时间段
+  → 调用 notification.Service.create() 通知教练（学员取消预约）
+  → 调用 notification.Service.create() 通知学员（取消确认）
+  → 返回成功
+
+私教课结束后（定时任务触发状态流转为"已完成"）
+  → 调用 notification.Service.create() 通知学员（课程已结束，可评价和录入战绩）
 ```
 
 ### 4.2 事件流
@@ -678,3 +690,4 @@ Response:
 - **本地开发**: docker-compose 提供 PostgreSQL 等外部依赖，前后端各自开发服务器
 - **前端部署**: web-app 和 admin 分别构建为静态资源，通过 Nginx 或 CDN 分发
 - **定时任务**: 随后端服务进程运行，通过 scheduler 模块管理（不引入独立任务服务）
+- **定时任务并发控制**: 一期单实例部署，不存在并发问题；如需多实例部署，scheduler 启动时通过数据库行锁（`SELECT ... FOR UPDATE SKIP LOCKED`）竞争执行权，确保同一任务不会被多个实例重复执行
