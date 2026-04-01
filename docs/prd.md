@@ -462,14 +462,50 @@
 > 以下线框图基于上述 UX/交互说明生成，用于辅助理解页面布局和操作流程。
 > 文字描述（5.1-5.3）为需求权威来源，若原型与文字不一致，以文字为准。
 
+#### 注册/登录页
+![注册登录页线框图](prototypes/prototype-login.png)
+
 #### 首页/约球列表
 ![首页线框图](prototypes/prototype-home.png)
+
+#### 发起约球页
+![发起约球页线框图](prototypes/prototype-create-activity.png)
+
+#### 活动详情页
+![活动详情页线框图](prototypes/prototype-activity-detail.png)
+
+#### 找教练列表
+![找教练列表线框图](prototypes/prototype-coach-list.png)
 
 #### 教练主页
 ![教练主页线框图](prototypes/prototype-coach-profile.png)
 
-#### 活动详情页
-![活动详情线框图](prototypes/prototype-activity-detail.png)
+#### 团课详情页
+![团课详情页线框图](prototypes/prototype-group-class-detail.png)
+
+#### 个人主页/我的
+![个人主页线框图](prototypes/prototype-my-profile.png)
+
+#### 通知列表页
+![通知列表页线框图](prototypes/prototype-notifications.png)
+
+#### 战绩录入页
+![战绩录入页线框图](prototypes/prototype-match-record.png)
+
+#### 个人资料编辑页
+![个人资料编辑线框图](prototypes/prototype-edit-profile.png)
+
+#### 教练资料编辑页
+![教练资料编辑线框图](prototypes/prototype-coach-edit.png)
+
+#### 私教时间设置页
+![私教时间设置线框图](prototypes/prototype-private-lesson-schedule.png)
+
+#### 战绩历史列表页
+![战绩历史列表线框图](prototypes/prototype-match-history.png)
+
+#### 设置页
+![设置页线框图](prototypes/prototype-settings.png)
 
 ---
 
