@@ -1,7 +1,7 @@
 # Workflow State
 
 ## 当前阶段
-step: 1
+step: 2
 substep:
 
 ## 当前模块
