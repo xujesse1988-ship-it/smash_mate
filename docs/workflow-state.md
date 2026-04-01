@@ -1,8 +1,8 @@
 # Workflow State
 
 ## 当前阶段
-step: 2
-substep: review
+step: 3
+substep:
 
 ## 当前模块
 module:
@@ -38,4 +38,4 @@ feature:
 current_milestone:
 
 ## 备注
-architecture.md 已完成，等待技术负责人 Review。
+architecture.md Review 通过，进入 Step 3 模块详细设计。
