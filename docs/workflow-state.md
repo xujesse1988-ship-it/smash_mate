@@ -17,7 +17,7 @@ feature:
 | venue | 后端 | done | | | | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
-| coaching | 后端 | review | | | | | |
+| coaching | 后端 | done | | | | | |
 | match-record | 后端 | | | | | | |
 | review | 后端 | | | | | | |
 | web-app/auth | 前端 | | | | | | |
@@ -43,4 +43,4 @@ user 模块设计 review 通过（2026-04-02）。
 venue 模块设计 review 通过（2026-04-02）。
 notification 模块设计 review 通过（2026-04-02）。基础层后端模块设计全部完成。
 activity 模块设计 review 通过（2026-04-02）。
-coaching 模块设计已完成，等待 review（2026-04-02）。
+coaching 模块设计 review 通过（2026-04-02）。中间层后端模块设计全部完成。
