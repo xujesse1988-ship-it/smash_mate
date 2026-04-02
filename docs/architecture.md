@@ -156,8 +156,9 @@
 - **对外接口**:
   - `POST /api/reviews` — 提交评价
   - `GET /api/coaches/:id/reviews` — 教练的评价列表（分页）
+  - `GET /api/coaches/:id/rating` — 教练评分查询
+  - `POST /api/coaches/ratings` — 批量教练评分查询
   - `ReviewService.getCoachAverageRating(coachId)` — 模块间调用：获取教练平均评分
-  - `ReviewService.getCoachReviewCount(coachId)` — 模块间调用：获取评价数量
 - **详细设计**: module-design/review.md
 
 #### web-app（前端）

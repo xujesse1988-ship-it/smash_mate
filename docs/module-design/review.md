@@ -256,32 +256,6 @@ User 1 ← N Review（一个教练可收到多条评价，通过 coachId）
 
 ---
 
-#### ReviewService.getCoachReviewCount(coachId)
-
-**描述**: 获取指定教练的评价数量
-
-**Consumers**: web-app（通过 HTTP 接口间接调用）
-
-**参数**:
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| coachId | string | 是 | 教练用户 ID (uuid) |
-
-**返回值**:
-```typescript
-number  // 评价数量
-```
-
-**业务规则**:
-- 教练不存在时返回 0（不抛错）
-
-**错误码**:
-| error.code | 触发条件 |
-|-----------|---------|
-| 无 | 始终返回结果，不抛错 |
-
----
-
 ### 教练评分查询
 
 `GET /api/coaches/:id/rating`
@@ -371,8 +345,9 @@ number  // 评价数量
 ```
 
 **业务规则**:
+- 使用 POST 而非 GET 是为了通过请求体传递 coachIds 数组，避免 GET 请求 URL 长度限制
 - 任何已登录用户均可查询（公开信息）
-- 对每个 coachId 调用 ReviewService.getCoachAverageRating() 获取评分
+- Repository 层提供批量查询方法，使用一条 `GROUP BY coachId` 的 SQL 批量完成聚合计算，避免 N+1 查询
 - 不存在的 coachId 也会返回对应结果（averageRating: null, totalCount: 0）
 - 返回顺序与输入 coachIds 顺序一致
 - coachIds 为空数组时返回空 ratings 数组
@@ -480,7 +455,7 @@ number  // 评价数量
 
 ### 性能约束
 - 教练评分查询（GET /api/coaches/:id/rating）使用 SQL 聚合函数（AVG + COUNT），在 coachId 索引上执行，一期评价量小（百级），无性能压力
-- 批量教练评分查询（POST /api/coaches/ratings）一次最多 100 个教练，每个教练一次聚合查询；如后续评价量增长，可考虑引入缓存或冗余字段
+- 批量教练评分查询（POST /api/coaches/ratings）一次最多 100 个教练，Repository 层使用一条 `GROUP BY coachId` 的 SQL 批量完成聚合计算，避免 N+1 查询；如后续评价量增长，可考虑引入缓存或冗余字段
 - 评价列表查询通过分页控制返回数据量，联合索引 (coachId, createdAt) 支持高效排序分页
 
 ### 错误处理
