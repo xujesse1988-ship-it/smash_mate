@@ -46,3 +46,4 @@ activity 模块设计 review 通过（2026-04-02）。
 coaching 模块设计 review 通过（2026-04-02）。中间层后端模块设计全部完成。
 match-record 模块设计 review 通过（2026-04-02）。
 review 模块设计 review 通过（2026-04-02）。全部后端模块设计完成。
+web-app 前端整体设计 review 通过（2026-04-02）。
