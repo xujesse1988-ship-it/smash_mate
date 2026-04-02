@@ -372,27 +372,31 @@ interface MatchRecord {
   sourceId: string;
   matchType: MatchType;
   recordedBy: string;
-  teamA: MatchTeam;
-  teamB: MatchTeam;
-  scores: MatchScore[];
-  result: 'team_a_win' | 'team_b_win' | 'draw';
-  matchDate: string;
+  recorder: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  players: {
+    sideA: MatchPlayer[];
+    sideB: MatchPlayer[];
+  };
+  games: MatchGame[];
+  result: 'A_WIN' | 'B_WIN' | 'DRAW';
   createdAt: string;
 }
 
-interface MatchTeam {
-  players: MatchPlayer[];
-}
-
 interface MatchPlayer {
-  userId: string | null;       // 平台用户 ID，非平台用户为 null
-  guestPlayerId: string | null; // 非平台用户 ID
-  nickname: string;            // 展示用昵称
+  userId?: string;              // 平台用户 ID（平台用户时存在）
+  guestId?: string;             // 非平台用户 ID（临时用户时存在）
+  nickname: string;             // 展示用昵称
+  avatarUrl?: string | null;    // 头像 URL（平台用户时存在）
 }
 
-interface MatchScore {
-  teamAScore: number;  // 0-30
-  teamBScore: number;  // 0-30
+interface MatchGame {
+  gameNumber: number;  // 局号（从 1 开始）
+  scoreA: number;      // A 方得分（0-30）
+  scoreB: number;      // B 方得分（0-30）
 }
 
 interface MatchStats {

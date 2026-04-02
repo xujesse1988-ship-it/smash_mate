@@ -19,7 +19,7 @@
 
 **路由**: `/activities`
 
-**功能**: 约球活动列表，作为应用首页。支持按时间/距离/空余筛选活动，支持按时间或距离排序。右下角悬浮按钮进入"发起约球"页面。点击活动卡片进入活动详情页。
+**功能**: 约球活动列表，作为应用首页。列表默认仅返回未来活动（startTime > 当前时间）且状态不为 cancelled 的活动。支持按时间/距离/空余筛选活动，支持按时间或距离排序。右下角悬浮按钮进入"发起约球"页面。点击活动卡片进入活动详情页。
 
 **页面状态**:
 
@@ -206,7 +206,7 @@ CreateActivityPage
 | `POST /api/activities/:id/leave` | 确认退出活动 | message.success 提示"已退出活动"，刷新活动详情 | 根据错误码显示提示（见下方） |
 | `PUT /api/activities/:id` | 编辑模式下点击"保存" | message.success 提示"修改成功"，退出编辑模式，刷新活动详情 | 根据错误码显示提示（见下方） |
 | `POST /api/activities/:id/cancel` | 确认取消活动 | message.success 提示"活动已取消"，刷新活动详情 | 根据错误码显示提示（见下方） |
-| `DELETE /api/match-records/:id` | 确认删除战绩 | message.success 提示"战绩已删除"，刷新战绩列表 | 403: "只能删除自己录入的战绩"；404: "战绩不存在" |
+| `DELETE /api/match-records/:id` | 确认删除战绩 | message.success 提示"战绩已删除"，刷新战绩列表 | 根据错误码显示提示（见下方） |
 
 **加入活动错误处理**:
 
@@ -246,6 +246,13 @@ CreateActivityPage
 | ACTIVITY_NOT_CREATOR | "只有发起人可以取消活动" |
 | ACTIVITY_NOT_CANCELLABLE | "活动已开始或已结束，无法取消" |
 
+**删除战绩错误处理**:
+
+| error.code | 用户提示 |
+|-----------|---------|
+| MATCH_RECORD_NOT_RECORDER | "只能删除自己录入的战绩" |
+| MATCH_RECORD_NOT_FOUND | "战绩不存在" |
+
 **交互流程**:
 
 ```
@@ -268,7 +275,9 @@ CreateActivityPage
     → 显示"已满员"（不可点击）
   活动状态为 completed 且 当前用户是参与者:
     → 显示"录入战绩"按钮
-  活动状态为 in_progress/cancelled:
+  活动状态为 in_progress:
+    → 不显示操作按钮（后端要求活动状态为 completed 才允许录入战绩，in_progress 状态下活动尚未结束，不可录入）
+  活动状态为 cancelled:
     → 不显示操作按钮
 
 加入活动:
@@ -334,6 +343,8 @@ ActivityDetailPage
 ### MyActivityListPage 页面
 
 **路由**: `/my-activities`
+
+**入口**: 位于 profile feature 的个人主页（UserProfilePage），通过"我的活动"入口跳转。
 
 **功能**: 展示当前用户参与（含发起）的活动列表。支持按角色（发起的/参加的）和状态筛选。点击活动卡片进入活动详情页。
 
@@ -479,6 +490,7 @@ status === 'full':
 
 status === 'in_progress':
   无操作按钮
+  说明: 后端 POST /api/match-records 要求来源活动状态为 completed，in_progress 状态下不可录入战绩
 
 status === 'completed':
   isParticipant（含 isCreator）: [录入战绩]
