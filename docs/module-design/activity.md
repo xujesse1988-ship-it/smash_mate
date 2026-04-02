@@ -633,7 +633,9 @@ User 1 ← N ActivityParticipant（一个用户可参与多个活动）
         "venue": {
           "id": "uuid",
           "name": "朝阳体育中心羽毛球馆",
-          "address": "北京市朝阳区..."
+          "address": "北京市朝阳区...",
+          "latitude": 39.9215,
+          "longitude": 116.4435
         },
         "title": null,
         "startTime": "2026-04-05T14:00:00.000Z",
@@ -652,6 +654,7 @@ User 1 ← N ActivityParticipant（一个用户可参与多个活动）
 ```
 
 **业务规则**:
+- 当 userId 对应的用户不存在时，返回空列表（而非 404），与社交平台惯例一致（不暴露用户是否存在）
 - 任何已登录用户均可查看其他用户参与的活动列表（公开信息）
 - role 筛选：
   - creator: 仅返回 creatorId === userId 的活动
