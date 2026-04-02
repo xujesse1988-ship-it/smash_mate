@@ -21,7 +21,7 @@ feature:
 | match-record | 后端 | done | | | | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
-| web-app/activity | 前端 | | | | | | |
+| web-app/activity | 前端 | review | | | | | |
 | web-app/coaching | 前端 | | | | | | |
 | web-app/match-record | 前端 | | | | | | |
 | web-app/profile | 前端 | | | | | | |
