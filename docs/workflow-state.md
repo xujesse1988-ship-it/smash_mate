@@ -18,7 +18,7 @@ feature:
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
-| match-record | 后端 | | | | | | |
+| match-record | 后端 | review | | | | | |
 | review | 后端 | | | | | | |
 | web-app/auth | 前端 | | | | | | |
 | web-app/activity | 前端 | | | | | | |
