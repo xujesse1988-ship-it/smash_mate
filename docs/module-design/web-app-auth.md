@@ -79,8 +79,8 @@ Tab 切换:
 
 登录（登录 Tab）:
   1. 前端校验手机号格式和验证码格式（6 位数字）
-  2. 校验通过 → 调用 POST /api/auth/login { phone, code }
-  3. 请求成功 → 将 token 和 user.id 存入 authStore → 重定向到来源页面（默认 /activities）
+  2. 校验通过 → 调用 POST /api/auth/login { phone, code }（不传 isCoach）
+  3. 请求成功 → 将 token 和 userId 存入 authStore → 重定向到来源页面（默认 /activities）
   4. 请求失败 → 显示对应错误提示
 
 注册（注册 Tab）:
@@ -172,6 +172,8 @@ LoginPage
 登录成功:
   1. authStore.setToken(token) → 同步写入 localStorage
   2. authStore.setUserId(userId) → 同步写入 localStorage
+  注: 登录成功后仅存储 token 和 userId，不存储完整 user 对象；
+      用户详细信息由 useCurrentUser hook 通过 GET /api/users/me 按需获取，避免数据过期不一致
 
 应用启动时:
   1. authStore 初始化时从 localStorage 读取 token 和 userId
