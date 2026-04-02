@@ -177,6 +177,7 @@ PhoneLock 通过 phone 字段管理验证失败次数（非外键，同上理由
 ```
 
 **业务规则**:
+- 无论新用户注册还是老用户登录，统一返回 HTTP 200（接口的主要语义是"登录"，非"创建用户"）
 - 手机号格式校验同 send-code
 - 验证码匹配最近一条未使用的 VerificationCode 记录（同一手机号、code 匹配、expiresAt > 当前时间、used = false）
 - 验证成功后标记该验证码为已使用（used = true），并重置 PhoneLock 的 failCount
@@ -397,6 +398,7 @@ PhoneLock 通过 phone 字段管理验证失败次数（非外键，同上理由
   id: string;
   nickname: string;
   avatarUrl: string | null;
+  bio: string | null;
   isCoach: boolean;
 } | null
 ```
@@ -404,6 +406,7 @@ PhoneLock 通过 phone 字段管理验证失败次数（非外键，同上理由
 **业务规则**:
 - 用户不存在时返回 null（由调用方决定如何处理）
 - 返回字段不包含敏感信息（不返回 phone）
+- 包含 bio 字段，供个人主页等聚合场景使用，避免消费方额外查询
 
 **错误码**:
 | error.code | 触发条件 |
@@ -429,6 +432,7 @@ Array<{
   id: string;
   nickname: string;
   avatarUrl: string | null;
+  bio: string | null;
   isCoach: boolean;
 }>
 ```
@@ -475,6 +479,9 @@ Array<{
 3. expiresAt < 当前时间 → AUTH_CODE_EXPIRED
 4. code 不匹配 → 递增 PhoneLock.failCount，达到 5 次时设置 lockedUntil → AUTH_CODE_WRONG
 5. 匹配成功 → 标记 used = true，重置 PhoneLock.failCount = 0
+
+注：步骤 2（无未使用的验证码记录）和步骤 4（验证码不匹配）统一返回 AUTH_CODE_WRONG，
+这是安全设计——避免攻击者通过错误码差异探测某手机号是否发送过验证码。
 ```
 
 ### 6.2 登录/注册合一流程
@@ -528,6 +535,7 @@ Array<{
 
 ### 数据清理
 - VerificationCode 表中过期且已使用的记录可定期清理（一期不实现定时清理，表数据量可控）
+- 频率限制检查（60 秒内不可重复发送）的查询应限定时间范围（如只查最近 5 分钟内的记录），避免数据量增长后全表扫描
 - PhoneLock 表中锁定已过期的记录可保留（failCount 在下次验证成功时重置）
 
 ### 错误处理
