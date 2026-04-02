@@ -122,7 +122,8 @@ City 1 ← N Venue（一个城市对应多个球馆）
         "address": "北京市朝阳区...",
         "latitude": 39.9215,
         "longitude": 116.4435,
-        "distance": 1.2
+        "distance": 1.2,
+        "cityName": "北京"
       }
     ]
   }
@@ -130,8 +131,10 @@ City 1 ← N Venue（一个城市对应多个球馆）
 ```
 
 > `distance` 字段：仅当请求中传入了 `latitude` 和 `longitude` 时返回，单位为千米（km），保留一位小数。未传入经纬度时该字段不返回。
+> `cityName` 字段：球馆所属城市名称，方便前端在搜索结果中展示城市信息。
 
 **业务规则**:
+- 本接口为搜索/自动补全场景，使用 `limit` 参数控制返回条数，不使用 `page`+`pageSize` 标准分页（用户需要的是 top-N 结果而非翻页浏览）
 - keyword 按球馆名称进行模糊匹配（LIKE '%keyword%'）
 - 当 latitude 和 longitude 都提供时，按直线距离（Haversine 公式）升序排序
 - 当 latitude 和 longitude 未提供时，按球馆名称排序
@@ -256,7 +259,10 @@ City 1 ← N Venue（一个城市对应多个球馆）
 ```json
 {
   "data": {
-    "message": "城市已移除"
+    "id": "uuid",
+    "name": "北京",
+    "isActive": false,
+    "updatedAt": "2026-04-02T10:00:00.000Z"
   }
 }
 ```
@@ -264,6 +270,7 @@ City 1 ← N Venue（一个城市对应多个球馆）
 **业务规则**:
 - 仅管理员可调用
 - 移除城市 = 将 City.isActive 设为 false（软删除），不物理删除
+- 返回更新后的城市对象（含 isActive: false），方便前端更新本地状态
 - 移除后该城市的球馆数据保留，用户仍可搜索到这些球馆
 - 移除后该城市不再参与定时球馆数据更新
 - 已关联该城市球馆的活动/课程不受影响（PRD 明确要求）
@@ -304,7 +311,8 @@ City 1 ← N Venue（一个城市对应多个球馆）
         "name": "北京",
         "isActive": true,
         "venueCount": 42,
-        "createdAt": "2026-04-01T10:00:00.000Z"
+        "createdAt": "2026-04-01T10:00:00.000Z",
+        "updatedAt": "2026-04-01T10:00:00.000Z"
       }
     ],
     "total": 5,
