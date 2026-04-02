@@ -19,7 +19,7 @@ feature:
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
-| review | 后端 | | | | | | |
+| review | 后端 | review | | | | | |
 | web-app/auth | 前端 | | | | | | |
 | web-app/activity | 前端 | | | | | | |
 | web-app/coaching | 前端 | | | | | | |
