@@ -147,6 +147,7 @@
   - `PUT /api/notifications/:id/read` — 标记单条已读
   - `PUT /api/notifications/read-all` — 全部标记已读
   - `NotificationService.create(notification)` — 模块间调用：创建通知（供其他业务模块调用）
+  - `NotificationService.createBatch(notifications)` — 模块间调用：批量创建通知（供其他业务模块调用）
 - **详细设计**: module-design/notification.md
 
 #### review

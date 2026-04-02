@@ -385,7 +385,7 @@ PhoneLock 通过 phone 字段管理验证失败次数（非外键，同上理由
 
 **描述**: 根据用户 ID 获取用户基本信息（供其他模块校验用户存在性或获取用户信息）
 
-**Consumers**: activity, coaching, match-record, review, notification
+**Consumers**: activity, coaching, match-record, review
 
 **参数**:
 | 参数 | 类型 | 必填 | 说明 |
@@ -419,7 +419,7 @@ PhoneLock 通过 phone 字段管理验证失败次数（非外键，同上理由
 
 **描述**: 根据用户 ID 列表批量获取用户基本信息（用于列表页面展示参与者/成员信息）
 
-**Consumers**: activity, coaching, match-record, notification
+**Consumers**: activity, coaching, match-record
 
 **参数**:
 | 参数 | 类型 | 必填 | 说明 |
