@@ -131,7 +131,6 @@
   - `GET /api/venues/search` — 球馆搜索（关键词 + 可选经纬度排序）
   - `GET /api/venues/:id` — 球馆详情
   - `POST /api/admin/cities` — 添加城市（管理员）
-  - `DELETE /api/admin/cities/:id` — 移除城市（管理员）
   - `GET /api/admin/cities` — 城市列表（管理员）
   - `GET /api/admin/venues` — 球馆列表（管理员）
   - `DELETE /api/admin/venues/:id` — 移除球馆（管理员）
