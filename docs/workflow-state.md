@@ -19,7 +19,7 @@ feature:
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
-| review | 后端 | review | | | | | |
+| review | 后端 | done | | | | | |
 | web-app/auth | 前端 | | | | | | |
 | web-app/activity | 前端 | | | | | | |
 | web-app/coaching | 前端 | | | | | | |
@@ -45,3 +45,4 @@ notification 模块设计 review 通过（2026-04-02）。基础层后端模块�
 activity 模块设计 review 通过（2026-04-02）。
 coaching 模块设计 review 通过（2026-04-02）。中间层后端模块设计全部完成。
 match-record 模块设计 review 通过（2026-04-02）。
+review 模块设计 review 通过（2026-04-02）。全部后端模块设计完成。
