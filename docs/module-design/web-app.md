@@ -101,7 +101,9 @@ web/
 | /coaches/:id | CoachProfilePage | coaching | 教练主页（简介、课程、评价） | 需要 |
 | /group-classes/:id | GroupClassDetailPage | coaching | 团课详情（报名） | 需要 |
 | /coaches/:id/private-lessons | PrivateLessonBookingPage | coaching | 私教预约（选择时间段） | 需要 |
+| /my-activities | MyActivityListPage | activity | 我的活动（发起的 + 参加的），对应 `GET /api/users/:id/activities` | 需要 |
 | /my-courses | MyCourseManagementPage | coaching | 我的课程管理（教练角色） | 需要（教练） |
+| /my-enrollments | MyEnrollmentListPage | coaching | 我的课程报名（学员视角），对应 `GET /api/users/:id/enrollments` | 需要 |
 | /match-records/create | CreateMatchRecordPage | match-record | 战绩录入 | 需要 |
 | /users/:id/match-records | MatchRecordHistoryPage | match-record | 个人战绩历史列表 | 需要 |
 | /users/:id | UserProfilePage | profile | 个人主页（基本信息、战绩汇总） | 需要 |
@@ -114,6 +116,7 @@ web/
 - 未登录用户访问需要认证的路由时，自动重定向到 `/login`
 - 登录成功后重定向回原目标页面（默认首页 `/activities`）
 - 非教练用户访问教练专属页面（如 `/my-courses`、`/profile/coach-edit`）时，提示并引导至设置页开启教练角色
+- `/my-courses` 为教练管理自己发布的课程（教练角色），`/my-enrollments` 为学员查看自己报名的课程（学员视角），两者面向不同角色、互不重叠
 
 ---
 
@@ -478,6 +481,11 @@ interface ApiErrorResponse {
   - 卡片圆角 12px，按钮使用圆角胶囊形或大圆角矩形
   - 图标风格统一使用线性图标（outlined）
   - 通过 Ant Design ConfigProvider 全局配置主题色
+- **教练评分聚合**:
+  - 教练列表页（`CoachListPage`）获取教练列表后，需要将评分数据合并到 `CoachListItem` 中渲染
+  - 数据获取流程：并行发起 `GET /api/coaches`（教练列表）和 `POST /api/coaches/ratings`（批量教练评分查询，请求体为教练列表返回的所有 coachId）
+  - 两个请求均完成后，前端按 coachId 匹配，将 `averageRating` 和 `reviewCount` 合并到对应的教练列表项中
+  - 这样设计是因为教练评分由 review 模块实时计算，coaching 模块不存冗余字段（参见架构约定）
 - **定位相关**:
   - 定位授权在用户首次使用距离相关功能时触发（活动列表距离排序/筛选、球馆搜索距离排序）
   - 用户拒绝定位后，距离排序不可用（默认按时间排序），距离筛选项隐藏，活动卡片不显示距离信息
