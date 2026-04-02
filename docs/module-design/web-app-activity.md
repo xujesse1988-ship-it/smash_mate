@@ -26,8 +26,7 @@
 | 状态 | 类型 | 来源 | 说明 |
 |------|------|------|------|
 | activities | `Activity[]` | API（GET /api/activities） | 活动列表数据 |
-| total | number | API | 活动总数（用于分页） |
-| page | number | 用户翻页 | 当前页码，默认 1 |
+| total | number | API | 活动总数 |
 | dateFilter | `'today' \| 'tomorrow' \| 'this_week' \| null` | 用户选择 | 时间快捷筛选 |
 | dateRange | `[string, string] \| null` | 用户选择 | 自定义日期范围（dateStart, dateEnd），与 dateFilter 互斥 |
 | maxDistance | `3 \| 5 \| 10 \| null` | 用户选择 | 距离筛选范围（km），需定位授权 |
@@ -36,11 +35,13 @@
 | isLoading | boolean | API 请求状态 | 列表加载中 |
 | error | string \| null | API 响应 | 加载错误信息 |
 
+> 注：分页由 useInfiniteQuery 内部管理（自动维护 page/cursor），页面状态中无需显式维护 page 字段。
+
 **调用的后端接口**:
 
 | 接口 | 触发时机 | 成功处理 | 错误处理 |
 |------|---------|---------|---------|
-| `GET /api/activities` | 页面加载、筛选条件变化、排序变化、翻页 | 渲染活动列表 | 显示 PageError 组件 |
+| `GET /api/activities` | 页面加载、筛选条件变化、排序变化、滚动加载更多 | 渲染活动列表 | 显示 PageError 组件 |
 
 **交互流程**:
 
@@ -48,7 +49,7 @@
 用户进入 /activities → 加载活动列表（GET /api/activities，默认 sortBy=time）→ 渲染活动卡片列表
 
 筛选操作:
-  时间筛选 → 点击"时间"按钮 → 弹出筛选面板（今天/明天/本周/自定义日期）→ 选择后关闭面板 → 重新加载列表（page 重置为 1）
+  时间筛选 → 点击"时间"按钮 → 弹出筛选面板（今天/明天/本周/自定义日期）→ 选择后关闭面板 → useInfiniteQuery 重置，从第一页重新加载
   距离筛选 → 点击"距离"按钮:
     ├→ 已授权定位 → 弹出距离选择（3km/5km/10km/不限）→ 选择后重新加载
     └→ 未授权定位 → 触发浏览器定位请求（useGeolocation）
@@ -342,16 +343,17 @@ ActivityDetailPage
 |------|------|------|------|
 | activities | Activity[] | API（GET /api/users/:id/activities） | 活动列表数据 |
 | total | number | API | 活动总数 |
-| page | number | 用户翻页 | 当前页码，默认 1 |
 | role | `'creator' \| 'participant' \| null` | 用户选择 | 角色筛选（发起的/参加的/全部） |
 | status | ActivityStatus \| null | 用户选择 | 状态筛选 |
 | isLoading | boolean | API 请求状态 | 列表加载中 |
+
+> 注：分页由 useInfiniteQuery 内部管理，页面状态中无需显式维护 page 字段。使用 useInfiniteScroll 实现无限滚动，与 ActivityListPage 保持一致。
 
 **调用的后端接口**:
 
 | 接口 | 触发时机 | 成功处理 | 错误处理 |
 |------|---------|---------|---------|
-| `GET /api/users/:id/activities` | 页面加载、筛选条件变化、翻页 | 渲染活动列表 | 显示 PageError 组件 |
+| `GET /api/users/:id/activities` | 页面加载、筛选条件变化、滚动加载更多 | 渲染活动列表 | 显示 PageError 组件 |
 
 **交互流程**:
 
@@ -359,7 +361,7 @@ ActivityDetailPage
 用户进入 /my-activities → 使用当前用户 ID 调用 GET /api/users/{me}/activities → 渲染列表
 
 角色筛选:
-  Tab 切换（全部/我发起的/我参加的）→ 设置 role → 重新加载列表（page 重置为 1）
+  Tab 切换（全部/我发起的/我参加的）→ 设置 role → useInfiniteQuery 重置，从第一页重新加载
 
 状态筛选:
   下拉选择状态（全部/报名中/已满员/进行中/已结束/已取消）→ 设置 status → 重新加载
@@ -394,7 +396,7 @@ MyActivityListPage
 | DistanceFilterButton | 距离筛选按钮+弹出面板，支持 3km/5km/10km/不限，定位拒绝时隐藏 | ActivityListPage（FilterBar 子组件） |
 | SlotFilterSwitch | "有空位"开关组件 | ActivityListPage（FilterBar 子组件） |
 | SortSelector | 排序方式选择（按时间/按距离），距离排序需定位授权 | ActivityListPage |
-| ActivityCard | 活动卡片组件，展示球馆名称、时间、人数、状态、距离（可选）、发起人头像 | ActivityListPage, MyActivityListPage |
+| ActivityCard | 活动卡片组件，展示球馆名称、时间、人数、状态、距离（可选） | ActivityListPage, MyActivityListPage |
 | ActivityCardList | 活动卡片列表容器 | ActivityListPage, MyActivityListPage |
 | CreateActivityFAB | 右下角悬浮"发起约球"按钮（Floating Action Button） | ActivityListPage |
 | ParticipantStepper | 人数数字步进器（+/-按钮 + 数字输入，范围 2-50） | CreateActivityPage, ActivityDetailPage（编辑模式） |
@@ -415,7 +417,7 @@ MyActivityListPage
 
 | Hook | 用途 | 使用页面 |
 |------|------|---------|
-| useActivities | 获取活动列表（useQuery 封装），支持筛选/排序/分页参数，集成 useInfiniteScroll 实现无限滚动 | ActivityListPage |
+| useActivities | 获取活动列表（useInfiniteQuery 封装），支持筛选/排序参数，集成 useInfiniteScroll 实现无限滚动 | ActivityListPage |
 | useActivityDetail | 获取活动详情（useQuery 封装 GET /api/activities/:id） | ActivityDetailPage |
 | useActivityMatchRecords | 获取活动的战绩列表（useQuery 封装 GET /api/activities/:id/match-records） | ActivityDetailPage |
 | useJoinActivity | 加入活动操作（useMutation 封装 POST /api/activities/:id/join），成功后 invalidate 活动详情缓存 | ActivityDetailPage |
@@ -424,7 +426,7 @@ MyActivityListPage
 | useCancelActivity | 取消活动操作（useMutation 封装 POST /api/activities/:id/cancel），成功后 invalidate 活动详情缓存和活动列表缓存 | ActivityDetailPage |
 | useDeleteMatchRecord | 删除战绩操作（useMutation 封装 DELETE /api/match-records/:id），成功后 invalidate 战绩列表缓存 | ActivityDetailPage |
 | useCreateActivity | 创建活动操作（useMutation 封装 POST /api/activities），成功后跳转到活动详情页 | CreateActivityPage |
-| useMyActivities | 获取当前用户的活动列表（useQuery 封装 GET /api/users/:id/activities），支持角色和状态筛选 | MyActivityListPage |
+| useMyActivities | 获取当前用户的活动列表（useInfiniteQuery 封装 GET /api/users/:id/activities），支持角色和状态筛选，集成 useInfiniteScroll 实现无限滚动 | MyActivityListPage |
 
 ## 5. 消费的后端接口汇总
 
@@ -514,7 +516,7 @@ dateFilter 和 dateRange 互斥:
   选择自定义日期范围 → 清除 dateFilter
 
 切换筛选条件后:
-  page 重置为 1
+  useInfiniteQuery 重置（从第一页重新加载）
   列表自动重新加载
 ```
 
@@ -557,7 +559,7 @@ activity.venue 为 null（球馆已被移除）→ 显示"已删除的球馆"
 
 ```
 活动列表 (GET /api/activities):
-  queryKey: ['activities', { filters, sortBy, page }]
+  queryKey: ['activities', { filters, sortBy }]  // page 由 useInfiniteQuery 内部管理
   staleTime: 30 秒（与整体设计约定一致）
 
 活动详情 (GET /api/activities/:id):
@@ -569,7 +571,7 @@ activity.venue 为 null（球馆已被移除）→ 显示"已删除的球馆"
   staleTime: 30 秒
 
 我的活动 (GET /api/users/:id/activities):
-  queryKey: ['user-activities', userId, { role, status, page }]
+  queryKey: ['user-activities', userId, { role, status }]  // page 由 useInfiniteQuery 内部管理
   staleTime: 30 秒
 
 操作成功后的缓存失效:

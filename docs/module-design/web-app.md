@@ -244,21 +244,31 @@ interface UserPublicInfo {
 
 type ActivityStatus = 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled';
 
+// 活动中的球馆信息（后端返回 id, name, address, latitude, longitude）
+interface ActivityVenue {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 interface Activity {
   id: string;
   creatorId: string;
-  venue: VenueBrief | null;
+  venue: ActivityVenue | null;
   title: string | null;
   startTime: string;
   endTime: string;
   maxParticipants: number;
   currentParticipants: number;
   status: ActivityStatus;
+  distance?: number;           // 单位 km，仅当请求提供经纬度时后端返回
   createdAt: string;
 }
 
 interface ActivityDetail extends Activity {
-  creator: UserPublicInfo;
+  creator: { id: string; nickname: string; avatarUrl: string | null; };
   participants: ActivityParticipant[];
 }
 
