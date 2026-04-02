@@ -322,7 +322,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 **业务规则**:
 - 指定用户必须是教练角色（isCoach = true），否则返回 COACHING_NOT_A_COACH
 - 用户信息通过 UserService.getUserById() 获取
-- groupClasses 返回该教练的所有团课，按 startTime 升序排列（未来的在前）；已取消和已结束的团课也返回（前端根据 status 区分展示）
+- groupClasses 仅返回未来的和最近 30 天内结束的团课（即 endTime > 当前时间 - 30 天），不返回更早的历史数据；按 startTime 升序排列（未来的在前）；已取消和已结束的团课也返回（前端根据 status 区分展示）
 - privateLessonSlots 仅返回未来的且未被预约的空闲时间段（isBooked = false 且 startTime > 当前时间），按 startTime 升序排列
 - venue 信息通过 Prisma relation 或 JOIN 获取
 - privateLessonSlots 中的 venues 通过 VenueService 批量获取可选球馆信息；venueIds 为空数组时 venues 返回空数组（表示不限地点）
@@ -366,7 +366,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 ```
 
 **业务规则**:
-- 当前用户必须是教练角色（isCoach = true），否则返回 COACHING_NOT_A_COACH
+- 当前用户必须是教练角色（isCoach = true），否则返回 COACHING_COACH_ROLE_REQUIRED
 - 如果 CoachProfile 记录不存在，自动创建（教练首次编辑资料时）
 - 只更新请求体中包含的字段，未提供的字段保持不变
 - bio 长度限制最长 500 字符
@@ -379,7 +379,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 | 400 | COACHING_INVALID_BIO | 简介超过 500 字符 |
 | 400 | COACHING_INVALID_SPECIALTY | specialties 中有值不在枚举范围内 |
 | 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
-| 403 | COACHING_NOT_A_COACH | 当前用户不是教练角色 |
+| 403 | COACHING_COACH_ROLE_REQUIRED | 当前用户不是教练角色，无权执行此操作 |
 
 ---
 
@@ -449,7 +449,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 | 400 | COACHING_INVALID_PARTICIPANTS | maxParticipants 不在 2-30 范围内 |
 | 400 | COACHING_INVALID_FEE_DESCRIPTION | feeDescription 超过 200 字符 |
 | 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
-| 403 | COACHING_NOT_A_COACH | 当前用户不是教练角色 |
+| 403 | COACHING_COACH_ROLE_REQUIRED | 当前用户不是教练角色，无权执行此操作 |
 | 404 | COACHING_VENUE_NOT_FOUND | 球馆不存在 |
 
 ---
@@ -837,7 +837,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 | 400 | COACHING_SLOT_TOO_SHORT | 时间段时长不足 1 小时 |
 | 400 | COACHING_INVALID_FEE_DESCRIPTION | feeDescription 超过 200 字符 |
 | 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
-| 403 | COACHING_NOT_A_COACH | 当前用户不是教练角色 |
+| 403 | COACHING_COACH_ROLE_REQUIRED | 当前用户不是教练角色，无权执行此操作 |
 | 404 | COACHING_VENUE_NOT_FOUND | venueIds 中有球馆不存在 |
 | 409 | COACHING_SLOT_OVERLAP | 时间段与已有时间段重叠 |
 
@@ -1483,6 +1483,7 @@ coaching 模块负责按 PRD 定义的模板生成通知文案，通过 Notifica
 - 一期不支持团课候补机制（人满后排队等候）
 - 一期教练评分由 review 模块实时计算，coaching 不存储冗余评分字段
 - 一期教练列表默认按创建时间排序，前端可结合 review 评分做客户端排序；二期可考虑后端支持按评分排序
+- 一期教练主页团课不做分页，仅返回未来及最近 30 天内结束的团课；二期可考虑团课分页
 - 一期不支持教练设置私教课时选择"不限地点"的同时指定部分球馆（要么全部指定，要么不限）
 - 一期 CoachProfile 惰性创建（首次编辑教练资料时），而非开启教练角色时自动创建
 - 一期 privateLessonSlots.venueIds 存储为字符串数组，不建立物理外键；球馆被删除后，venueIds 中可能存在无效 ID，获取空闲时间时通过 VenueService 过滤无效球馆
