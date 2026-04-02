@@ -276,12 +276,14 @@ CreateActivityPage
   活动状态为 completed 且 当前用户是参与者:
     → 显示"录入战绩"按钮
   活动状态为 in_progress:
-    → 不显示操作按钮（后端要求活动状态为 completed 才允许录入战绩，in_progress 状态下活动尚未结束，不可录入）
+    → 不显示操作按钮；对参与者（含发起人）显示提示文案"活动进行中，结束后可录入战绩"（非按钮，仅文字提示）
+    说明: 后端 POST /api/match-records 要求来源活动状态为 completed，in_progress 状态下活动尚未结束，不可录入
   活动状态为 cancelled:
     → 不显示操作按钮
 
 加入活动:
-  点击"加入活动" → 调用 POST /api/activities/:id/join → 成功 → 刷新详情
+  点击"加入活动" → 调用 POST /api/activities/:id/join → 成功 → message.success 提示"加入成功" → 刷新详情
+  注: 加入者的"确认通知"通过前端 message.success 即时反馈实现（PRD FB 验收标准 #3），站内通知仅发送给活动发起人
 
 退出活动:
   点击"退出活动" → 弹出 ConfirmDialog → 确认 → 调用 POST /api/activities/:id/leave → 成功 → 刷新详情
@@ -490,6 +492,8 @@ status === 'full':
 
 status === 'in_progress':
   无操作按钮
+  isParticipant（含 isCreator）: 显示提示文案"活动进行中，结束后可录入战绩"
+  未加入:                       无提示
   说明: 后端 POST /api/match-records 要求来源活动状态为 completed，in_progress 状态下不可录入战绩
 
 status === 'completed':
