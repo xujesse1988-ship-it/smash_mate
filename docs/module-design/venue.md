@@ -27,7 +27,7 @@ venue/
 | 层 | 职责 | 依赖 |
 |----|------|------|
 | Controller | 接收请求、参数校验、调用 Service、格式化响应 | Service |
-| Service | 业务逻辑（城市增删、球馆搜索、地图服务调用、数据同步编排、定时任务注册） | Repository, infra（logger、config、scheduler） |
+| Service | 业务逻辑（城市添加、球馆搜索、地图服务调用、数据同步编排、定时任务注册） | Repository, infra（logger、config、scheduler） |
 | Repository | 数据库操作、Prisma 查询封装（含地理距离排序的 SQL） | Prisma Client（infra） |
 
 ### 控制流
@@ -48,7 +48,6 @@ venue/
 |------|------|------|------|
 | id | string (uuid) | PK | 主键 |
 | name | string | NOT NULL, UNIQUE | 城市名称（如"北京"、"上海"） |
-| isActive | boolean | NOT NULL, DEFAULT true | 是否启用（启用的城市参与定时数据更新） |
 | createdAt | datetime | NOT NULL | 创建时间 |
 | updatedAt | datetime | NOT NULL | 更新时间 |
 
@@ -213,7 +212,6 @@ City 1 ← N Venue（一个城市对应多个球馆）
   "data": {
     "id": "uuid",
     "name": "北京",
-    "isActive": true,
     "venueCount": 42,
     "createdAt": "2026-04-01T10:00:00.000Z"
   }
@@ -236,51 +234,6 @@ City 1 ← N Venue（一个城市对应多个球馆）
 | 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
 | 403 | AUTH_ADMIN_REQUIRED | 非管理员身份 |
 | 409 | VENUE_CITY_DUPLICATE | 城市名称已存在 |
-
----
-
-### 移除城市（管理员）
-
-`DELETE /api/admin/cities/:id`
-
-**描述**: 管理员移除一个城市。移除后该城市的球馆数据保留但不再自动更新
-
-**认证**: 需要（管理员）
-
-**Consumers**: admin（城市管理页）
-
-**Path Params**:
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| id | string (uuid) | 城市 ID |
-
-**Response 200**:
-```json
-{
-  "data": {
-    "id": "uuid",
-    "name": "北京",
-    "isActive": false,
-    "updatedAt": "2026-04-02T10:00:00.000Z"
-  }
-}
-```
-
-**业务规则**:
-- 仅管理员可调用
-- 移除城市 = 将 City.isActive 设为 false（软删除），不物理删除
-- 返回更新后的城市对象（含 isActive: false），方便前端更新本地状态
-- 移除后该城市的球馆数据保留，用户仍可搜索到这些球馆
-- 移除后该城市不再参与定时球馆数据更新
-- 已关联该城市球馆的活动/课程不受影响（PRD 明确要求）
-
-**错误码**:
-| 状态码 | error.code | 触发条件 |
-|--------|-----------|---------|
-| 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
-| 403 | AUTH_ADMIN_REQUIRED | 非管理员身份 |
-| 404 | VENUE_CITY_NOT_FOUND | 城市不存在 |
 
 ---
 
@@ -309,7 +262,6 @@ City 1 ← N Venue（一个城市对应多个球馆）
       {
         "id": "uuid",
         "name": "北京",
-        "isActive": true,
         "venueCount": 42,
         "createdAt": "2026-04-01T10:00:00.000Z",
         "updatedAt": "2026-04-01T10:00:00.000Z"
@@ -324,7 +276,6 @@ City 1 ← N Venue（一个城市对应多个球馆）
 
 **业务规则**:
 - 仅管理员可调用
-- 返回所有城市（包括 isActive = false 的已移除城市），管理员需看到完整列表
 - venueCount 为该城市下的球馆数量（实时计算）
 - 按创建时间倒序排列
 
@@ -436,7 +387,7 @@ City 1 ← N Venue（一个城市对应多个球馆）
 
 `POST /api/admin/venues/sync`
 
-**描述**: 管理员手动触发所有活跃城市的球馆数据更新
+**描述**: 管理员手动触发所有城市的球馆数据更新
 
 **认证**: 需要（管理员）
 
@@ -464,7 +415,7 @@ City 1 ← N Venue（一个城市对应多个球馆）
 
 **业务规则**:
 - 仅管理员可调用
-- 对所有 isActive = true 的城市调用地图服务，更新球馆数据
+- 对所有城市调用地图服务，更新球馆数据
 - 同步方式为同步执行（一期城市数量少，不需要异步队列）
 - 同步逻辑：通过 mapPoiId 去重，已存在的更新名称和地址，不存在的新增；已关闭球馆不自动删除（PRD 明确要求由管理员手动处理）
 - 某个城市的同步失败不影响其他城市的同步（记录 error 日志后继续）
@@ -554,7 +505,7 @@ City 1 ← N Venue（一个城市对应多个球馆）
 ```
 触发: 每周一次（通过 infra/scheduler 注册 cron 任务）
 逻辑:
-1. 获取所有 isActive = true 的城市列表
+1. 获取所有城市列表
 2. 获取内存锁，如已锁定则跳过本次执行（记录 warn 日志）
 3. 逐个城市调用地图服务 API 获取最新球馆数据
 4. 通过 mapPoiId 去重：
@@ -626,7 +577,7 @@ d = 2R * arcsin(sqrt(sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlon/2)))
 ### 日志策略
 
 - 球馆搜索：info 级别记录搜索关键词和结果数量（不记录经纬度原文，脱敏为城市粒度或省略）
-- 城市增删：info 级别记录操作事件
+- 城市添加：info 级别记录操作事件
 - 数据同步：info 级别记录同步开始/结束、每个城市的同步结果；error 级别记录地图服务调用失败详情
 - 定时任务执行：使用 module: "venue-sync" 标记（遵循 architecture.md 约定）
 
