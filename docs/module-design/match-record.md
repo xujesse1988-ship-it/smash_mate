@@ -189,6 +189,11 @@ Array<{
     "sourceId": "uuid",
     "matchType": "singles",
     "recordedBy": "uuid",
+    "recorder": {
+      "id": "uuid",
+      "nickname": "王五",
+      "avatarUrl": "https://..."
+    },
     "players": {
       "sideA": [
         { "userId": "uuid", "nickname": "张三", "avatarUrl": "https://..." }
@@ -219,7 +224,7 @@ Array<{
 - guestName 不为空且长度不超过 20 字符
 - games 至少有 1 局，不限上限
 - 每局 scoreA 和 scoreB 为 0-30 之间的整数，且不可同时为 0
-- 胜负判定：赢得多数局的一方为胜方；若总局数为偶数且双方胜局数相同，记为平局
+- 胜负判定：赢得多数局的一方为胜方；若双方胜局数相同，记为平局
 - 非平台用户（guestName）在录入时自动创建 GuestPlayer 记录
 - 同一选手不可出现在 sideA 和 sideB 中（userId 不可重复出现在两侧）
 - 一期不需要对方确认，录入即生效
@@ -500,6 +505,7 @@ Array<{
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
+| sourceType | string | 否 | 按来源类型筛选：'activity' / 'group-class' / 'private-lesson' |
 | page | number | 否 | 页码，默认 1 |
 | pageSize | number | 否 | 每页数量，默认 20，最大 100 |
 
@@ -546,6 +552,7 @@ Array<{
 
 **业务规则**:
 - 返回 MatchPlayer.userId = :id 的所有关联战绩记录
+- 当提供 sourceType 时，只返回该来源类型的战绩；未提供时返回所有来源类型的战绩
 - 按 createdAt 倒序排列
 - 支持分页（page 从 1 开始，pageSize 默认 20，最大 100）
 - 每条记录额外包含 `userResult` 字段，表示该用户在这场比赛中的结果（'WIN' / 'LOSE' / 'DRAW'）
@@ -592,7 +599,7 @@ Array<{
 - totalMatches = wins + losses + draws（总场次）
 - wins：用户所在方赢得多数局的场次
 - losses：用户所在方输掉多数局的场次
-- draws：总局数为偶数且双方胜局数相同的场次
+- draws：双方胜局数相同的场次
 - winRate = wins / (wins + losses) * 100，保留一位小数；若 wins + losses = 0 则 winRate 为 0
 - 仅统计平台用户的数据，临时用户不生成汇总
 - 任何已登录用户均可查看其他用户的战绩汇总（公开数据）
