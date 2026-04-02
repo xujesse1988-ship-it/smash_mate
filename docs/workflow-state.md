@@ -15,7 +15,7 @@ feature:
 | infra | 基础设施 | N/A | N/A | | N/A | N/A | N/A |
 | user | 后端 | done | | | | | |
 | venue | 后端 | done | | | | | |
-| notification | 后端 | review | | | | | |
+| notification | 后端 | done | | | | | |
 | activity | 后端 | | | | | | |
 | coaching | 后端 | | | | | | |
 | match-record | 后端 | | | | | | |
@@ -41,3 +41,4 @@ current_milestone:
 architecture.md Review 通过，进入 Step 3 模块详细设计。
 user 模块设计 review 通过（2026-04-02）。
 venue 模块设计 review 通过（2026-04-02）。
+notification 模块设计 review 通过（2026-04-02）。基础层后端模块设计全部完成。
