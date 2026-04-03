@@ -606,7 +606,7 @@ User 1 ← N Notification（一个用户可收到多条通知）
 ### 认证方式
 
 - **用户端**: Bearer Token（JWT），登录成功后签发，有效期 7 天
-- **管理后台**: Bearer Token（JWT），管理员登录后签发，token 中包含 `role: "admin"`
+- **管理后台**: 复用用户端 JWT（仅含 userId），通过 admin-auth 中间件查询用户手机号是否在 ADMIN_PHONES 预设列表中来校验管理员身份
 - **公开接口**: 不需要认证的接口（如发送验证码、登录/注册）在路由级别标注为公开
 - **Token 传递**: 通过 HTTP Header `Authorization: Bearer <token>` 传递
 

@@ -2,10 +2,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   databaseUrl: process.env.DATABASE_URL || '',
-  jwtSecret: process.env.JWT_SECRET || 'dev-secret',
+  jwtSecret: getJwtSecret(),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   logLevel: process.env.LOG_LEVEL || 'info',
   adminPhones: (process.env.ADMIN_PHONES || '').split(',').filter(Boolean),
