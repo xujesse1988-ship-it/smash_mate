@@ -18,18 +18,24 @@
 - 任务管理 — GitHub Projects（`gh issue list` 查看）
 
 ## 常用命令
-- `docker compose up -d` — 启动本地依赖（PostgreSQL 等）
+- `docker compose up -d` — 启动本地依赖（PostgreSQL 开发库 5432 + 测试库 5433）
 - `docker compose down` — 停止本地依赖
-- `npm run dev:server` — 启动后端开发服务器
-- `npm run dev:web` — 启动前端 SPA
-- `npm run dev:admin` — 启动管理后台
-- `npx vitest` — 跑全部测试
+- `npm run dev:server` — 启动后端开发服务器（tsx watch，端口 3000）
+- `npm run dev:web` — 启动前端 SPA（Vite，端口 5173，自动代理 /api 到后端）
+- `npm run dev:admin` — 启动管理后台（Vite，端口 5174，自动代理 /api 到后端）
+- `npx vitest` — 跑全部测试（watch 模式）
+- `npx vitest run` — 跑全部测试（单次运行）
 - `npx vitest tests/contracts` — 只跑契约测试
 - `npx vitest tests/integration` — 只跑集成测试
 - `npx vitest {file}` — 跑单个文件测试
 - `npm run lint` — ESLint + Prettier 检查
-- `npx prisma db seed` — 填充种子数据
-- `npm run build` — 构建全部
+- `npm run lint:fix` — 自动修复 lint 和格式问题
+- `npm run db:generate` — 生成 Prisma Client
+- `npm run db:migrate` — 运行数据库迁移
+- `npm run db:push` — 推送 schema 到数据库（开发用，不生成迁移文件）
+- `npm run db:seed` — 填充种子数据
+- `npm run build` — 构建全部（server + web + admin）
+- `npx playwright test` — 跑 E2E 测试
 
 ## 项目结构
 ```
@@ -113,9 +119,12 @@ tests/
 - 日志级别通过环境变量 `LOG_LEVEL` 控制（默认 info，测试时可设为 warn 减少噪音）
 
 ## 测试环境
-- 测试数据库: PostgreSQL 测试库（通过 DATABASE_URL 环境变量区分，由 docker-compose 提供）
+- 测试数据库: PostgreSQL 测试库（docker-compose 中 postgres-test 服务，端口 5433，通过 DATABASE_URL_TEST 环境变量区分）
 - 测试数据隔离: 每个测试文件使用事务回滚
-- 前端测试: Vitest + React Testing Library + jsdom
+- 后端测试: Vitest（environment: node），含契约测试和集成测试
+- 前端测试: Vitest + React Testing Library + jsdom（通过 vitest.config.ts 中 environmentMatchGlobs 自动为 web-app 测试切换 jsdom 环境）
+- E2E 测试: Playwright（Chromium），配置在 playwright.config.ts
+- Mock: MSW (Mock Service Worker) 用于前端测试中拦截 HTTP 请求
 
 ## Git 规则
 - 每次完成一个有意义的改动后，主动 commit
