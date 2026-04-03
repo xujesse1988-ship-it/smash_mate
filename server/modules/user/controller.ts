@@ -48,9 +48,53 @@ export function createUserController(): Router {
     },
   );
 
-  // PUT /api/users/me — will be fully implemented in Issue #19
-  // PUT /api/users/me/coach-role — will be fully implemented in Issue #19
-  // GET /api/users/:id — will be fully implemented in Issue #19
+  // PUT /api/users/me
+  router.put(
+    '/users/me',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.updateProfile(userId, {
+          nickname: req.body.nickname,
+          avatarUrl: req.body.avatarUrl,
+          bio: req.body.bio,
+        });
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // PUT /api/users/me/coach-role
+  router.put(
+    '/users/me/coach-role',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.updateCoachRole(userId, req.body.isCoach);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // GET /api/users/:id
+  router.get(
+    '/users/:id',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getUserPublicInfo(req.params.id);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   return router;
 }

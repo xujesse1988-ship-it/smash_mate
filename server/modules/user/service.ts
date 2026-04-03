@@ -177,19 +177,111 @@ export class UserService {
     };
   }
 
-  async updateProfile(_userId: string, _input: UpdateProfileInput) {
-    // This will be fully implemented in Issue #19
-    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
+  async updateProfile(userId: string, input: UpdateProfileInput) {
+    // 1. Validate nickname if provided
+    if (input.nickname !== undefined) {
+      if (
+        typeof input.nickname !== 'string' ||
+        input.nickname.length < 2 ||
+        input.nickname.length > 20
+      ) {
+        throw new AppError(400, 'USER_INVALID_NICKNAME', '昵称长度需要在 2-20 个字符之间');
+      }
+    }
+
+    // 2. Validate bio if provided
+    if (input.bio !== undefined) {
+      if (typeof input.bio !== 'string' || input.bio.length > 200) {
+        throw new AppError(400, 'USER_INVALID_BIO', '个人简介不能超过 200 字符');
+      }
+    }
+
+    // 3. Validate avatarUrl if provided
+    if (input.avatarUrl !== undefined) {
+      if (
+        typeof input.avatarUrl !== 'string' ||
+        (!input.avatarUrl.startsWith('http://') && !input.avatarUrl.startsWith('https://'))
+      ) {
+        throw new AppError(400, 'USER_INVALID_AVATAR_URL', '头像 URL 格式不合法');
+      }
+    }
+
+    // 4. Build update data (only provided fields)
+    const updateData: { nickname?: string; avatarUrl?: string; bio?: string } = {};
+    if (input.nickname !== undefined) updateData.nickname = input.nickname;
+    if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
+    if (input.bio !== undefined) updateData.bio = input.bio;
+
+    // 5. Update and return
+    const updated = await this.repo.update(userId, updateData);
+    return {
+      id: updated.id,
+      phone: maskPhone(updated.phone),
+      nickname: updated.nickname,
+      avatarUrl: updated.avatarUrl,
+      bio: updated.bio,
+      isCoach: updated.isCoach,
+      createdAt: updated.createdAt,
+    };
   }
 
-  async updateCoachRole(_userId: string, _isCoach: boolean) {
-    // This will be fully implemented in Issue #19
-    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
+  async updateCoachRole(userId: string, isCoach: boolean) {
+    // 1. Validate isCoach field
+    if (isCoach === undefined || isCoach === null || typeof isCoach !== 'boolean') {
+      throw new AppError(400, 'USER_INVALID_COACH_ROLE', 'isCoach 字段必须为布尔值');
+    }
+
+    // 2. Reject closing coach role (Phase 1 limitation)
+    if (isCoach === false) {
+      throw new AppError(400, 'USER_COACH_ROLE_CLOSE_NOT_SUPPORTED', '一期不支持关闭教练角色');
+    }
+
+    // 3. Check if already a coach (idempotent)
+    const user = await this.repo.findById(userId);
+    if (!user) {
+      throw new AppError(404, 'USER_NOT_FOUND', '用户不存在');
+    }
+
+    if (user.isCoach) {
+      // Already a coach, return current info (idempotent)
+      return {
+        id: user.id,
+        phone: maskPhone(user.phone),
+        nickname: user.nickname,
+        avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        isCoach: user.isCoach,
+        createdAt: user.createdAt,
+      };
+    }
+
+    // 4. Enable coach role
+    const updated = await this.repo.updateCoachRole(userId, true);
+    return {
+      id: updated.id,
+      phone: maskPhone(updated.phone),
+      nickname: updated.nickname,
+      avatarUrl: updated.avatarUrl,
+      bio: updated.bio,
+      isCoach: updated.isCoach,
+      createdAt: updated.createdAt,
+    };
   }
 
-  async getUserPublicInfo(_id: string) {
-    // This will be fully implemented in Issue #19
-    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
+  async getUserPublicInfo(id: string) {
+    const user = await this.repo.findById(id);
+    if (!user) {
+      throw new AppError(404, 'USER_NOT_FOUND', '用户不存在');
+    }
+    // Public info: no phone field
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      isCoach: user.isCoach,
+      createdAt: user.createdAt,
+    };
   }
 
   // --- Cross-module service methods ---
