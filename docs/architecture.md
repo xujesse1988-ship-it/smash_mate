@@ -106,6 +106,7 @@
   - `POST /api/private-lessons/book` — 预约私教课
   - `POST /api/private-lessons/:id/cancel` — 取消私教预约
   - `GET /api/users/:id/enrollments` — 用户的课程报名列表
+  - `GET /api/coaches/:id/private-lessons` — 教练的私教预约列表（教练视角）
   - `CoachingService.getGroupClassById(id)` — 模块间调用：获取团课信息
   - `CoachingService.getPrivateLessonById(id)` — 模块间调用：获取私教课信息
   - `CoachingService.getParticipantIds(classId, type)` — 模块间调用：获取课程参与者

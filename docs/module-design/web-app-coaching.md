@@ -283,6 +283,8 @@ GroupClassDetailPage
 
 ### PrivateLessonBookingPage 页面
 
+**UI 原型**: 本页面暂无 UI 原型
+
 **路由**: `/coaches/:id/private-lessons`
 
 **功能**: 私教预约页，展示指定教练的可预约空闲时间段列表。每个时间段显示日期、时间范围、可选球馆、费用说明、预约状态。学员选择未预约的时间段，若教练设置了可选球馆则须选择一个上课地点，确认后完成预约。
@@ -395,7 +397,7 @@ PrivateLessonBookingPage
 | showAddSlotModal | boolean | 用户操作 | 是否显示添加私教时间弹窗 |
 | showCancelLessonConfirm | boolean | 用户操作 | 是否显示取消私教预约确认弹窗 |
 | cancellingLessonId | string \| null | 用户操作 | 当前待取消的私教课 ID |
-| enrollments | `EnrollmentListItem[]` | API（GET /api/users/:id/enrollments?type=private-lesson） | 教练视角的私教预约列表 |
+| privateLessons | `CoachPrivateLesson[]` | API（GET /api/coaches/:id/private-lessons） | 教练视角的私教预约列表 |
 | availability | `PrivateLessonSlot[]` | API（GET /api/coaches/:id/availability） | 教练的空闲时间段列表 |
 
 **调用的后端接口**:
@@ -408,6 +410,7 @@ PrivateLessonBookingPage
 | `PUT /api/group-classes/:id` | 用户在修改团课弹窗中提交 | message.success "团课已更新"，关闭弹窗，刷新教练数据 | 根据错误码显示对应提示 |
 | `POST /api/group-classes/:id/cancel` | 用户确认取消团课 | message.success "团课已取消"，刷新教练数据 | 根据错误码显示对应提示 |
 | `POST /api/private-lessons/availability` | 用户在添加私教时间弹窗中提交 | message.success "私教时间已添加"，关闭弹窗，刷新时间段列表 | 根据错误码显示对应提示 |
+| `GET /api/coaches/:id/private-lessons` (id=当前用户) | 切换到"私教预约"Tab | 渲染私教预约列表 | message.error "加载失败" |
 | `POST /api/private-lessons/:id/cancel` | 用户确认取消私教预约 | message.success "私教预约已取消"，刷新数据 | 根据错误码显示对应提示 |
 | `GET /api/venues/search` | 发布/修改团课、添加私教时间时选择球馆 | 下拉展示匹配球馆 | message.error "球馆搜索失败" |
 
@@ -488,7 +491,7 @@ PrivateLessonBookingPage
   → 前端校验 → 提交 POST /api/private-lessons/availability → 成功 → 刷新时间段列表
 
 == 私教预约管理 Tab ==
-切换到此 Tab → 加载教练的私教课列表（GET /api/users/:id/enrollments?type=private-lesson，id 为当前用户）
+切换到此 Tab → 加载教练的私教课列表（GET /api/coaches/:id/private-lessons，id 为当前用户）
 → 渲染私教预约列表（学员昵称、时间、球馆、状态）
 
 取消私教预约:
@@ -564,6 +567,12 @@ MyCourseManagementPage（CoachGuard 包裹）
 筛选操作:
   类型筛选 → 选择"全部/团课/私教" → 重新加载列表（传入 type 参数）
   状态筛选 → 选择"全部/进行中/已结束/已取消" → 重新加载列表（传入 status 参数）
+    映射关系:
+      "全部"   → 不传 status 参数（返回所有状态的记录，包括 open/full/scheduled 等）
+      "进行中" → status=in_progress
+      "已结束" → status=completed
+      "已取消" → status=cancelled
+    说明: open/full/scheduled 状态的课程仅在"全部"筛选中可见，不单独提供筛选选项
 
 查看课程详情:
   点击团课报名项 → 跳转到 /group-classes/:id
@@ -645,6 +654,7 @@ MyEnrollmentListPage
 | useCancelGroupClass | 取消团课（useMutation 封装 POST /api/group-classes/:id/cancel），成功后使教练主页缓存失效 | MyCourseManagementPage |
 | useSetAvailability | 设置私教空闲时间（useMutation 封装 POST /api/private-lessons/availability），成功后使空闲时间缓存失效 | MyCourseManagementPage |
 | useCancelPrivateLesson | 取消私教预约（useMutation 封装 POST /api/private-lessons/:id/cancel），成功后使相关缓存失效 | MyCourseManagementPage |
+| useCoachPrivateLessons | 获取教练的私教预约列表（useQuery 封装 GET /api/coaches/:id/private-lessons），支持 status 筛选 | MyCourseManagementPage |
 | useMyEnrollments | 获取当前用户的课程报名列表（useInfiniteQuery 封装 GET /api/users/:id/enrollments），支持 type 和 status 筛选 | MyEnrollmentListPage |
 
 ## 5. 消费的后端接口汇总
@@ -668,6 +678,7 @@ MyEnrollmentListPage
 | `PUT /api/group-classes/:id` | coaching | MyCourseManagementPage | 修改团课 |
 | `POST /api/group-classes/:id/cancel` | coaching | MyCourseManagementPage | 取消团课 |
 | `POST /api/private-lessons/availability` | coaching | MyCourseManagementPage | 设置私教空闲时间 |
+| `GET /api/coaches/:id/private-lessons` | coaching | MyCourseManagementPage | 获取教练的私教预约列表（教练视角） |
 | `POST /api/private-lessons/:id/cancel` | coaching | MyCourseManagementPage | 取消私教预约 |
 | `GET /api/venues/search` | venue | MyCourseManagementPage（通过 VenueSearchInput） | 发布/修改团课、添加私教时间时搜索球馆 |
 | `GET /api/users/:id/enrollments` | coaching | MyEnrollmentListPage | 获取学员的课程报名列表 |
@@ -836,6 +847,7 @@ MyEnrollmentListPage
   ['groupClass', classId] — 团课详情
   ['groupClass', classId, 'matchRecords'] — 团课战绩列表
   ['coach', coachId, 'availability'] — 教练空闲时间
+  ['coach', coachId, 'privateLessons'] — 教练私教预约列表（教练视角）
   ['enrollments', userId] — 用户课程报名列表
 
 缓存失效策略:
@@ -847,7 +859,7 @@ MyEnrollmentListPage
   修改团课成功 → 失效 ['coach', currentUserId] + ['groupClass', classId]
   取消团课成功 → 失效 ['coach', currentUserId]
   添加私教时间成功 → 失效 ['coach', currentUserId, 'availability']
-  取消私教预约成功 → 失效 ['coach', currentUserId, 'availability'] + ['coach', currentUserId]
+  取消私教预约成功 → 失效 ['coach', currentUserId, 'availability'] + ['coach', currentUserId] + ['coach', currentUserId, 'privateLessons']
 
 staleTime: 30 秒（与 web-app.md 定义一致）
 ```

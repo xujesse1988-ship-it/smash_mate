@@ -1133,6 +1133,79 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 
 ---
 
+### 教练的私教预约列表
+
+`GET /api/coaches/:id/private-lessons`
+
+**描述**: 获取教练的私教预约列表（教练视角），返回 coachId = :id 的已预约私教课记录
+
+**认证**: 需要
+
+**Consumers**: web-app（教练课程管理页 -- 私教预约管理 Tab）
+
+**Path Params**:
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | string (uuid) | 教练用户 ID |
+
+**Query Params**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | string | 否 | 状态筛选：scheduled / in_progress / completed / cancelled；不传则返回全部 |
+| page | number | 否 | 页码（默认 1） |
+| pageSize | number | 否 | 每页条数（默认 20，最大 100） |
+
+**Response 200**:
+```json
+{
+  "data": {
+    "items": [
+      {
+        "id": "uuid",
+        "slot": {
+          "startTime": "2026-04-11T10:00:00.000Z",
+          "endTime": "2026-04-11T12:00:00.000Z"
+        },
+        "venue": {
+          "id": "uuid",
+          "name": "朝阳体育中心羽毛球馆",
+          "address": "北京市朝阳区..."
+        },
+        "student": {
+          "id": "uuid",
+          "nickname": "羽球达人",
+          "avatarUrl": "https://example.com/avatar.jpg"
+        },
+        "status": "scheduled",
+        "createdAt": "2026-04-03T10:00:00.000Z"
+      }
+    ],
+    "total": 5,
+    "page": 1,
+    "pageSize": 20
+  }
+}
+```
+
+**业务规则**:
+- 指定用户必须是教练角色（isCoach = true），否则返回 COACHING_NOT_A_COACH
+- 只返回 coachId = :id 的 PrivateLesson 记录（已预约的私教课）
+- 按 slot.startTime 降序排列（最近的排前面）
+- status 筛选：仅返回匹配状态的记录
+- student 信息通过 UserService.getUsersByIds() 批量获取
+- venue 为 null 时（球馆被管理员移除或未选择球馆），venue 字段返回 null
+- slot 的 startTime 和 endTime 从 PrivateLesson 的冗余字段获取
+
+**错误码**:
+| 状态码 | error.code | 触发条件 |
+|--------|-----------|---------|
+| 401 | AUTH_UNAUTHORIZED | Token 缺失或无效 |
+| 403 | COACHING_NOT_A_COACH | 用户不存在或不是教练角色 |
+
+---
+
 ### 内部接口（跨模块 Service 调用）
 
 > 非 HTTP 暴露的接口。用于其他模块的 Service 层直接调用本模块的 Service。

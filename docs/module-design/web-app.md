@@ -313,7 +313,7 @@ interface GroupClass {
   id: string;
   coachId: string;
   title: string;
-  venue: VenueBrief | null;
+  venue: SlotVenue | null;       // 后端 GET /api/coaches/:id 返回的 groupClasses 中 venue 包含 id, name, address
   startTime: string;
   endTime: string;
   maxStudents: number;
@@ -370,6 +370,27 @@ interface GroupClassDetail extends GroupClass {
     avatarUrl: string | null;
     enrolledAt: string;
   }[];
+}
+
+// 教练私教预约列表项（GET /api/coaches/:id/private-lessons 响应的 items 元素，教练视角）
+interface CoachPrivateLesson {
+  id: string;
+  slot: {
+    startTime: string;
+    endTime: string;
+  };
+  venue: {
+    id: string;
+    name: string;
+    address: string;
+  } | null;
+  student: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  status: PrivateLessonStatus;
+  createdAt: string;
 }
 
 // 课程报名列表项（GET /api/users/:id/enrollments 响应的 items 元素）
@@ -485,10 +506,11 @@ interface Notification {
 
 interface Review {
   id: string;
-  reviewerId: string;
-  reviewerNickname: string;
-  reviewerAvatarUrl: string | null;
-  coachId: string;
+  reviewer: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
   courseType: 'group-class' | 'private-lesson';
   courseId: string;
   rating: number;          // 1-5
