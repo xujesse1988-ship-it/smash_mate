@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b-continue
+substep: 5c
 
 ## 当前模块
 module: user
@@ -13,7 +13,7 @@ feature:
 | 模块 | 类型 | 设计 | 契约测试 | 实现 | Task Review | 模块 Review | L2 集成测试 |
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
-| user | 后端 | done | review | | | | |
+| user | 后端 | done | done | in_progress | | | |
 | venue | 后端 | done | | | | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
@@ -164,3 +164,4 @@ Issues review 通过（2026-04-03），进入 Step 5 实现阶段。首先实现
 infra 实现完成（2026-04-03）：数据库连接、配置管理、认证中间件（JWT + 管理员）、全局错误处理、标准响应格式、结构化日志、requestId 中间件、请求日志、初始迁移、种子脚本。等待 review。
 infra #1 review 通过（2026-04-03）。进入 Step 5b，开始 user 模块契约测试。
 user 契约测试 #16（认证接口）review 通过（2026-04-03）。#17（用户信息与资料管理接口）待开始。
+user 契约测试 #17（用户信息与资料管理接口）review 通过（2026-04-03）。user 模块契约测试全部完成（85 个用例），进入实现阶段。
