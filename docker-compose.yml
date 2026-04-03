@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smashmate-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: smashmate
+      POSTGRES_PASSWORD: smashmate_dev
+      POSTGRES_DB: smashmate_dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: smashmate-postgres-test
+    restart: unless-stopped
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: smashmate
+      POSTGRES_PASSWORD: smashmate_test
+      POSTGRES_DB: smashmate_test
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
+  postgres-test-data:

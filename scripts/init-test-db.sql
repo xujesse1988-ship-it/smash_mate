@@ -1,0 +1,5 @@
+-- This file is mounted into the dev postgres container.
+-- It creates the test database so both dev and test dbs live in the same container
+-- if you prefer a single-container setup.
+-- The docker-compose.yml also provides a separate postgres-test container
+-- for complete isolation; use whichever approach you prefer.

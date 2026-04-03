@@ -1,0 +1,314 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== User Module =====
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  nickname  String
+  avatarUrl String?
+  bio       String?
+  isCoach   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  activities           Activity[]
+  activityParticipants ActivityParticipant[]
+  coachProfile         CoachProfile?
+  groupClasses         GroupClass[]
+  groupClassEnrollments GroupClassEnrollment[]
+  privateLessonSlots   PrivateLessonSlot[]
+  privateLessonsAsCoach  PrivateLesson[]      @relation("CoachPrivateLessons")
+  privateLessonsAsStudent PrivateLesson[]     @relation("StudentPrivateLessons")
+  matchRecordsRecorded MatchRecord[]
+  matchPlayers         MatchPlayer[]
+  reviewsGiven         Review[]             @relation("ReviewerReviews")
+  reviewsReceived      Review[]             @relation("CoachReviews")
+  notifications        Notification[]
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model PhoneLock {
+  id          String    @id @default(uuid())
+  phone       String    @unique
+  failCount   Int       @default(0)
+  lockedUntil DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ===== Venue Module =====
+
+model City {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venues Venue[]
+}
+
+model Venue {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  cityId    String
+  mapPoiId  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city       City       @relation(fields: [cityId], references: [id])
+  activities Activity[]
+  groupClasses GroupClass[]
+  privateLessons PrivateLesson[] @relation("VenuePrivateLessons")
+
+  @@index([cityId])
+  @@index([name])
+  @@index([latitude, longitude])
+}
+
+// ===== Activity Module =====
+
+model Activity {
+  id               String   @id @default(uuid())
+  creatorId        String
+  venueId          String?
+  title            String?
+  startTime        DateTime
+  endTime          DateTime
+  maxParticipants  Int
+  status           String   @default("open")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  creator      User                  @relation(fields: [creatorId], references: [id])
+  venue        Venue?                @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  participants ActivityParticipant[]
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([startTime])
+  @@index([venueId])
+  @@index([status, startTime])
+  @@index([status, endTime])
+}
+
+model ActivityParticipant {
+  id         String   @id @default(uuid())
+  activityId String
+  userId     String
+  joinedAt   DateTime @default(now())
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([activityId, userId])
+  @@index([userId])
+}
+
+// ===== Coaching Module =====
+
+model CoachProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  bio         String?
+  specialties String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model GroupClass {
+  id              String   @id @default(uuid())
+  coachId         String
+  venueId         String?
+  title           String
+  startTime       DateTime
+  endTime         DateTime
+  maxParticipants Int
+  feeDescription  String?
+  status          String   @default("open")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  coach       User                   @relation(fields: [coachId], references: [id])
+  venue       Venue?                 @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  enrollments GroupClassEnrollment[]
+
+  @@index([coachId])
+  @@index([status])
+  @@index([startTime])
+  @@index([venueId])
+  @@index([status, startTime])
+  @@index([status, endTime])
+}
+
+model GroupClassEnrollment {
+  id           String   @id @default(uuid())
+  groupClassId String
+  userId       String
+  enrolledAt   DateTime @default(now())
+
+  groupClass GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([groupClassId, userId])
+  @@index([userId])
+}
+
+model PrivateLessonSlot {
+  id             String   @id @default(uuid())
+  coachId        String
+  startTime      DateTime
+  endTime        DateTime
+  venueIds       String[] @default([])
+  feeDescription String?
+  isBooked       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  coach         User           @relation(fields: [coachId], references: [id])
+  privateLesson PrivateLesson?
+
+  @@index([coachId])
+  @@index([coachId, startTime])
+}
+
+model PrivateLesson {
+  id        String   @id @default(uuid())
+  slotId    String   @unique
+  coachId   String
+  studentId String
+  venueId   String?
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("scheduled")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slot    PrivateLessonSlot @relation(fields: [slotId], references: [id])
+  coach   User              @relation("CoachPrivateLessons", fields: [coachId], references: [id])
+  student User              @relation("StudentPrivateLessons", fields: [studentId], references: [id])
+  venue   Venue?            @relation("VenuePrivateLessons", fields: [venueId], references: [id], onDelete: SetNull)
+
+  @@index([coachId])
+  @@index([studentId])
+  @@index([status])
+  @@index([status, startTime])
+  @@index([status, endTime])
+}
+
+// ===== Match Record Module =====
+
+model MatchRecord {
+  id         String   @id @default(uuid())
+  sourceType String
+  sourceId   String
+  matchType  String
+  recordedBy String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  recorder User          @relation(fields: [recordedBy], references: [id])
+  players  MatchPlayer[]
+  games    MatchGame[]
+
+  @@index([sourceType, sourceId])
+  @@index([recordedBy])
+}
+
+model MatchPlayer {
+  id            String  @id @default(uuid())
+  matchRecordId String
+  side          String
+  userId        String?
+  guestId       String?
+
+  matchRecord MatchRecord  @relation(fields: [matchRecordId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id])
+  guest       GuestPlayer? @relation(fields: [guestId], references: [id])
+
+  @@index([matchRecordId])
+  @@index([userId])
+}
+
+model GuestPlayer {
+  id        String   @id @default(uuid())
+  nickname  String
+  createdAt DateTime @default(now())
+
+  matchPlayers MatchPlayer[]
+}
+
+model MatchGame {
+  id            String @id @default(uuid())
+  matchRecordId String
+  gameNumber    Int
+  scoreA        Int
+  scoreB        Int
+
+  matchRecord MatchRecord @relation(fields: [matchRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([matchRecordId, gameNumber])
+  @@index([matchRecordId])
+}
+
+// ===== Notification Module =====
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String
+  type       String
+  title      String
+  content    String
+  targetType String
+  targetId   String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, createdAt])
+  @@index([createdAt])
+}
+
+// ===== Review Module =====
+
+model Review {
+  id         String   @id @default(uuid())
+  reviewerId String
+  coachId    String
+  courseType  String
+  courseId    String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  reviewer User @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  coach    User @relation("CoachReviews", fields: [coachId], references: [id])
+
+  @@unique([reviewerId, courseType, courseId])
+  @@index([coachId])
+  @@index([coachId, createdAt])
+}
