@@ -2,10 +2,10 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
-module: user
+module: venue
 feature:
 
 ## 模块进度
@@ -13,7 +13,7 @@ feature:
 | 模块 | 类型 | 设计 | 契约测试 | 实现 | Task Review | 模块 Review | L2 集成测试 |
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
-| user | 后端 | done | done | done | done | | |
+| user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | | | | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
@@ -171,3 +171,4 @@ user #18 review 问题已修复（2026-04-03）：修复 3 个 SHOULD FIX（频�
 user #18 review LGTM（2026-04-03）。Issue #18 关闭。继续实现 #19（用户资料管理与教练角色开启）。
 user #19（用户资料管理与教练角色开启）实现完成（2026-04-03）：更新个人资料、开启教练角色、用户公开信息、跨模块 Service 接口。契约测试 49 通过，L1 集成测试 43 通过。等待 review。
 user #19 review LGTM（2026-04-03）。Issue #19 关闭。user 模块所有 Task 完成（#18 + #19），进入模块 Review。
+user 模块 Review LGTM（2026-04-03）。user 模块完成（基础层，无 L2 集成测试）。152 个测试全通过。进入 venue 模块。
