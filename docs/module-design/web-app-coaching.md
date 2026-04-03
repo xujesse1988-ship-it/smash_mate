@@ -164,6 +164,8 @@ CoachProfilePage
 │   │   ├── GroupClassSection    # 团课列表区域
 │   │   │   └── GroupClassCard   # 单个团课卡片（标题、时间、球馆、人数、费用、状态）
 │   │   └── PrivateLessonSection # 私教概览区域（可用时间段数量 + "预约私教"按钮）
+#                                  数据源：可用时间段数量取自 GET /api/coaches/:id 返回的 privateLessonSlots（仅未预约的未来时间段），
+#                                  而非 GET /api/coaches/:id/availability（含已预约的全部时间段）
 │   └── ReviewsTab               # 评价 Tab 内容
 │       ├── ReviewList           # 评价列表
 │       │   └── ReviewItem       # 单条评价（评价者头像昵称、评分、文字、时间）
@@ -566,13 +568,14 @@ MyCourseManagementPage（CoachGuard 包裹）
 
 筛选操作:
   类型筛选 → 选择"全部/团课/私教" → 重新加载列表（传入 type 参数）
-  状态筛选 → 选择"全部/进行中/已结束/已取消" → 重新加载列表（传入 status 参数）
+  状态筛选 → 选择"全部/待开课/进行中/已结束/已取消" → 根据映射关系加载或筛选列表
     映射关系:
       "全部"   → 不传 status 参数（返回所有状态的记录，包括 open/full/scheduled 等）
+      "待开课" → 前端客户端过滤：请求"全部"数据（不传 status 参数），在前端筛选 status 为 open/full/scheduled 的记录
+                （因后端 status 参数一次只能传一个值，无法一次查询多个状态）
       "进行中" → status=in_progress
       "已结束" → status=completed
       "已取消" → status=cancelled
-    说明: open/full/scheduled 状态的课程仅在"全部"筛选中可见，不单独提供筛选选项
 
 查看课程详情:
   点击团课报名项 → 跳转到 /group-classes/:id
@@ -588,7 +591,7 @@ MyCourseManagementPage（CoachGuard 包裹）
 MyEnrollmentListPage
 ├── EnrollmentFilterBar            # 筛选栏
 │   ├── TypeFilter                # 类型筛选（全部/团课/私教）
-│   └── StatusFilter              # 状态筛选（全部/进行中/已结束/已取消）
+│   └── StatusFilter              # 状态筛选（全部/待开课/进行中/已结束/已取消）
 ├── EnrollmentCardList            # 课程报名卡片列表
 │   └── EnrollmentCard            # 单个报名卡片（课程类型图标、课程名称/时间、教练昵称、球馆、状态标签）
 ├── EmptyState                    # 无报名记录时的空状态（共享组件）

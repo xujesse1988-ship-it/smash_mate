@@ -301,6 +301,8 @@ interface CoachProfile {
   bio: string | null;
   specialties: CoachSpecialty[];
   studentCount: number;
+  groupClasses: GroupClass[];              // 团课列表（未来 + 最近 30 天内结束的）
+  privateLessonSlots: PrivateLessonSlot[]; // 未来且未被预约的私教空闲时间段
   createdAt: string;
 }
 
