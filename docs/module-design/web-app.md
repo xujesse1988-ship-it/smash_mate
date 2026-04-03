@@ -290,8 +290,8 @@ interface CoachListItem {
   bio: string | null;
   specialties: CoachSpecialty[];
   studentCount: number;
-  averageRating: number | null;   // 前端从 review 接口聚合
-  totalCount: number;             // 前端从 review 接口聚合
+  averageRating: number | null;   // 前端聚合字段，非后端 GET /api/coaches 直接返回；需通过 POST /api/coaches/ratings 批量查询后在前端合并
+  totalCount: number;             // 前端聚合字段，非后端 GET /api/coaches 直接返回；需通过 POST /api/coaches/ratings 批量查询后在前端合并
 }
 
 interface CoachProfile {
@@ -336,7 +336,7 @@ interface PrivateLessonSlot {
   id: string;
   startTime: string;
   endTime: string;
-  venues: SlotVenue[];        // 可选球馆列表
+  venues: SlotVenue[];        // 可选球馆列表（与后端 GET /api/coaches/:id 响应一致，后端将 venueIds 转换为 SlotVenue[] 返回）
   feeDescription: string | null;
   isBooked: boolean;
 }
