@@ -24,7 +24,7 @@ feature:
 | web-app/activity | 前端 | done | | | | | |
 | web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | done | | | | | |
-| web-app/profile | 前端 | | | | | | |
+| web-app/profile | 前端 | review | | | | | |
 | web-app/notification | 前端 | | | | | | |
 | admin | 前端 | | | | | | |
 
