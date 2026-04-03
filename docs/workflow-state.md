@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 4
-substep: 4a-review
+substep: 4b
 
 ## 当前模块
 module:
@@ -56,4 +56,5 @@ web-app/notification feature 设计 review 通过（2026-04-03）。全部 web-a
 admin 模块设计 review 通过（2026-04-03）。全部模块设计完成，进入汇总检查。
 汇总补充完成（2026-04-03）：architecture.md 已补充接口依赖矩阵（10 节）和需求追溯表（11 节）。
 汇总 review 通过（2026-04-03）。Step 3 模块详细设计 + 接口契约全部完成，进入 Step 4a 脚手架。
-脚手架完成（2026-04-03）：项目目录结构、依赖安装、构建配置、Prisma schema、所有模块桩文件、前端页面和 API 桩文件、docker-compose、测试框架验证通过。等待 review。
+脚手架完成（2026-04-03）：项目目录结构、依赖安装、构建配置、Prisma schema、所有模块桩文件、前端页面和 API 桩文件、docker-compose、测试框架验证通过。
+脚手架 review 通过（2026-04-03），进入 Step 4b 任务拆分。
