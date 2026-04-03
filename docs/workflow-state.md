@@ -13,7 +13,7 @@ feature:
 | 模块 | 类型 | 设计 | 契约测试 | 实现 | Task Review | 模块 Review | L2 集成测试 |
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
-| user | 后端 | done | in_progress | | | | |
+| user | 后端 | done | review | | | | |
 | venue | 后端 | done | | | | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
