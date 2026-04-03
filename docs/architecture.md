@@ -727,7 +727,7 @@ Response:
 | 接口 | 提供方 | 消费方 | 变更影响级别 |
 |------|--------|--------|------------|
 | `UserService.getUserById(id)` | user | activity, coaching, match-record, review | 高 |
-| `UserService.getUsersByIds(ids)` | user | activity, coaching, match-record | 高 |
+| `UserService.getUsersByIds(ids)` | user | activity, coaching, match-record, review | 高 |
 | `VenueService.getVenueById(id)` | venue | activity, coaching | 高 |
 | `NotificationService.create(notification)` | notification | activity, coaching, review | 高 |
 | `NotificationService.createBatch(notifications)` | notification | activity, coaching | 高 |
