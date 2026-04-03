@@ -3,7 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed data will be added here
+  // Seed data will be added here as test fixtures accumulate.
+  // Import factory functions from tests/fixtures/ to populate base data.
   console.log('Seed completed'); // eslint-disable-line no-console
 }
 

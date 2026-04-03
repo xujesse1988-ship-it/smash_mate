@@ -3,12 +3,15 @@ import cors from 'cors';
 import { config } from './infra/config.js';
 import { logger } from './infra/logger.js';
 import { errorHandler } from './infra/error-handler.js';
+import { requestIdMiddleware, requestLogMiddleware } from './infra/request-context.js';
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(requestIdMiddleware);
+app.use(requestLogMiddleware);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -27,9 +27,6 @@ playwright-report/
 # Claude
 .claude/
 
-# Prisma
-server/prisma/migrations/
-
 # Logs
 *.log
 npm-debug.log*
