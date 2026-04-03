@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 3
-substep:
+substep: review
 
 ## 当前模块
 module:
@@ -54,3 +54,4 @@ web-app/match-record feature 设计 review 通过（2026-04-03）。
 web-app/profile feature 设计 review 通过（2026-04-03）。
 web-app/notification feature 设计 review 通过（2026-04-03）。全部 web-app feature 设计完成。
 admin 模块设计 review 通过（2026-04-03）。全部模块设计完成，进入汇总检查。
+汇总补充完成（2026-04-02）：architecture.md 已补充接口依赖矩阵（10 节）和需求追溯表（11 节），等待 review。

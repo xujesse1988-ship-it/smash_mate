@@ -665,11 +665,78 @@ Response:
 ## 10. 接口依赖矩阵
 
 > 此表用于变更影响评估。当某个接口需要修改时，查看"消费方"列确定受影响的模块。
-> 所有模块设计完成后汇总填写。
+
+### 10.1 HTTP API 接口
 
 | 接口 | 提供方 | 消费方 | 变更影响级别 |
 |------|--------|--------|------------|
-| （所有模块设计完成后汇总填写） | | | |
+| `POST /api/auth/send-code` | user | web-app, admin | 高 |
+| `POST /api/auth/login` | user | web-app, admin | 高 |
+| `GET /api/users/me` | user | web-app, admin | 高 |
+| `PUT /api/users/me` | user | web-app | 中 |
+| `PUT /api/users/me/coach-role` | user | web-app | 中 |
+| `GET /api/users/:id` | user | web-app | 中 |
+| `POST /api/activities` | activity | web-app | 中 |
+| `GET /api/activities` | activity | web-app | 中 |
+| `GET /api/activities/:id` | activity | web-app | 中 |
+| `POST /api/activities/:id/join` | activity | web-app | 中 |
+| `POST /api/activities/:id/leave` | activity | web-app | 中 |
+| `PUT /api/activities/:id` | activity | web-app | 中 |
+| `POST /api/activities/:id/cancel` | activity | web-app | 中 |
+| `GET /api/users/:id/activities` | activity | web-app | 中 |
+| `GET /api/coaches` | coaching | web-app | 中 |
+| `GET /api/coaches/:id` | coaching | web-app | 中 |
+| `PUT /api/coaches/me` | coaching | web-app | 中 |
+| `POST /api/group-classes` | coaching | web-app | 中 |
+| `GET /api/group-classes/:id` | coaching | web-app | 中 |
+| `PUT /api/group-classes/:id` | coaching | web-app | 中 |
+| `POST /api/group-classes/:id/cancel` | coaching | web-app | 中 |
+| `POST /api/group-classes/:id/enroll` | coaching | web-app | 中 |
+| `POST /api/group-classes/:id/cancel-enrollment` | coaching | web-app | 中 |
+| `POST /api/private-lessons/availability` | coaching | web-app | 中 |
+| `GET /api/coaches/:id/availability` | coaching | web-app | 中 |
+| `POST /api/private-lessons/book` | coaching | web-app | 中 |
+| `POST /api/private-lessons/:id/cancel` | coaching | web-app | 中 |
+| `GET /api/users/:id/enrollments` | coaching | web-app | 中 |
+| `GET /api/coaches/:id/private-lessons` | coaching | web-app | 中 |
+| `POST /api/match-records` | match-record | web-app | 中 |
+| `DELETE /api/match-records/:id` | match-record | web-app | 中 |
+| `GET /api/activities/:id/match-records` | match-record | web-app | 中 |
+| `GET /api/group-classes/:id/match-records` | match-record | web-app | 中 |
+| `GET /api/private-lessons/:id/match-records` | match-record | web-app | 中 |
+| `GET /api/users/:id/match-records` | match-record | web-app | 中 |
+| `GET /api/users/:id/match-stats` | match-record | web-app | 中 |
+| `GET /api/venues/search` | venue | web-app, admin | 高 |
+| `GET /api/venues/:id` | venue | web-app, admin | 高 |
+| `POST /api/admin/cities` | venue | admin | 中 |
+| `GET /api/admin/cities` | venue | admin | 中 |
+| `GET /api/admin/venues` | venue | admin | 中 |
+| `DELETE /api/admin/venues/:id` | venue | admin | 中 |
+| `POST /api/admin/venues/sync` | venue | admin | 中 |
+| `GET /api/notifications` | notification | web-app | 中 |
+| `GET /api/notifications/unread-count` | notification | web-app | 中 |
+| `PUT /api/notifications/:id/read` | notification | web-app | 中 |
+| `PUT /api/notifications/read-all` | notification | web-app | 中 |
+| `POST /api/reviews` | review | web-app | 中 |
+| `GET /api/coaches/:id/reviews` | review | web-app | 中 |
+| `GET /api/coaches/:id/rating` | review | web-app | 中 |
+| `POST /api/coaches/ratings` | review | web-app | 中 |
+
+### 10.2 内部 Service 接口（跨模块调用）
+
+| 接口 | 提供方 | 消费方 | 变更影响级别 |
+|------|--------|--------|------------|
+| `UserService.getUserById(id)` | user | activity, coaching, match-record, review | 高 |
+| `UserService.getUsersByIds(ids)` | user | activity, coaching, match-record | 高 |
+| `VenueService.getVenueById(id)` | venue | activity, coaching | 高 |
+| `NotificationService.create(notification)` | notification | activity, coaching, review | 高 |
+| `NotificationService.createBatch(notifications)` | notification | activity, coaching | 高 |
+| `ActivityService.getActivityById(id)` | activity | match-record | 中 |
+| `ActivityService.getParticipantIds(activityId)` | activity | match-record | 中 |
+| `CoachingService.getGroupClassById(id)` | coaching | match-record, review | 高 |
+| `CoachingService.getPrivateLessonById(id)` | coaching | match-record, review | 高 |
+| `CoachingService.getParticipantIds(classId, type)` | coaching | match-record, review | 高 |
+| `ReviewService.getCoachAverageRating(coachId)` | review | 仅内部（通过 HTTP 接口暴露） | 低 |
 
 ### 变更影响级别定义
 
@@ -683,11 +750,185 @@ Response:
 
 > 确保 PRD 中的每条业务规则和验收标准都已在模块设计的接口契约中落地。
 > 技术负责人 Review 时逐行核对：**"对应接口定义"不允许为空**。
-> 所有模块设计完成后汇总填写。
 
-| PRD 来源（模块 + 规则/验收标准） | 业务规则 / 验收标准原文 | 对应接口定义 | 备注 |
-|-------------------------------|----------------------|------------|------|
-| （所有模块设计完成后汇总填写） | | | |
+### 11.1 用户管理（FA）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FA 规则 1 | 注册方式为手机号+短信验证码，不设密码 | user.md: `POST /api/auth/send-code` + `POST /api/auth/login` | 登录注册合一 |
+| FA 规则 2 | 手机号格式校验：中国大陆手机号（11 位，1 开头） | user.md: `POST /api/auth/send-code` 业务规则，正则 `/^1\d{10}$/` | |
+| FA 规则 3 | 同一手机号不可重复注册 | user.md: `POST /api/auth/login` 业务规则，已存在手机号视为登录 | |
+| FA 规则 4 | 短信验证码为 6 位数字，有效期 5 分钟 | user.md: `POST /api/auth/send-code` 业务规则 + VerificationCode.expiresAt | |
+| FA 规则 5 | 同一手机号 60 秒内不可重复发送验证码 | user.md: `POST /api/auth/send-code` 错误码 AUTH_CODE_RATE_LIMITED | |
+| FA 规则 6 | 验证码输入错误超过 5 次后锁定 30 分钟 | user.md: `POST /api/auth/login` 业务规则 + PhoneLock 模型 + 错误码 AUTH_PHONE_LOCKED | |
+| FA 规则 7 | 登录方式同为手机号+短信验证码 | user.md: `POST /api/auth/login` | |
+| FA 规则 8 | 登录成功后保持登录态 7 天 | user.md: `POST /api/auth/login` 业务规则，JWT 有效期 7 天 | |
+| FA 规则 9 | 昵称不可为空，长度限制 2-20 个字符 | user.md: `PUT /api/users/me` 错误码 USER_INVALID_NICKNAME | |
+| FA 规则 10 | 注册时勾选教练角色后自动拥有教练功能权限 | user.md: `POST /api/auth/login` 请求体 isCoach 参数 | |
+| FA 规则 11 | 未在注册时勾选教练的用户，登录后可在设置中开启教练角色 | user.md: `PUT /api/users/me/coach-role` | |
+| FA 规则 12 | 一个账号同时具备普通用户和教练两种身份 | user.md: User.isCoach 字段，不需要切换账号 | |
+| FA 验收 1 | 输入手机号并获取验证码，输入正确验证码后注册成功 | user.md: `POST /api/auth/send-code` + `POST /api/auth/login` | |
+| FA 验收 2 | 60 秒内重复点击获取验证码提示 | user.md: 错误码 AUTH_CODE_RATE_LIMITED | |
+| FA 验收 3 | 验证码过期提示 | user.md: 错误码 AUTH_CODE_EXPIRED | |
+| FA 验收 4 | 验证码错误超过 5 次后提示 | user.md: 错误码 AUTH_PHONE_LOCKED | |
+| FA 验收 5 | 已注册手机号再次注册 | user.md: `POST /api/auth/login` 自动识别已存在用户进行登录 | PRD 写"提示已注册"，设计为登录注册合一（不区分） |
+| FA 验收 6 | 登录成功后 7 天内无需重新登录 | user.md: JWT 有效期 7 天 | |
+| FA 验收 7 | 注册时勾选我是教练后可发布课程 | user.md: `POST /api/auth/login` isCoach 参数 + coaching 模块教练权限校验 | |
+| FA 验收 8 | 非教练用户在设置中开启教练角色后立即获得发布课程能力 | user.md: `PUT /api/users/me/coach-role` | |
+| FA 验收 9 | 个人主页正确展示历史战绩汇总 | match-record.md: `GET /api/users/:id/match-stats` | 前端聚合展示 |
+
+### 11.2 约球（FB）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FB 规则 1 | 发起活动时必填：球馆、开始时间、限定人数（2-50） | activity.md: `POST /api/activities` 请求体 + 错误码 | 结束时间也必填（规则 6） |
+| FB 规则 2 | 球馆通过关键词自动匹配系统已有球馆 | venue.md: `GET /api/venues/search` | |
+| FB 规则 3 | 活动开始时间必须晚于当前时间 | activity.md: `POST /api/activities` 错误码 ACTIVITY_INVALID_TIME | |
+| FB 规则 4 | 活动状态：报名中→已满员→进行中→已结束/已取消 | activity.md: 活动状态枚举（open/full/in_progress/completed/cancelled） | |
+| FB 规则 5 | 人数达到上限后状态自动变为已满员，退出后恢复 | activity.md: `POST /api/activities/:id/join` + `POST /api/activities/:id/leave` 业务规则 | |
+| FB 规则 6 | 必须设定结束时间，结束时间晚于开始时间 | activity.md: `POST /api/activities` 请求体 endTime 必填 + 错误码 ACTIVITY_INVALID_TIME | |
+| FB 规则 7 | 开始时间到达后自动变为进行中，结束后变为已结束 | activity.md: 6.2 定时任务 -- 活动状态自动流转 | |
+| FB 规则 8 | 修改活动后通知所有参与者 | activity.md: `PUT /api/activities/:id` 业务规则（调用 NotificationService.createBatch） | |
+| FB 规则 9 | 取消活动后通知所有参与者 | activity.md: `POST /api/activities/:id/cancel` 业务规则 | |
+| FB 规则 10 | 已取消的活动不可恢复 | activity.md: cancelled 状态为终态 | |
+| FB 规则 11 | 发起人自动算作第一个参与者 | activity.md: `POST /api/activities` 业务规则 | |
+| FB 规则 12 | 已开始或已结束的活动不可修改、不可加入、不可退出 | activity.md: 各接口错误码 ACTIVITY_NOT_MODIFIABLE / ACTIVITY_NOT_JOINABLE / ACTIVITY_NOT_LEAVABLE | |
+| FB 规则 13 | 发起人不可退出自己发起的活动 | activity.md: `POST /api/activities/:id/leave` 错误码 ACTIVITY_CREATOR_CANNOT_LEAVE | |
+| FB 规则 14 | 参与者退出活动后通知发起人 | activity.md: `POST /api/activities/:id/leave` 业务规则 | |
+| FB 规则 15 | 参与者在活动开始前均可退出活动 | activity.md: `POST /api/activities/:id/leave` 业务规则（状态为 open 或 full） | |
+| FB 规则 16 | 活动列表按距离排序依赖用户定位授权 | activity.md: `GET /api/activities` sortBy=distance 需 latitude + longitude | 前端处理定位授权 |
+| FB 规则 17 | 拒绝定位时按距离排序不可用 | activity.md: `GET /api/activities` 未提供经纬度时 sortBy=distance 回退到 time | 前端控制 |
+| FB 规则 18 | 筛选交互定义 | activity.md: `GET /api/activities` Query Params（dateFilter/maxDistance/hasSlot） | |
+| FB 规则 19 | 距离计算基准为用户实时定位坐标 | activity.md: `GET /api/activities` latitude + longitude 参数 | 前端传入实时坐标 |
+| FB 验收 1-14 | 所有验收标准 | 上述接口定义覆盖 | 每条验收标准均可追溯到对应接口 |
+
+### 11.3 教练管理（FC）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FC 规则 1 | 只有教练角色的用户可以发布团课和设置私教时间 | coaching.md: 各教练操作接口错误码 COACHING_COACH_ROLE_REQUIRED | |
+| FC 规则 2 | 团课必填项和限制 | coaching.md: `POST /api/group-classes` 请求体 + 错误码 | |
+| FC 规则 3 | 团课时间约束 | coaching.md: `POST /api/group-classes` 错误码 COACHING_INVALID_TIME | |
+| FC 规则 4 | 费用说明为选填文本 | coaching.md: `POST /api/group-classes` feeDescription 选填 | |
+| FC 规则 5 | 私教时间段最小粒度为 1 小时 | coaching.md: `POST /api/private-lessons/availability` 错误码 COACHING_SLOT_TOO_SHORT | |
+| FC 规则 6 | 同一时间段不可重复设置 | coaching.md: `POST /api/private-lessons/availability` 错误码 COACHING_SLOT_OVERLAP | |
+| FC 规则 7 | 教练设置私教课时可选择上课球馆（可多选或不选） | coaching.md: `POST /api/private-lessons/availability` slots[].venueIds | |
+| FC 规则 8 | 费用说明 | coaching.md: `POST /api/private-lessons/availability` slots[].feeDescription | |
+| FC 规则 9 | 学员预约私教课时须从可选球馆中选择 | coaching.md: `POST /api/private-lessons/book` 错误码 COACHING_VENUE_REQUIRED / COACHING_INVALID_VENUE_CHOICE | |
+| FC 规则 10 | 团课状态流转 | coaching.md: 团课状态枚举 + 6.1 团课状态机 | |
+| FC 规则 11 | 团课开始/结束时间到达后自动变更状态 | coaching.md: 6.3 定时任务 -- 课程状态自动流转 | |
+| FC 规则 12 | 团课满员/取消报名后状态变化 | coaching.md: `POST /api/group-classes/:id/enroll` + `POST /api/group-classes/:id/cancel-enrollment` 业务规则 | |
+| FC 规则 13 | 私教课状态流转 | coaching.md: 私教课状态枚举 + 6.2 私教课状态机 | |
+| FC 规则 14 | 私教课开始/结束时间到达后自动变更状态 | coaching.md: 6.3 定时任务 | |
+| FC 规则 15 | 仅已结束的课程可录入战绩和评价 | match-record.md: 录入战绩校验 status===completed; review.md: 提交评价校验 status===completed | |
+| FC 规则 16 | 教练可修改团课信息，修改后通知学员 | coaching.md: `PUT /api/group-classes/:id` 业务规则 | |
+| FC 规则 17 | 已开始或已结束的团课不可修改 | coaching.md: `PUT /api/group-classes/:id` 错误码 COACHING_CLASS_NOT_MODIFIABLE | |
+| FC 规则 18 | 教练取消团课时通知学员 | coaching.md: `POST /api/group-classes/:id/cancel` 业务规则 | |
+| FC 规则 19 | 教练取消私教预约时通知学员 | coaching.md: `POST /api/private-lessons/:id/cancel` 业务规则 | |
+| FC 规则 20 | 一期不设取消时间限制 | coaching.md: 取消接口业务规则明确说明 | |
+| FC 规则 21 | 教练评分 = 所有评价的平均分；无评价时显示暂无评价 | review.md: `GET /api/coaches/:id/rating` | 前端聚合展示 |
+| FC 规则 22 | 历史学员数 = 不重复参与人数 | coaching.md: `GET /api/coaches` + `GET /api/coaches/:id` studentCount 实时计算 | |
+| FC 规则 23 | 教练列表默认按评分排序，支持按擅长方向筛选 | coaching.md: `GET /api/coaches` specialty 筛选 + review.md: `POST /api/coaches/ratings` 评分数据 | 前端客户端排序 |
+| FC 规则 24 | 学员报名团课：未满员且未开始时可报名 | coaching.md: `POST /api/group-classes/:id/enroll` 业务规则 | |
+| FC 规则 25 | 团课满员后不可报名 | coaching.md: `POST /api/group-classes/:id/enroll` 错误码 COACHING_CLASS_FULL | |
+| FC 规则 26 | 学员预约私教 | coaching.md: `POST /api/private-lessons/book` 业务规则 | |
+| FC 规则 27 | 学员取消团课报名 | coaching.md: `POST /api/group-classes/:id/cancel-enrollment` 业务规则 | |
+| FC 规则 28 | 学员取消私教预约 | coaching.md: `POST /api/private-lessons/:id/cancel` 业务规则 | |
+| FC 规则 29 | 已开始或已结束的课程不可报名、不可取消 | coaching.md: 各接口错误码 COACHING_CLASS_NOT_ENROLLABLE / COACHING_CLASS_NOT_CANCELLABLE_ENROLLMENT / COACHING_LESSON_NOT_CANCELLABLE | |
+| FC 验收 1-17 | 所有验收标准 | 上述接口定义覆盖 | |
+
+### 11.4 战绩记录（FD）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FD 规则 1 | 战绩必须关联到某次活动/团课/私教课 | match-record.md: `POST /api/match-records` sourceType + sourceId 必填 | |
+| FD 规则 2 | 活动的发起人和所有参与者均可录入 | match-record.md: `POST /api/match-records` 参与者校验流程 | |
+| FD 规则 3 | 录入时须选择比赛类型 | match-record.md: `POST /api/match-records` matchType 必填 | |
+| FD 规则 4 | 单打各 1 人，双打各 2 人 | match-record.md: `POST /api/match-records` 错误码 MATCH_RECORD_INVALID_PLAYERS | |
+| FD 规则 5 | 选手选择：平台用户从参与者中选择；非平台用户输入昵称 | match-record.md: `POST /api/match-records` players.sideA/sideB 的 userId/guestName | |
+| FD 规则 6 | 非平台用户存储在临时用户表中 | match-record.md: GuestPlayer 模型 | |
+| FD 规则 7 | 每条战绩记录包含的字段 | match-record.md: MatchRecord + MatchPlayer + MatchGame 模型 | |
+| FD 规则 8 | 支持多局比分录入 | match-record.md: `POST /api/match-records` games 数组 | |
+| FD 规则 9 | 单局比分为 0-30 之间的整数，不可同时为 0 | match-record.md: `POST /api/match-records` 错误码 MATCH_RECORD_INVALID_SCORE | |
+| FD 规则 10 | 一期不需要对方确认 | match-record.md: 8. 已知限制中明确说明 | |
+| FD 规则 11 | 胜负判定：赢得多数局的一方为胜 | match-record.md: 6.1 胜负判定算法 | |
+| FD 规则 12 | 偶数局双方胜局数相同记为平局 | match-record.md: 6.1 胜负判定算法 DRAW 逻辑 | |
+| FD 规则 13 | 双打中获胜组每位平台用户各记 1 胜场 | match-record.md: 6.2 个人战绩结果判定 + 6.3 战绩统计计算 | |
+| FD 规则 14（第一个） | 战绩汇总仅统计平台用户 | match-record.md: `GET /api/users/:id/match-stats` 业务规则 | |
+| FD 规则 14（第二个） | 录入者可删除自己录入的战绩 | match-record.md: `DELETE /api/match-records/:id` 错误码 MATCH_RECORD_NOT_RECORDER | |
+| FD 规则 15 | 战绩的重复或冲突由用户自行处理 | match-record.md: 8. 已知限制中明确说明 | |
+| FD 验收 1-13 | 所有验收标准 | 上述接口定义覆盖 | |
+
+### 11.5 球馆管理（FE）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FE 规则 1 | 管理员添加城市后自动调用地图服务查询球馆 | venue.md: `POST /api/admin/cities` 业务规则 + 6.1 城市添加流程 | |
+| FE 规则 2 | 球馆数据包含名称、地址、经纬度 | venue.md: Venue 模型字段定义 | |
+| FE 规则 3 | 每周定时更新 | venue.md: 6.2 定时球馆数据更新 | |
+| FE 规则 4 | 用户输入关键词按名称模糊匹配+距离排序 | venue.md: `GET /api/venues/search` 业务规则 | |
+| FE 规则 5 | 球馆数据仅管理员可维护 | venue.md: 管理员接口使用 admin-auth 中间件 | |
+| FE 验收 1-3 | 所有验收标准 | 上述接口定义覆盖 | |
+
+### 11.6 通知（FF）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FF 规则 1 | 12 种触发事件 | notification.md: 通知类型枚举 12 个值，各模块设计文件中的通知发送逻辑 | |
+| FF 规则 2 | 每种通知的文案模板和跳转目标 | notification.md: 6.2 通知文案生成 + targetType/targetId 定义 | 文案由调用方生成 |
+| FF 规则 3 | 一期仅站内通知 | notification.md: 1. 模块概述 | |
+| FF 规则 4 | 通知分为已读和未读 | notification.md: Notification.isRead 字段 | |
+| FF 规则 5 | 标记单条或一键全部已读 | notification.md: `PUT /api/notifications/:id/read` + `PUT /api/notifications/read-all` | |
+| FF 规则 6 | 按时间倒序平铺展示 | notification.md: `GET /api/notifications` 按 createdAt 倒序 | |
+| FF 规则 7 | 通知保留 90 天 | notification.md: 6.3 通知过期自动清理 | |
+| FF 验收 1 | 所有事件触发时通知送达 | 各模块设计文件中的通知发送逻辑 + notification.md 通知类型枚举 | |
+| FF 验收 2 | 点击通知跳转 | notification.md: targetType + targetId + web-app-notification.md 页面跳转逻辑 | |
+| FF 验收 3 | 未读通知角标 | notification.md: `GET /api/notifications/unread-count` | |
+| FF 验收 4 | 通知列表展示 | notification.md: `GET /api/notifications` | |
+
+### 11.7 评价评分（FG）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FG 规则 1 | 只有参加过教练课程的学员可以评价 | review.md: `POST /api/reviews` 调用 CoachingService.getParticipantIds 校验 | |
+| FG 规则 2 | 评分范围 1-5 分整数 | review.md: `POST /api/reviews` 错误码 REVIEW_INVALID_RATING | |
+| FG 规则 3 | 文字评价最长 500 字符 | review.md: `POST /api/reviews` 错误码 REVIEW_INVALID_COMMENT | |
+| FG 规则 4 | 同一学员对同一次课程只能评价一次 | review.md: `POST /api/reviews` 错误码 REVIEW_DUPLICATE + 唯一约束 | |
+| FG 规则 5 | 教练评分 = 算术平均值，保留一位小数 | review.md: `GET /api/coaches/:id/rating` + 6.2 教练平均评分计算 | |
+| FG 规则 6 | 评价列表按时间倒序 | review.md: `GET /api/coaches/:id/reviews` 按 createdAt 倒序 | |
+| FG 验收 1-4 | 所有验收标准 | 上述接口定义覆盖 | |
+
+### 11.8 管理后台（FH）
+
+| PRD 来源 | 业务规则 / 验收标准 | 对应接口定义 | 备注 |
+|---------|-------------------|------------|------|
+| FH 规则 1 | 管理员账号由系统预设 | architecture.md: 决策 4 管理员认证，admin-auth 中间件校验预设手机号列表 | |
+| FH 规则 2 | 管理后台为独立入口 | architecture.md: admin 前端模块独立部署 | |
+| FH 规则 3 | 添加城市后自动获取球馆 | venue.md: `POST /api/admin/cities` 业务规则 | |
+| FH 规则 4 | 管理员可手动移除球馆，不影响历史数据 | venue.md: `DELETE /api/admin/venues/:id` 业务规则（ON DELETE SET NULL） | |
+| FH 验收 1 | 管理员可通过预设账号登录 | user.md: `POST /api/auth/login` + admin-auth 中间件 | |
+| FH 验收 2 | 添加城市后系统自动获取球馆 | venue.md: `POST /api/admin/cities` | |
+| FH 验收 3 | 管理员可手动移除球馆 | venue.md: `DELETE /api/admin/venues/:id` | |
+| FH 验收 4 | 管理员可手动触发球馆数据更新 | venue.md: `POST /api/admin/venues/sync` | |
+
+### 11.9 跨模块业务流验收标准
+
+| PRD 来源 | 验收标准 | 对应接口定义 | 备注 |
+|---------|---------|------------|------|
+| 4.1 验收 1 | 约球全链路可走通 | activity 全部接口 + match-record `POST /api/match-records` | |
+| 4.1 验收 2 | 活动取消后通知送达 | activity.md: `POST /api/activities/:id/cancel` + notification 接口 | |
+| 4.2 验收 1 | 团课全链路可走通 | coaching 团课接口 + review `POST /api/reviews` + match-record `POST /api/match-records` | |
+| 4.3 验收 1 | 私教全链路可走通 | coaching 私教接口 + review `POST /api/reviews` + match-record `POST /api/match-records` | |
+
+### 11.10 非功能需求
+
+| PRD 来源 | 需求 | 对应设计 | 备注 |
+|---------|------|---------|------|
+| 6. 性能 | 页面首次加载 <= 3 秒 | web-app.md: Vite 构建优化 + 代码分割 | |
+| 6. 性能 | 活动列表接口 <= 500ms | activity.md: 索引设计 + SQL 优化 | |
+| 6. 安全 | 接口身份认证和权限校验 | architecture.md: 9. 接口通用约定 认证方式 + infra auth.ts / admin-auth.ts | |
+| 6. 安全 | 短信验证码频率限制防刷 | user.md: AUTH_CODE_RATE_LIMITED + AUTH_PHONE_LOCKED | |
+| 6. 兼容性 | 移动端浏览器 + 桌面端 | web-app.md: 响应式布局约定 | |
 
 ## 12. 部署概要
 
