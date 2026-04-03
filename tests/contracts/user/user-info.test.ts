@@ -566,6 +566,39 @@ describe('PUT /api/users/me/coach-role — UserService.updateCoachRole', () => {
       statusCode: 400,
     });
   });
+
+  it('should reject when isCoach field is missing (undefined)', async () => {
+    // 业务规则: isCoach 字段缺失时返回 400 错误
+    // 来源: user.md §4 开启教练角色 - 错误码 USER_INVALID_COACH_ROLE
+    await expect(
+      service.updateCoachRole(userId, undefined as unknown as boolean),
+    ).rejects.toMatchObject({
+      code: 'USER_INVALID_COACH_ROLE',
+      statusCode: 400,
+    });
+  });
+
+  it('should reject when isCoach is a string instead of boolean', async () => {
+    // 业务规则: isCoach 为非布尔值时返回 400 错误
+    // 来源: user.md §4 开启教练角色 - 错误码 USER_INVALID_COACH_ROLE
+    await expect(
+      service.updateCoachRole(userId, 'true' as unknown as boolean),
+    ).rejects.toMatchObject({
+      code: 'USER_INVALID_COACH_ROLE',
+      statusCode: 400,
+    });
+  });
+
+  it('should reject when isCoach is a number instead of boolean', async () => {
+    // 业务规则: isCoach 为非布尔值时返回 400 错误
+    // 来源: user.md §4 开启教练角色 - 错误码 USER_INVALID_COACH_ROLE
+    await expect(
+      service.updateCoachRole(userId, 1 as unknown as boolean),
+    ).rejects.toMatchObject({
+      code: 'USER_INVALID_COACH_ROLE',
+      statusCode: 400,
+    });
+  });
 });
 
 // ===========================================================================
