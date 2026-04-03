@@ -26,9 +26,10 @@
 | filterStatus | `'all' \| 'unread' \| 'read'` | 用户切换 | 筛选条件：全部 / 未读 / 已读，默认 `'all'` |
 | notifications | `Notification[]` | API 响应 | 当前页的通知列表数据 |
 | total | number | API 响应 | 符合筛选条件的通知总数 |
-| page | number | 分页控制 | 当前页码，默认 1 |
 | isLoading | boolean | API 请求状态 | 通知列表加载中 |
 | isMarkingAllRead | boolean | API 请求状态 | "全部已读"操作进行中 |
+
+> 注：分页状态（当前页码、是否有下一页等）由 useInfiniteQuery 内部管理，无需在页面状态中维护。
 
 **调用的后端接口**:
 
@@ -56,14 +57,13 @@
   4. 重新渲染通知列表
 
 点击通知项:
-  1. 如果该通知 isRead = false → 调用 PUT /api/notifications/:id/read
-  2. 标记已读成功后 → invalidate 未读计数 query（刷新 TopBar 角标）
-  3. 根据 targetType 跳转到对应目标页面:
+  1. 如果该通知 isRead = false → 使用乐观更新立即标记为已读（参见 6.6 节），不阻塞页面跳转
+  2. 根据 targetType 跳转到对应目标页面:
      - activity → /activities/:targetId
      - group-class → /group-classes/:targetId
-     - private-lesson → /coaching/lessons（前端自行处理私教预约管理页）
+     - private-lesson → /my-courses（教练视角：PRIVATE_LESSON_BOOKED、PRIVATE_LESSON_CANCELLED_BY_STUDENT）
      - coach-profile → /coaches/:targetId
-  4. 如果已是已读状态 → 直接跳转，不调用标记已读接口
+  3. 如果已是已读状态 → 直接跳转，不调用标记已读接口
 
 全部标记已读:
   1. 用户点击"全部已读"按钮
@@ -109,7 +109,7 @@ NotificationListPage
 | useNotifications | 封装通知列表查询（useInfiniteQuery），支持 isRead 筛选参数；返回通知列表、加载状态、分页信息、fetchNextPage 方法 | NotificationListPage |
 | useMarkAsRead | 封装标记单条通知已读（useMutation），成功后 invalidate 通知列表和未读计数的 query key | NotificationListPage |
 | useMarkAllAsRead | 封装全部标记已读（useMutation），成功后 invalidate 通知列表和未读计数的 query key | NotificationListPage |
-| useNotificationNavigate | 封装通知跳转逻辑，根据 targetType 和 targetId 计算目标路由并执行 navigate；处理 private-lesson 类型的特殊跳转路由 | NotificationListPage |
+| useNotificationNavigate | 封装通知跳转逻辑，根据 targetType 和 targetId 计算目标路由并执行 navigate；private-lesson 类型固定跳转 `/my-courses`，不使用 targetId | NotificationListPage |
 
 ## 5. 消费的后端接口汇总
 
@@ -130,13 +130,12 @@ NotificationListPage
 |-----------|-------------|------|
 | activity | `/activities/:targetId` | 活动详情页 |
 | group-class | `/group-classes/:targetId` | 团课详情页 |
-| private-lesson | `/coaching/lessons` | 私教预约管理页（教练视角查看私教预约列表） |
+| private-lesson | `/my-courses` | 教练的课程管理页（教练视角） |
 | coach-profile | `/coaches/:targetId` | 教练主页（查看评价列表） |
 
 说明：
-- `private-lesson` 类型的跳转不使用 targetId 作为路由参数，因为前端私教预约管理页是列表页（`/coaching/lessons`，对应 web-app 路由表中的 MyCourseManagementPage 或 MyEnrollmentListPage），不是单条预约的详情页。教练收到的私教相关通知（如 PRIVATE_LESSON_BOOKED）跳转到我的课程管理页；学员收到的私教取消通知（如 PRIVATE_LESSON_CANCELLED_BY_COACH）跳转到我的课程报名页。由于后端统一使用 `private-lesson` targetType，前端在 useNotificationNavigate 中根据通知的 type 字段进一步区分跳转目标：
-  - 通知 type 为 `PRIVATE_LESSON_BOOKED` 或 `PRIVATE_LESSON_CANCELLED_BY_STUDENT` → 跳转 `/my-courses`（教练视角）
-  - 通知 type 为 `PRIVATE_LESSON_CANCELLED_BY_COACH` → 跳转 `/my-enrollments`（学员视角）
+- `private-lesson` targetType 仅用于教练视角的通知（PRIVATE_LESSON_BOOKED、PRIVATE_LESSON_CANCELLED_BY_STUDENT），跳转到教练的课程管理页 `/my-courses`，不使用 targetId 作为路由参数。
+- 学员收到的 PRIVATE_LESSON_CANCELLED_BY_COACH 通知，后端设定的 targetType 为 `coach-profile`（targetId 为教练用户 ID），自动走 `coach-profile → /coaches/:targetId` 的跳转逻辑，无需前端额外处理。
 
 ### 6.2 未读状态视觉区分
 
@@ -214,3 +213,10 @@ isRead 参数映射:
   1. 不调用标记已读接口
   2. 直接根据 targetType 执行页面跳转
 ```
+
+### 6.7 错误码到用户提示映射
+
+| error.code | 用户提示 |
+|-----------|---------|
+| NOTIFICATION_NOT_FOUND | 通知不存在 |
+| NOTIFICATION_FORBIDDEN | 无权操作此通知 |

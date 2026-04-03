@@ -488,9 +488,9 @@ interface MatchStats {
 // ===== 通知相关 =====
 
 type NotificationTargetType =
-  | 'activity-detail'
-  | 'group-class-detail'
-  | 'private-lesson-detail'
+  | 'activity'
+  | 'group-class'
+  | 'private-lesson'
   | 'coach-profile';
 
 interface Notification {
