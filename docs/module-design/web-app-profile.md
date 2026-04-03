@@ -28,6 +28,7 @@
 | userInfo | `UserPublicInfo \| null` | API（GET /api/users/:id） | 用户公开信息 |
 | matchStats | `MatchStats \| null` | API（GET /api/users/:id/match-stats） | 战绩汇总统计 |
 | isOwnProfile | boolean | 计算（比较 :id 与当前用户 ID） | 是否为当前用户自己的主页 |
+| isCoach | boolean | useCurrentUser（currentUser.isCoach） | 当前登录用户是否为教练角色（仅 isOwnProfile 时用于区分课程相关快捷入口） |
 | isLoading | boolean | API 请求状态 | 数据加载中 |
 | error | string \| null | API 响应 | 加载错误信息 |
 
@@ -53,9 +54,11 @@ isOwnProfile = true（查看自己的主页）时:
     - 用户信息区域（头像、昵称）
     - 战绩汇总卡片（总场次 | 胜场 | 胜率）
     - 快捷入口列表:
-      - "我发起的活动" → 跳转 /my-activities（activity feature）
-      - "我参加的活动" → 跳转 /my-activities（activity feature，默认 Tab 切换到参加的）
-      - "我的课程" → 跳转 /my-enrollments（coaching feature）
+      - "我发起的活动" → 跳转 /my-activities?role=initiated（activity feature）
+      - "我参加的活动" → 跳转 /my-activities?role=participated（activity feature）
+      - 课程相关入口（根据用户角色区分）:
+        - 普通用户（isCoach = false）: "我的课程" → 跳转 /my-enrollments（coaching feature）
+        - 教练用户（isCoach = true）: "我的报名" → 跳转 /my-enrollments（coaching feature） + "课程管理" → 跳转 /my-courses（coaching feature）
       - "战绩记录" → 跳转 /users/:id/match-records（match-record feature）
       - "个人资料" → 跳转 /profile/edit
       - "设置" → 跳转 /settings
@@ -166,7 +169,7 @@ ProfileEditPage
 
 | 状态 | 类型 | 来源 | 说明 |
 |------|------|------|------|
-| coachProfile | `{ bio: string \| null; specialties: CoachSpecialty[] } \| null` | API（GET /api/coaches/:id） | 教练资料（用于回填表单；首次编辑时可能不存在 CoachProfile，此时字段为空） |
+| coachProfile | `{ bio: string \| null; specialties: CoachSpecialty[] } \| null` | API（GET /api/coaches/:id） | 教练资料（用于回填表单；从 `GET /api/coaches/:id` 响应中仅提取 `bio` 和 `specialties` 字段用于表单初始化；首次编辑时可能不存在 CoachProfile，此时字段为空） |
 | bio | string | 用户输入 | 教练简介输入值 |
 | specialties | `CoachSpecialty[]` | 用户选择 | 已选择的擅长方向标签列表 |
 | submitting | boolean | API 请求状态 | 保存请求进行中 |
@@ -177,7 +180,7 @@ ProfileEditPage
 
 | 接口 | 触发时机 | 成功处理 | 错误处理 |
 |------|---------|---------|---------|
-| `GET /api/coaches/:id`（:id 为当前用户 ID） | 页面加载 | 回填教练简介和擅长方向标签 | COACHING_NOT_A_COACH: 表示无教练资料，使用空值初始化表单（首次编辑场景）；其他: 显示 PageError 组件 |
+| `GET /api/coaches/:id`（:id 为当前用户 ID） | 页面加载 | 回填教练简介和擅长方向标签 | COACHING_NOT_A_COACH（404）: 表示用户已是教练角色（isCoach=true）但尚未创建 CoachProfile 记录（惰性创建机制，见 coaching.md 6.9 节），使用空值初始化表单（首次编辑场景）；注意：此处不是指用户不是教练——CoachGuard 已提前过滤非教练用户；其他: 显示 PageError 组件 |
 | `PUT /api/coaches/me` | 用户点击"保存"按钮 | message.success 提示"保存成功"，返回上一页 | 根据错误码显示对应字段的错误提示（见下方错误处理表） |
 
 **教练资料更新错误处理**:

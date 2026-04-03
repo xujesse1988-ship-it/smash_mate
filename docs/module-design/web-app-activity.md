@@ -356,7 +356,7 @@ ActivityDetailPage
 |------|------|------|------|
 | activities | Activity[] | API（GET /api/users/:id/activities） | 活动列表数据 |
 | total | number | API | 活动总数 |
-| role | `'creator' \| 'participant' \| null` | 用户选择 | 角色筛选（发起的/参加的/全部） |
+| role | `'creator' \| 'participant' \| null` | URL 查询参数 / 用户选择 | 角色筛选（发起的/参加的/全部）；支持通过 URL 查询参数 `role` 设置初始选中状态（可选值：all/initiated/participated，分别映射为 null/creator/participant），默认为 all |
 | status | ActivityStatus \| null | 用户选择 | 状态筛选 |
 | isLoading | boolean | API 请求状态 | 列表加载中 |
 
@@ -371,7 +371,7 @@ ActivityDetailPage
 **交互流程**:
 
 ```
-用户进入 /my-activities → 使用当前用户 ID 调用 GET /api/users/{me}/activities → 渲染列表
+用户进入 /my-activities → 读取 URL 查询参数 role（可选值：all/initiated/participated）设置 RoleFilterTabs 初始选中状态（默认 all）→ 使用当前用户 ID 调用 GET /api/users/{me}/activities → 渲染列表
 
 角色筛选:
   Tab 切换（全部/我发起的/我参加的）→ 设置 role → useInfiniteQuery 重置，从第一页重新加载
