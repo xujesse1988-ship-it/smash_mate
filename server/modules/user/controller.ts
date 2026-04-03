@@ -54,5 +54,3 @@ export function createUserController(): Router {
 
   return router;
 }
-
-export { UserService, UserRepository };

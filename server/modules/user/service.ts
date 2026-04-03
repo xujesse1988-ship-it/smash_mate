@@ -103,8 +103,8 @@ export class UserService {
       throw new AppError(429, 'AUTH_PHONE_LOCKED', '该手机号已被锁定，请稍后再试');
     }
 
-    // 4. Verify code
-    const latestCode = await this.repo.findLatestVerificationCode(phone);
+    // 4. Verify code (only unused codes are valid for login)
+    const latestCode = await this.repo.findLatestVerificationCode(phone, true);
 
     // No unused verification code found
     if (!latestCode) {

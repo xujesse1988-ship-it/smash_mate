@@ -30,11 +30,11 @@ export class UserRepository {
     return prisma.verificationCode.create({ data });
   }
 
-  async findLatestVerificationCode(phone: string) {
+  async findLatestVerificationCode(phone: string, unusedOnly: boolean = false) {
     return prisma.verificationCode.findFirst({
       where: {
         phone,
-        used: false,
+        ...(unusedOnly ? { used: false } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -48,9 +48,11 @@ export class UserRepository {
   }
 
   async findOrCreatePhoneLock(phone: string) {
-    const existing = await prisma.phoneLock.findUnique({ where: { phone } });
-    if (existing) return existing;
-    return prisma.phoneLock.create({ data: { phone } });
+    return prisma.phoneLock.upsert({
+      where: { phone },
+      update: {},
+      create: { phone },
+    });
   }
 
   async updatePhoneLock(id: string, data: { failCount: number; lockedUntil: Date | null }) {
