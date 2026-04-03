@@ -23,7 +23,7 @@ feature:
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
 | web-app/coaching | 前端 | done | | | | | |
-| web-app/match-record | 前端 | review | | | | | |
+| web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | | | | | | |
 | web-app/notification | 前端 | | | | | | |
 | admin | 前端 | | | | | | |
@@ -50,3 +50,4 @@ web-app 前端整体设计 review 通过（2026-04-02）。
 web-app/auth feature 设计 review 通过（2026-04-02）。
 web-app/activity feature 设计 review 通过（2026-04-02）。
 web-app/coaching feature 设计 review 通过（2026-04-03）。
+web-app/match-record feature 设计 review 通过（2026-04-03）。
