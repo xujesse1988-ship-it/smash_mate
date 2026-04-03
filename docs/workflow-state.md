@@ -26,7 +26,7 @@ feature:
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
 | web-app/notification | 前端 | done | | | | | |
-| admin | 前端 | review | | | | | |
+| admin | 前端 | done | | | | | |
 
 > **填写规则**：
 > - **infra**：只跟踪"实现"列，其余标 `N/A`（infra 设计在 architecture.md 中，无契约测试、无独立模块 Review、无 L2 集成测试）
@@ -53,3 +53,4 @@ web-app/coaching feature 设计 review 通过（2026-04-03）。
 web-app/match-record feature 设计 review 通过（2026-04-03）。
 web-app/profile feature 设计 review 通过（2026-04-03）。
 web-app/notification feature 设计 review 通过（2026-04-03）。全部 web-app feature 设计完成。
+admin 模块设计 review 通过（2026-04-03）。全部模块设计完成，进入汇总检查。
