@@ -74,7 +74,7 @@ web/                           # 前端 SPA
 │   （每个 feature 内部：pages/ / components/ / hooks/ / api/）
 ├── shared/                    # 共享组件、hooks、工具函数、类型
 ├── stores/                    # 全局状态管理（Zustand）
-├── routes.ts
+├── routes.tsx
 └── main.tsx
 
 admin/                         # 管理后台
@@ -83,7 +83,7 @@ admin/                         # 管理后台
 │   └── venue-management/      # 城市管理、球馆管理
 ├── shared/
 ├── stores/
-├── routes.ts
+├── routes.tsx
 └── main.tsx
 
 tests/

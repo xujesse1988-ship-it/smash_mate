@@ -428,7 +428,7 @@ web/                           # 前端 SPA
 │       └── api/
 ├── shared/                    # 共享组件、hooks、工具函数、类型
 ├── stores/                    # 全局状态管理（Zustand）
-├── routes.ts                  # 统一路由
+├── routes.tsx                  # 统一路由
 └── main.tsx
 
 admin/                         # 管理后台
@@ -442,7 +442,7 @@ admin/                         # 管理后台
 │       └── api/
 ├── shared/
 ├── stores/
-├── routes.ts
+├── routes.tsx
 └── main.tsx
 
 tests/
