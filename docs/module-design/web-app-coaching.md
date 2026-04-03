@@ -45,7 +45,7 @@
 ```
 用户进入 /coaches → 并行加载教练列表（GET /api/coaches）
   → 教练列表返回后 → 提取所有 coachId → 批量查询评分（POST /api/coaches/ratings）
-  → 两个请求均完成 → 按 coachId 匹配合并 averageRating 和 reviewCount
+  → 两个请求均完成 → 按 coachId 匹配合并 averageRating 和 totalCount
   → 按评分降序排列（null 排最后）→ 渲染教练卡片列表
 
 筛选操作:
@@ -488,7 +488,7 @@ PrivateLessonBookingPage
   → 前端校验 → 提交 POST /api/private-lessons/availability → 成功 → 刷新时间段列表
 
 == 私教预约管理 Tab ==
-切换到此 Tab → 加载教练的私教课列表（通过 GET /api/coaches/:id 返回的数据中已含概览，或使用 GET /api/users/:id/enrollments?type=private-lesson 获取详细列表）
+切换到此 Tab → 加载教练的私教课列表（GET /api/users/:id/enrollments?type=private-lesson，id 为当前用户）
 → 渲染私教预约列表（学员昵称、时间、球馆、状态）
 
 取消私教预约:
@@ -559,7 +559,7 @@ MyCourseManagementPage（CoachGuard 包裹）
 **交互流程**:
 
 ```
-用户进入 /my-enrollments → 加载课程报名列表（GET /api/users/me/enrollments）→ 渲染列表
+用户进入 /my-enrollments → 加载课程报名列表（GET /api/users/:id/enrollments，使用当前用户 ID 替换 :id）→ 渲染列表
 
 筛选操作:
   类型筛选 → 选择"全部/团课/私教" → 重新加载列表（传入 type 参数）
@@ -681,7 +681,7 @@ MyEnrollmentListPage
 1. 调用 GET /api/coaches 获取教练列表（不含评分数据）
 2. 从返回的教练列表中提取所有 userId 组成 coachIds 数组
 3. 调用 POST /api/coaches/ratings { coachIds } 批量获取评分
-4. 按 coachId 匹配，将 averageRating 和 reviewCount 合并到对应的 CoachListItem
+4. 按 coachId 匹配，将 averageRating 和 totalCount 合并到对应的 CoachListItem
 5. 合并后按 averageRating 降序排列（null 值排最后，即无评价的教练排最后）
 
 分页处理:

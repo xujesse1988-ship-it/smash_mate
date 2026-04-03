@@ -291,7 +291,7 @@ interface CoachListItem {
   specialties: CoachSpecialty[];
   studentCount: number;
   averageRating: number | null;   // 前端从 review 接口聚合
-  reviewCount: number;            // 前端从 review 接口聚合
+  totalCount: number;             // 前端从 review 接口聚合
 }
 
 interface CoachProfile {
@@ -323,12 +323,18 @@ interface GroupClass {
   createdAt: string;
 }
 
+// 可用时间段中球馆信息（后端 GET /api/coaches/:id/availability 返回 id, name, address）
+interface SlotVenue {
+  id: string;
+  name: string;
+  address: string;
+}
+
 interface PrivateLessonSlot {
   id: string;
-  coachId: string;
   startTime: string;
   endTime: string;
-  venues: VenueBrief[];       // 可选球馆列表
+  venues: SlotVenue[];        // 可选球馆列表
   feeDescription: string | null;
   isBooked: boolean;
 }
@@ -342,6 +348,54 @@ interface PrivateLesson {
   endTime: string;
   status: PrivateLessonStatus;
   createdAt: string;
+}
+
+// 团课详情（GET /api/group-classes/:id 响应，扩展 GroupClass 增加教练和报名学员信息）
+interface GroupClassDetail extends GroupClass {
+  coach: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  venue: {                        // 详情接口返回完整球馆信息（覆盖 GroupClass 中的 VenueBrief）
+    id: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null;
+  enrollments: {
+    userId: string;
+    nickname: string;
+    avatarUrl: string | null;
+    enrolledAt: string;
+  }[];
+}
+
+// 课程报名列表项（GET /api/users/:id/enrollments 响应的 items 元素）
+interface EnrollmentListItem {
+  type: 'group-class' | 'private-lesson';
+  groupClass: {
+    id: string;
+    title: string;
+    coachId: string;
+    coachNickname: string;
+    venue: VenueBrief | null;
+    startTime: string;
+    endTime: string;
+    status: GroupClassStatus;
+    enrolledAt: string;
+  } | null;
+  privateLesson: {
+    id: string;
+    coachId: string;
+    coachNickname: string;
+    venue: VenueBrief | null;
+    startTime: string;
+    endTime: string;
+    status: PrivateLessonStatus;
+    createdAt: string;
+  } | null;
 }
 
 // ===== 球馆相关 =====
@@ -445,7 +499,7 @@ interface Review {
 interface CoachRating {
   coachId: string;
   averageRating: number | null;  // null 表示暂无评价
-  reviewCount: number;
+  totalCount: number;
 }
 
 // ===== 分页相关 =====
@@ -498,7 +552,7 @@ interface ApiErrorResponse {
 - **教练评分聚合**:
   - 教练列表页（`CoachListPage`）获取教练列表后，需要将评分数据合并到 `CoachListItem` 中渲染
   - 数据获取流程：并行发起 `GET /api/coaches`（教练列表）和 `POST /api/coaches/ratings`（批量教练评分查询，请求体为教练列表返回的所有 coachId）
-  - 两个请求均完成后，前端按 coachId 匹配，将 `averageRating` 和 `reviewCount` 合并到对应的教练列表项中
+  - 两个请求均完成后，前端按 coachId 匹配，将 `averageRating` 和 `totalCount` 合并到对应的教练列表项中
   - 这样设计是因为教练评分由 review 模块实时计算，coaching 模块不存冗余字段（参见架构约定）
 - **定位相关**:
   - 定位授权在用户首次使用距离相关功能时触发（活动列表距离排序/筛选、球馆搜索距离排序）
