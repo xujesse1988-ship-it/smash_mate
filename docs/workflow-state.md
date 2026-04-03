@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c-review
+substep: 5e
 
 ## 当前模块
 module: user
@@ -166,3 +166,4 @@ infra #1 review 通过（2026-04-03）。进入 Step 5b，开始 user 模块契�
 user 契约测试 #16（认证接口）review 通过（2026-04-03）。#17（用户信息与资料管理接口）待开始。
 user 契约测试 #17（用户信息与资料管理接口）review 通过（2026-04-03）。user 模块契约测试全部完成（85 个用例），进入实现阶段。
 user #18（认证功能）实现完成（2026-04-03）：验证码发送/验证、登录/注册合一、JWT 签发、手机号锁定、脱敏日志。契约测试 39 通过，L1 集成测试 21 通过。等待 review。
+user #18 review 有 SHOULD FIX（2026-04-03）：频率限制查询条件过严、PhoneLock 并发竞态、controller 冗余 re-export、测试数据隔离策略。需修复。
