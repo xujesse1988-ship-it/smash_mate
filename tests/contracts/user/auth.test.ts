@@ -10,6 +10,7 @@
  * - JWT: 验证签发结果格式，不 mock jwt 库本身
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import jwt from 'jsonwebtoken';
 import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
 import type { SendCodeInput, LoginInput } from '@server/modules/user/types.js';
@@ -448,6 +449,49 @@ describe('POST /api/auth/login — UserService.login', () => {
     expect(typeof result.token).toBe('string');
     // JWT format: header.payload.signature
     expect(result.token.split('.')).toHaveLength(3);
+  });
+
+  it('should include userId and role in JWT payload with 7-day expiry', async () => {
+    // 业务规则: JWT payload 包含 { userId: string, role: "user" }，有效期 7 天
+    // 来源: user.md §4 登录/注册 - 业务规则 bullet 8（第 188-189 行）
+    // 来源: user.md §6.2 步骤 5
+    setupValidVerificationCode();
+    const existingUser = setupExistingUser();
+
+    const input: LoginInput = { phone: validPhone, code: validCode };
+    const result = await service.login(input);
+
+    // Decode JWT without verification (contract test does not know the secret)
+    const decoded = jwt.decode(result.token) as Record<string, unknown> | null;
+    expect(decoded).not.toBeNull();
+
+    // Verify userId matches the logged-in user
+    expect(decoded!.userId).toBe(existingUser.id);
+
+    // Verify role is "user"
+    expect(decoded!.role).toBe('user');
+
+    // Verify expiry is approximately 7 days from now
+    // JWT exp is in seconds, not milliseconds
+    expect(decoded!.exp).toBeDefined();
+    const expectedExp = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+    expect(decoded!.exp).toBeGreaterThan(expectedExp - 60); // allow 60s tolerance
+    expect(decoded!.exp).toBeLessThan(expectedExp + 60);
+  });
+
+  it('should include correct userId in JWT payload for new user', async () => {
+    // 业务规则: 新用户注册后签发的 JWT 中 userId 应为新创建用户的 ID
+    // 来源: user.md §4 登录/注册 - 业务规则 bullet 8（第 188 行）
+    setupValidVerificationCode();
+    repo.findByPhone.mockResolvedValue(null); // new user
+
+    const input: LoginInput = { phone: validPhone, code: validCode };
+    const result = await service.login(input);
+
+    const decoded = jwt.decode(result.token) as Record<string, unknown> | null;
+    expect(decoded).not.toBeNull();
+    expect(decoded!.userId).toBe(result.user.id);
+    expect(decoded!.role).toBe('user');
   });
 
   // -----------------------------------------------------------------------
