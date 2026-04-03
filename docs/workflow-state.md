@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: user
@@ -169,3 +169,4 @@ user #18（认证功能）实现完成（2026-04-03）：验证码发送/验证�
 user #18 review 有 SHOULD FIX（2026-04-03）：频率限制查询条件过严、PhoneLock 并发竞态、controller 冗余 re-export、测试数据隔离策略。需修复。
 user #18 review 问题已修复（2026-04-03）：修复 3 个 SHOULD FIX（频率限制、upsert 竞态、冗余导出），测试隔离策略保留 deleteMany（需 infra 层变更，建议后续独立处理）。等待重新 review。
 user #18 review LGTM（2026-04-03）。Issue #18 关闭。继续实现 #19（用户资料管理与教练角色开启）。
+user #19（用户资料管理与教练角色开启）实现完成（2026-04-03）：更新个人资料、开启教练角色、用户公开信息、跨模块 Service 接口。契约测试 49 通过，L1 集成测试 43 通过。等待 review。
