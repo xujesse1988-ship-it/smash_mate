@@ -25,7 +25,7 @@ feature:
 | web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
-| web-app/notification | 前端 | review | | | | | |
+| web-app/notification | 前端 | done | | | | | |
 | admin | 前端 | | | | | | |
 
 > **填写规则**：
@@ -52,4 +52,4 @@ web-app/activity feature 设计 review 通过（2026-04-02）。
 web-app/coaching feature 设计 review 通过（2026-04-03）。
 web-app/match-record feature 设计 review 通过（2026-04-03）。
 web-app/profile feature 设计 review 通过（2026-04-03）。
-web-app/notification feature 设计已提交 review（2026-04-02）。
+web-app/notification feature 设计 review 通过（2026-04-03）。全部 web-app feature 设计完成。
