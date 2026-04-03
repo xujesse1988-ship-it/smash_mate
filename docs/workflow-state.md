@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5a
+substep: 5a-review
 
 ## 当前模块
 module: infra
@@ -12,7 +12,7 @@ feature:
 
 | 模块 | 类型 | 设计 | 契约测试 | 实现 | Task Review | 模块 Review | L2 集成测试 |
 |------|------|------|---------|------|------------|------------|------------|
-| infra | 基础设施 | N/A | N/A | | N/A | N/A | N/A |
+| infra | 基础设施 | N/A | N/A | review | N/A | N/A | N/A |
 | user | 后端 | done | | | | | |
 | venue | 后端 | done | | | | | |
 | notification | 后端 | done | | | | | |
@@ -161,3 +161,4 @@ admin 模块设计 review 通过（2026-04-03）。全部模块设计完成，�
 脚手架 review 通过（2026-04-03），进入 Step 4b 任务拆分。
 任务拆分完成（2026-04-03）：创建 57 个 GitHub Issues（#1-#57），包含 15 个模块父 Issue、1 个 infra Issue、12 个契约测试 Issue、15 个实现 Issue、7 个前端测试 Issue、7 个前端实现 Issue、3 个 L2 集成测试 Issue。3 个 Milestone 已创建。
 Issues review 通过（2026-04-03），进入 Step 5 实现阶段。首先实现 infra（#1）。
+infra 实现完成（2026-04-03）：数据库连接、配置管理、认证中间件（JWT + 管理员）、全局错误处理、标准响应格式、结构化日志、requestId 中间件、请求日志、初始迁移、种子脚本。等待 review。
