@@ -22,7 +22,7 @@ feature:
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
-| web-app/coaching | 前端 | review | | | | | |
+| web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | | | | | | |
 | web-app/profile | 前端 | | | | | | |
 | web-app/notification | 前端 | | | | | | |
@@ -49,3 +49,4 @@ review 模块设计 review 通过（2026-04-02）。全部后端模块设计完�
 web-app 前端整体设计 review 通过（2026-04-02）。
 web-app/auth feature 设计 review 通过（2026-04-02）。
 web-app/activity feature 设计 review 通过（2026-04-02）。
+web-app/coaching feature 设计 review 通过（2026-04-03）。
