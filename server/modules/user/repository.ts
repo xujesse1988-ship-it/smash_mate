@@ -1,45 +1,62 @@
+import { prisma } from '../../infra/database.js';
+
 export class UserRepository {
-  async findByPhone(_phone: string) {
-    throw new Error('Not implemented');
+  async findByPhone(phone: string) {
+    return prisma.user.findUnique({ where: { phone } });
   }
 
-  async findById(_id: string) {
-    throw new Error('Not implemented');
+  async findById(id: string) {
+    return prisma.user.findUnique({ where: { id } });
   }
 
-  async findByIds(_ids: string[]) {
-    throw new Error('Not implemented');
+  async findByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+    return prisma.user.findMany({ where: { id: { in: ids } } });
   }
 
-  async create(_data: { phone: string; nickname: string; isCoach: boolean }) {
-    throw new Error('Not implemented');
+  async create(data: { phone: string; nickname: string; isCoach: boolean }) {
+    return prisma.user.create({ data });
   }
 
-  async update(_id: string, _data: { nickname?: string; avatarUrl?: string; bio?: string }) {
-    throw new Error('Not implemented');
+  async update(id: string, data: { nickname?: string; avatarUrl?: string; bio?: string }) {
+    return prisma.user.update({ where: { id }, data });
   }
 
-  async updateCoachRole(_id: string, _isCoach: boolean) {
-    throw new Error('Not implemented');
+  async updateCoachRole(id: string, isCoach: boolean) {
+    return prisma.user.update({ where: { id }, data: { isCoach } });
   }
 
-  async createVerificationCode(_data: { phone: string; code: string; expiresAt: Date }) {
-    throw new Error('Not implemented');
+  async createVerificationCode(data: { phone: string; code: string; expiresAt: Date }) {
+    return prisma.verificationCode.create({ data });
   }
 
-  async findLatestVerificationCode(_phone: string) {
-    throw new Error('Not implemented');
+  async findLatestVerificationCode(phone: string) {
+    return prisma.verificationCode.findFirst({
+      where: {
+        phone,
+        used: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async markVerificationCodeUsed(_id: string) {
-    throw new Error('Not implemented');
+  async markVerificationCodeUsed(id: string) {
+    await prisma.verificationCode.update({
+      where: { id },
+      data: { used: true },
+    });
   }
 
-  async findOrCreatePhoneLock(_phone: string) {
-    throw new Error('Not implemented');
+  async findOrCreatePhoneLock(phone: string) {
+    const existing = await prisma.phoneLock.findUnique({ where: { phone } });
+    if (existing) return existing;
+    return prisma.phoneLock.create({ data: { phone } });
   }
 
-  async updatePhoneLock(_id: string, _data: { failCount: number; lockedUntil: Date | null }) {
-    throw new Error('Not implemented');
+  async updatePhoneLock(id: string, data: { failCount: number; lockedUntil: Date | null }) {
+    await prisma.phoneLock.update({
+      where: { id },
+      data,
+    });
   }
 }

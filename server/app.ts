@@ -4,6 +4,7 @@ import { config } from './infra/config.js';
 import { logger } from './infra/logger.js';
 import { errorHandler } from './infra/error-handler.js';
 import { requestIdMiddleware, requestLogMiddleware } from './infra/request-context.js';
+import { createUserController } from './modules/user/controller.js';
 
 const app = express();
 
@@ -18,8 +19,9 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// TODO: Mount module routes here
-// app.use('/api', userRoutes);
+// Mount module routes
+app.use('/api', createUserController());
+// TODO: Mount remaining module routes here
 // app.use('/api', activityRoutes);
 // app.use('/api', coachingRoutes);
 // app.use('/api', matchRecordRoutes);

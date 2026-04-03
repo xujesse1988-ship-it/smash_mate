@@ -1,3 +1,8 @@
+import jwt from 'jsonwebtoken';
+import { config } from '../../infra/config.js';
+import { AppError } from '../../infra/error-handler.js';
+import { createModuleLogger } from '../../infra/logger.js';
+import { UserRepository } from './repository.js';
 import type {
   SendCodeInput,
   LoginInput,
@@ -6,38 +11,223 @@ import type {
   UserPublicInfo,
 } from './types.js';
 
+const logger = createModuleLogger('user');
+
+// Phone number validation: 11 digits starting with 1
+const PHONE_REGEX = /^1\d{10}$/;
+// Verification code format: exactly 6 digits
+const CODE_REGEX = /^\d{6}$/;
+
+/**
+ * Mask phone number: 13812345678 -> 138****5678
+ */
+function maskPhone(phone: string): string {
+  return phone.slice(0, 3) + '****' + phone.slice(7);
+}
+
+/**
+ * Generate a random 6-digit verification code
+ */
+function generateCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+/**
+ * Generate a random nickname: 球友 + 5 random digits
+ */
+function generateNickname(): string {
+  const digits = String(Math.floor(10000 + Math.random() * 90000));
+  return `球友${digits}`;
+}
+
 export class UserService {
-  async sendCode(_input: SendCodeInput): Promise<{ message: string }> {
-    throw new Error('Not implemented');
+  private repo: UserRepository;
+
+  constructor(repo: UserRepository) {
+    this.repo = repo;
   }
 
-  async login(_input: LoginInput): Promise<LoginResponse> {
-    throw new Error('Not implemented');
+  async sendCode(input: SendCodeInput): Promise<{ message: string }> {
+    const { phone } = input;
+
+    // 1. Validate phone format
+    if (!PHONE_REGEX.test(phone)) {
+      throw new AppError(400, 'AUTH_INVALID_PHONE', '手机号格式不合法');
+    }
+
+    // 2. Check phone lock
+    const phoneLock = await this.repo.findOrCreatePhoneLock(phone);
+    if (phoneLock.lockedUntil && phoneLock.lockedUntil > new Date()) {
+      throw new AppError(429, 'AUTH_PHONE_LOCKED', '该手机号已被锁定，请稍后再试');
+    }
+
+    // 3. Check rate limit
+    const latestCode = await this.repo.findLatestVerificationCode(phone);
+    if (latestCode) {
+      const elapsed = Date.now() - latestCode.createdAt.getTime();
+      if (elapsed < config.codeResendIntervalSeconds * 1000) {
+        throw new AppError(429, 'AUTH_CODE_RATE_LIMITED', '验证码发送过于频繁，请稍后再试');
+      }
+    }
+
+    // 4. Generate verification code
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + config.verificationCodeExpireMinutes * 60 * 1000);
+
+    // 5. Store verification code
+    await this.repo.createVerificationCode({ phone, code, expiresAt });
+
+    // 6. Log (phone masked, code only at debug level)
+    logger.info({ phone: maskPhone(phone) }, '验证码已发送');
+    logger.debug({ phone: maskPhone(phone), code }, '验证码详情（仅开发环境）');
+
+    return { message: '验证码已发送' };
   }
 
-  async getCurrentUser(_userId: string) {
-    throw new Error('Not implemented');
+  async login(input: LoginInput): Promise<LoginResponse> {
+    const { phone, code, isCoach } = input;
+
+    // 1. Validate phone format
+    if (!PHONE_REGEX.test(phone)) {
+      throw new AppError(400, 'AUTH_INVALID_PHONE', '手机号格式不合法');
+    }
+
+    // 2. Validate code format
+    if (!CODE_REGEX.test(code)) {
+      throw new AppError(400, 'AUTH_INVALID_CODE', '验证码格式不合法');
+    }
+
+    // 3. Check phone lock
+    const phoneLock = await this.repo.findOrCreatePhoneLock(phone);
+    if (phoneLock.lockedUntil && phoneLock.lockedUntil > new Date()) {
+      throw new AppError(429, 'AUTH_PHONE_LOCKED', '该手机号已被锁定，请稍后再试');
+    }
+
+    // 4. Verify code
+    const latestCode = await this.repo.findLatestVerificationCode(phone);
+
+    // No unused verification code found
+    if (!latestCode) {
+      await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
+      throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
+    }
+
+    // Code expired
+    if (latestCode.expiresAt < new Date()) {
+      throw new AppError(401, 'AUTH_CODE_EXPIRED', '验证码已过期');
+    }
+
+    // Code mismatch
+    if (latestCode.code !== code) {
+      await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
+      throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
+    }
+
+    // 5. Code matches - mark used and reset phone lock
+    await this.repo.markVerificationCodeUsed(latestCode.id);
+    await this.repo.updatePhoneLock(phoneLock.id, { failCount: 0, lockedUntil: null });
+
+    // 6. Find or create user
+    let user = await this.repo.findByPhone(phone);
+    let isNewUser = false;
+
+    if (!user) {
+      isNewUser = true;
+      user = await this.repo.create({
+        phone,
+        nickname: generateNickname(),
+        isCoach: isCoach ?? false,
+      });
+    }
+
+    // 7. Sign JWT
+    const token = jwt.sign({ userId: user.id, role: 'user' }, config.jwtSecret, {
+      expiresIn: config.jwtExpiresIn,
+    });
+
+    // 8. Return response
+    return {
+      token,
+      user: {
+        id: user.id,
+        phone: maskPhone(user.phone),
+        nickname: user.nickname,
+        avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        isCoach: user.isCoach,
+        createdAt: user.createdAt,
+      },
+      isNewUser,
+    };
+  }
+
+  async getCurrentUser(userId: string) {
+    const user = await this.repo.findById(userId);
+    if (!user) {
+      throw new AppError(404, 'USER_NOT_FOUND', '用户不存在');
+    }
+    return {
+      id: user.id,
+      phone: maskPhone(user.phone),
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      isCoach: user.isCoach,
+      createdAt: user.createdAt,
+    };
   }
 
   async updateProfile(_userId: string, _input: UpdateProfileInput) {
-    throw new Error('Not implemented');
+    // This will be fully implemented in Issue #19
+    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
   }
 
   async updateCoachRole(_userId: string, _isCoach: boolean) {
-    throw new Error('Not implemented');
+    // This will be fully implemented in Issue #19
+    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
   }
 
   async getUserPublicInfo(_id: string) {
-    throw new Error('Not implemented');
+    // This will be fully implemented in Issue #19
+    throw new AppError(500, 'NOT_IMPLEMENTED', 'Not implemented');
   }
 
   // --- Cross-module service methods ---
 
-  async getUserById(_id: string): Promise<UserPublicInfo | null> {
-    throw new Error('Not implemented');
+  async getUserById(id: string): Promise<UserPublicInfo | null> {
+    const user = await this.repo.findById(id);
+    if (!user) return null;
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      isCoach: user.isCoach,
+    };
   }
 
-  async getUsersByIds(_ids: string[]): Promise<UserPublicInfo[]> {
-    throw new Error('Not implemented');
+  async getUsersByIds(ids: string[]): Promise<UserPublicInfo[]> {
+    const users = await this.repo.findByIds(ids);
+    return users.map((u) => ({
+      id: u.id,
+      nickname: u.nickname,
+      avatarUrl: u.avatarUrl,
+      bio: u.bio,
+      isCoach: u.isCoach,
+    }));
+  }
+
+  // --- Private helpers ---
+
+  private async incrementFailCount(phoneLockId: string, currentFailCount: number) {
+    const newFailCount = currentFailCount + 1;
+    const lockedUntil =
+      newFailCount >= config.phoneLockMaxFailures
+        ? new Date(Date.now() + config.phoneLockDurationMinutes * 60 * 1000)
+        : null;
+    await this.repo.updatePhoneLock(phoneLockId, {
+      failCount: newFailCount,
+      lockedUntil,
+    });
   }
 }
