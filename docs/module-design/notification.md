@@ -81,7 +81,7 @@ HTTP 请求 → Controller（校验）→ Service（业务逻辑）→ Repositor
 |--------|------|-------------|
 | activity | 活动详情页 | /activities/:id |
 | group-class | 团课详情页 | /group-classes/:id |
-| private-lesson | 私教预约管理页 | /coaching/lessons（前端自行处理） |
+| private-lesson | 私教预约管理页 | /my-courses |
 | coach-profile | 教练主页（评价列表） | /coaches/:id |
 
 ### 索引
