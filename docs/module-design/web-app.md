@@ -460,6 +460,7 @@ interface MatchRecord {
   };
   games: MatchGame[];
   result: 'A_WIN' | 'B_WIN' | 'DRAW';
+  userResult?: 'WIN' | 'LOSE' | 'DRAW';  // 仅在个人战绩历史接口（GET /api/users/:id/match-records）返回时有值，表示该用户在本场的结果
   createdAt: string;
 }
 
@@ -477,12 +478,11 @@ interface MatchGame {
 }
 
 interface MatchStats {
-  userId: string;
   totalMatches: number;
   wins: number;
   losses: number;
   draws: number;
-  winRate: number;     // 0-1 之间，胜场/(胜场+负场)
+  winRate: number;     // 0-100 之间的百分比值，保留一位小数；胜场/(胜场+负场)*100
 }
 
 // ===== 通知相关 =====

@@ -369,11 +369,12 @@ MatchRecordHistoryPage
 
 ```
 每条 HistoryMatchRecordCard 根据 userResult 字段显示不同颜色:
-  userResult === 'WIN'  → 绿色（#4CAF50）标签"胜"
-  userResult === 'LOSE' → 红色（#F44336）标签"负"
-  userResult === 'DRAW' → 灰色（#9E9E9E）标签"平"
+  userResult === 'WIN'  → 成功色，标签"胜"
+  userResult === 'LOSE' → 错误色，标签"负"
+  userResult === 'DRAW' → 中性色，标签"平"
 
-颜色使用视觉风格中定义的状态色
+颜色使用视觉风格中定义的语义色（成功色/错误色/中性色），
+具体色值在实现时参照 web-app.md section 8 的设计系统。
 ```
 
 ### 6.6 URL 参数缺失处理
@@ -394,13 +395,19 @@ sourceType 不在 'activity' / 'group-class' / 'private-lesson' 范围内:
 sourceType = 'private-lesson' 时:
   由于不调用详情接口获取参与者列表，participants 为空数组
   所有选手位置默认为"非平台用户"模式（isGuest=true），展示昵称输入框
-  用户也可切换为平台用户模式手动输入 userId（但无下拉选择，需自行确认）
+  用户直接输入教练和学员的姓名即可
+
+UX 说明:
+  私教课仅教练和学员两人，双方身份已知，无需从参与者下拉框选择。
+  一期私教来源仅支持 guest 模式（非平台用户输入昵称），不提供平台用户搜索选择功能。
+  "非平台用户"开关在 sourceType='private-lesson' 时锁定为开启状态，不可切换。
+  这样简化实现，避免在无参与者列表的情况下引入额外的用户搜索输入框。
 
 说明:
-  私教课通常仅教练和学员两人，场景简单
   参与关系由后端 POST /api/match-records 校验，前端不做参与关系预校验
-  如果用户选择了不是参与者的平台用户，后端会返回 MATCH_RECORD_PLAYER_NOT_PARTICIPANT 错误
 ```
+
+**已知限制**: 一期私教来源仅支持 guest 模式录入选手，不支持关联平台用户。如需关联平台用户，需在后续版本中增加用户搜索输入框。
 
 ### 6.8 TanStack Query 缓存策略
 
