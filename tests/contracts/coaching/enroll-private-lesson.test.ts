@@ -27,6 +27,7 @@ import { CoachingRepository } from '@server/modules/coaching/repository.js';
 import type {
   SetAvailabilityInput,
   BookPrivateLessonInput,
+  EnrollmentListQuery,
 } from '@server/modules/coaching/types.js';
 
 // ---------------------------------------------------------------------------
@@ -58,6 +59,10 @@ function createMockRepository(): {
     findCoachPrivateLessons: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     getGroupClassParticipantIds: vi.fn().mockResolvedValue([]),
     getPrivateLessonParticipantIds: vi.fn().mockResolvedValue([]),
+    updateGroupClassesStarted: vi.fn().mockResolvedValue(0),
+    updateGroupClassesCompleted: vi.fn().mockResolvedValue(0),
+    updatePrivateLessonsStarted: vi.fn().mockResolvedValue(0),
+    updatePrivateLessonsCompleted: vi.fn().mockResolvedValue(0),
   };
 }
 
@@ -107,6 +112,18 @@ function createMockNotificationService() {
   return {
     create: vi.fn().mockResolvedValue(undefined),
     createBatch: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+/**
+ * Build a mock logger for testing scheduled tasks.
+ */
+function createMockLogger() {
+  return {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
   };
 }
 
@@ -286,8 +303,8 @@ describe('POST /api/group-classes/:id/enroll — CoachingService.enrollGroupClas
     expect(result.currentParticipants).toBe(10);
   });
 
-  // 业务规则: 报名成功后通知教练（§4 报名团课 - 业务规则）
-  it('should notify the coach after successful enrollment', async () => {
+  // 业务规则: 报名成功后通知教练（§4 报名团课 - 业务规则 / §6.10 通知文案）
+  it('should notify the coach after successful enrollment with correct notification fields', async () => {
     repo.findGroupClassById.mockResolvedValue(
       createGroupClassRecord({ status: 'open', currentParticipants: 3 }),
     );
@@ -307,7 +324,15 @@ describe('POST /api/group-classes/:id/enroll — CoachingService.enrollGroupClas
 
     await service.enrollGroupClass('group-class-uuid-1', 'user-uuid-student');
 
-    expect(notificationService.create).toHaveBeenCalled();
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid-coach', // 通知接收人是教练
+        type: 'GROUP_CLASS_ENROLLED',
+        title: '新学员报名',
+        targetType: 'group-class',
+        targetId: 'group-class-uuid-1',
+      }),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 报名团课 - 业务规则）
@@ -546,8 +571,8 @@ describe('POST /api/group-classes/:id/cancel-enrollment — CoachingService.canc
     expect(result.currentParticipants).toBe(9);
   });
 
-  // 业务规则: 取消成功后通知教练（§4 取消团课报名 - 业务规则）
-  it('should notify the coach after successful enrollment cancellation', async () => {
+  // 业务规则: 取消成功后通知教练（§4 取消团课报名 - 业务规则 / §6.10 通知文案）
+  it('should notify the coach after successful enrollment cancellation with correct notification fields', async () => {
     repo.findGroupClassById.mockResolvedValue(
       createGroupClassRecord({
         status: 'open',
@@ -576,7 +601,15 @@ describe('POST /api/group-classes/:id/cancel-enrollment — CoachingService.canc
 
     await service.cancelEnrollment('group-class-uuid-1', 'user-uuid-student');
 
-    expect(notificationService.create).toHaveBeenCalled();
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid-coach', // 通知接收人是教练
+        type: 'GROUP_CLASS_ENROLLMENT_CANCELLED',
+        title: '学员取消报名',
+        targetType: 'group-class',
+        targetId: 'group-class-uuid-1',
+      }),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 取消团课报名 - 业务规则）
@@ -730,10 +763,48 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ]);
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      venueIds: ['venue-uuid-1'],
-      feeDescription: '300元/小时',
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          venueIds: ['venue-uuid-1'],
+          feeDescription: '300元/小时',
+        },
+      ],
+    };
+
+    const result = await service.setAvailability('user-uuid-coach', input);
+
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty('slots');
+  });
+
+  // 业务规则: 支持批量设置多个时间段（§4 设置私教空闲时间 - 业务规则）
+  it('should create multiple availability slots in one request', async () => {
+    userService.getUserById.mockResolvedValue({
+      id: 'user-uuid-coach',
+      nickname: '教练张',
+      avatarUrl: null,
+      isCoach: true,
+    });
+    repo.findAvailability.mockResolvedValue([]);
+    repo.createPrivateLessonSlot.mockResolvedValue([
+      createSlotRecord(),
+      createSlotRecord({ id: 'slot-uuid-2' }),
+    ]);
+
+    const input: SetAvailabilityInput = {
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          venueIds: ['venue-uuid-1'],
+        },
+        {
+          startTime: futureDate(48),
+          endTime: futureDate(50),
+        },
+      ],
     };
 
     const result = await service.setAvailability('user-uuid-coach', input);
@@ -756,9 +827,13 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ]);
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      venueIds: [],
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          venueIds: [],
+        },
+      ],
     };
 
     const result = await service.setAvailability('user-uuid-coach', input);
@@ -780,8 +855,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ]);
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+        },
+      ],
     };
 
     const result = await service.setAvailability('user-uuid-coach', input);
@@ -801,9 +880,13 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     repo.createPrivateLessonSlot.mockResolvedValue([createSlotRecord()]);
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      venueIds: ['venue-uuid-1', 'venue-uuid-2'],
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          venueIds: ['venue-uuid-1', 'venue-uuid-2'],
+        },
+      ],
     };
 
     await service.setAvailability('user-uuid-coach', input);
@@ -826,8 +909,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     });
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+        },
+      ],
     };
 
     await expect(
@@ -835,6 +922,31 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ).rejects.toMatchObject({
       code: 'COACHING_COACH_ROLE_REQUIRED',
       statusCode: 403,
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // 异常流程: COACHING_INVALID_SLOTS
+  // -----------------------------------------------------------------------
+
+  // 错误码: COACHING_INVALID_SLOTS — slots 为空数组（§4 设置私教空闲时间 - 错误码）
+  it('should throw COACHING_INVALID_SLOTS when slots is empty array', async () => {
+    userService.getUserById.mockResolvedValue({
+      id: 'user-uuid-coach',
+      nickname: '教练张',
+      avatarUrl: null,
+      isCoach: true,
+    });
+
+    const input: SetAvailabilityInput = {
+      slots: [],
+    };
+
+    await expect(
+      service.setAvailability('user-uuid-coach', input),
+    ).rejects.toMatchObject({
+      code: 'COACHING_INVALID_SLOTS',
+      statusCode: 400,
     });
   });
 
@@ -852,8 +964,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     });
 
     const input: SetAvailabilityInput = {
-      startTime: new Date('2020-01-01T00:00:00.000Z').toISOString(),
-      endTime: futureDate(26),
+      slots: [
+        {
+          startTime: new Date('2020-01-01T00:00:00.000Z').toISOString(),
+          endTime: futureDate(26),
+        },
+      ],
     };
 
     await expect(
@@ -874,8 +990,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     });
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(26),
-      endTime: futureDate(24),
+      slots: [
+        {
+          startTime: futureDate(26),
+          endTime: futureDate(24),
+        },
+      ],
     };
 
     await expect(
@@ -905,8 +1025,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ).toISOString();
 
     const input: SetAvailabilityInput = {
-      startTime: start,
-      endTime: end,
+      slots: [
+        {
+          startTime: start,
+          endTime: end,
+        },
+      ],
     };
 
     await expect(
@@ -934,8 +1058,12 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     ).toISOString();
 
     const input: SetAvailabilityInput = {
-      startTime: start,
-      endTime: end,
+      slots: [
+        {
+          startTime: start,
+          endTime: end,
+        },
+      ],
     };
 
     const result = await service.setAvailability('user-uuid-coach', input);
@@ -968,8 +1096,43 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     const overlappingEnd = new Date(Date.now() + 27 * 60 * 60 * 1000).toISOString();
 
     const input: SetAvailabilityInput = {
-      startTime: overlappingStart,
-      endTime: overlappingEnd,
+      slots: [
+        {
+          startTime: overlappingStart,
+          endTime: overlappingEnd,
+        },
+      ],
+    };
+
+    await expect(
+      service.setAvailability('user-uuid-coach', input),
+    ).rejects.toMatchObject({
+      code: 'COACHING_SLOT_OVERLAP',
+      statusCode: 409,
+    });
+  });
+
+  // 错误码: COACHING_SLOT_OVERLAP — 同一批次提交的时间段之间重叠（§4 设置私教空闲时间 - 业务规则）
+  it('should throw COACHING_SLOT_OVERLAP when slots within the same batch overlap', async () => {
+    userService.getUserById.mockResolvedValue({
+      id: 'user-uuid-coach',
+      nickname: '教练张',
+      avatarUrl: null,
+      isCoach: true,
+    });
+    repo.findAvailability.mockResolvedValue([]); // No existing slots
+
+    const input: SetAvailabilityInput = {
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+        },
+        {
+          startTime: futureDate(25), // Overlaps with the first slot
+          endTime: futureDate(27),
+        },
+      ],
     };
 
     await expect(
@@ -994,9 +1157,13 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     });
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      feeDescription: 'a'.repeat(201),
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          feeDescription: 'a'.repeat(201),
+        },
+      ],
     };
 
     await expect(
@@ -1022,9 +1189,13 @@ describe('POST /api/private-lessons/availability — CoachingService.setAvailabi
     venueService.getVenueById.mockResolvedValue(null);
 
     const input: SetAvailabilityInput = {
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      venueIds: ['nonexistent-venue-uuid'],
+      slots: [
+        {
+          startTime: futureDate(24),
+          endTime: futureDate(26),
+          venueIds: ['nonexistent-venue-uuid'],
+        },
+      ],
     };
 
     await expect(
@@ -1266,8 +1437,8 @@ describe('POST /api/private-lessons/book — CoachingService.bookPrivateLesson',
     expect(venueService.getVenueById).toHaveBeenCalledWith('venue-uuid-1');
   });
 
-  // 业务规则: 预约成功后通知教练（§4 预约私教课 - 业务规则）
-  it('should notify the coach after successful booking', async () => {
+  // 业务规则: 预约成功后通知教练（§4 预约私教课 - 业务规则 / §6.10 通知文案）
+  it('should notify the coach after successful booking with correct notification fields', async () => {
     repo.findAvailability.mockResolvedValue([
       createSlotRecord({
         isBooked: false,
@@ -1290,7 +1461,15 @@ describe('POST /api/private-lessons/book — CoachingService.bookPrivateLesson',
 
     await service.bookPrivateLesson('user-uuid-student', input);
 
-    expect(notificationService.create).toHaveBeenCalled();
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid-coach', // 通知接收人是教练
+        type: 'PRIVATE_LESSON_BOOKED',
+        title: '新私教预约',
+        targetType: 'private-lesson',
+        targetId: 'private-lesson-uuid-1',
+      }),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 预约私教课 - 业务规则）
@@ -1606,8 +1785,8 @@ describe('POST /api/private-lessons/:id/cancel — CoachingService.cancelPrivate
     // The implementation should release the slot in the same transaction
   });
 
-  // 业务规则: 学员取消时通知教练（§4 取消私教预约 - 业务规则 / §6.10）
-  it('should notify coach when student cancels', async () => {
+  // 业务规则: 学员取消时通知教练（§4 取消私教预约 - 业务规则 / §6.10 通知文案）
+  it('should notify coach when student cancels with correct notification fields', async () => {
     repo.findPrivateLessonById.mockResolvedValue(
       createPrivateLessonRecord({ status: 'scheduled', studentId: 'user-uuid-student' }),
     );
@@ -1623,11 +1802,19 @@ describe('POST /api/private-lessons/:id/cancel — CoachingService.cancelPrivate
 
     await service.cancelPrivateLesson('private-lesson-uuid-1', 'user-uuid-student');
 
-    expect(notificationService.create).toHaveBeenCalled();
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid-coach', // 通知接收人是教练
+        type: 'PRIVATE_LESSON_CANCELLED_BY_STUDENT',
+        title: '学员取消私教',
+        targetType: 'private-lesson',
+        targetId: 'private-lesson-uuid-1',
+      }),
+    );
   });
 
-  // 业务规则: 教练取消时通知学员（§4 取消私教预约 - 业务规则 / §6.10）
-  it('should notify student when coach cancels', async () => {
+  // 业务规则: 教练取消时通知学员（§4 取消私教预约 - 业务规则 / §6.10 通知文案）
+  it('should notify student when coach cancels with correct notification fields', async () => {
     repo.findPrivateLessonById.mockResolvedValue(
       createPrivateLessonRecord({ status: 'scheduled', coachId: 'user-uuid-coach' }),
     );
@@ -1637,7 +1824,15 @@ describe('POST /api/private-lessons/:id/cancel — CoachingService.cancelPrivate
 
     await service.cancelPrivateLesson('private-lesson-uuid-1', 'user-uuid-coach');
 
-    expect(notificationService.create).toHaveBeenCalled();
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid-student', // 通知接收人是学员
+        type: 'PRIVATE_LESSON_CANCELLED_BY_COACH',
+        title: '教练取消私教',
+        targetType: 'private-lesson',
+        targetId: 'private-lesson-uuid-1',
+      }),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 取消私教预约 - 业务规则）
@@ -1861,6 +2056,116 @@ describe('GET /api/users/:id/enrollments — CoachingService.getUserEnrollments'
     const result = await service.getUserEnrollments('user-uuid-student', {});
 
     expect(result.items[0].groupClass).toHaveProperty('coachNickname');
+  });
+
+  // -----------------------------------------------------------------------
+  // type/status 筛选 (MF-4)
+  // -----------------------------------------------------------------------
+
+  // 业务规则: type 筛选 — 仅返回指定类型的记录（§4 用户的课程报名列表 - Query Params / 业务规则）
+  it('should filter enrollments by type=group-class', async () => {
+    repo.findUserEnrollments.mockResolvedValue({
+      items: [
+        {
+          type: 'group-class',
+          groupClass: {
+            id: 'gc-1',
+            title: '团课1',
+            coachId: 'user-uuid-coach',
+            startTime: new Date(),
+            endTime: new Date(),
+            status: 'open',
+            enrolledAt: new Date(),
+          },
+          privateLesson: null,
+        },
+      ],
+      total: 1,
+    });
+
+    const query: EnrollmentListQuery = { type: 'group-class' };
+    const result = await service.getUserEnrollments('user-uuid-student', query);
+
+    expect(result).toBeDefined();
+    expect(repo.findUserEnrollments).toHaveBeenCalledWith(
+      'user-uuid-student',
+      expect.objectContaining({ type: 'group-class' }),
+    );
+  });
+
+  // 业务规则: type 筛选 — 仅返回 private-lesson 类型（§4 用户的课程报名列表 - Query Params / 业务规则）
+  it('should filter enrollments by type=private-lesson', async () => {
+    repo.findUserEnrollments.mockResolvedValue({
+      items: [
+        {
+          type: 'private-lesson',
+          groupClass: null,
+          privateLesson: {
+            id: 'pl-1',
+            coachId: 'user-uuid-coach',
+            startTime: new Date(),
+            endTime: new Date(),
+            status: 'scheduled',
+            createdAt: new Date(),
+          },
+        },
+      ],
+      total: 1,
+    });
+
+    const query: EnrollmentListQuery = { type: 'private-lesson' };
+    const result = await service.getUserEnrollments('user-uuid-student', query);
+
+    expect(result).toBeDefined();
+    expect(repo.findUserEnrollments).toHaveBeenCalledWith(
+      'user-uuid-student',
+      expect.objectContaining({ type: 'private-lesson' }),
+    );
+  });
+
+  // 业务规则: status 筛选 — 团课报名的状态取关联团课的 status（§4 用户的课程报名列表 - 业务规则）
+  it('should filter enrollments by status', async () => {
+    repo.findUserEnrollments.mockResolvedValue({
+      items: [
+        {
+          type: 'group-class',
+          groupClass: {
+            id: 'gc-1',
+            title: '团课1',
+            coachId: 'user-uuid-coach',
+            startTime: new Date(),
+            endTime: new Date(),
+            status: 'open',
+            enrolledAt: new Date(),
+          },
+          privateLesson: null,
+        },
+      ],
+      total: 1,
+    });
+
+    const query: EnrollmentListQuery = { status: 'open' };
+    const result = await service.getUserEnrollments('user-uuid-student', query);
+
+    expect(result).toBeDefined();
+    expect(repo.findUserEnrollments).toHaveBeenCalledWith(
+      'user-uuid-student',
+      expect.objectContaining({ status: 'open' }),
+    );
+  });
+
+  // 业务规则: type 和 status 组合筛选（§4 用户的课程报名列表 - 业务规则）
+  it('should filter enrollments by both type and status', async () => {
+    repo.findUserEnrollments.mockResolvedValue({ items: [], total: 0 });
+
+    const query: EnrollmentListQuery = { type: 'private-lesson', status: 'scheduled' };
+    const result = await service.getUserEnrollments('user-uuid-student', query);
+
+    expect(result).toBeDefined();
+    expect(repo.findUserEnrollments).toHaveBeenCalledWith(
+      'user-uuid-student',
+      expect.objectContaining({ type: 'private-lesson', status: 'scheduled' }),
+    );
   });
 });
 
@@ -2145,5 +2450,144 @@ describe('CoachingService.getParticipantIds — cross-module service', () => {
     const result = await service.getParticipantIds('nonexistent-uuid', 'private-lesson');
 
     expect(result).toEqual([]);
+  });
+});
+
+// ===========================================================================
+// 定时任务: 课程状态自动流转 — CoachingService.processStatusTransitions (MF-1)
+// ===========================================================================
+
+describe('定时任务: 课程状态自动流转 — CoachingService.processStatusTransitions', () => {
+  let service: CoachingService;
+  let repo: ReturnType<typeof createMockRepository>;
+  let userService: ReturnType<typeof createMockUserService>;
+  let venueService: ReturnType<typeof createMockVenueService>;
+  let notificationService: ReturnType<typeof createMockNotificationService>;
+
+  beforeEach(() => {
+    repo = createMockRepository();
+    userService = createMockUserService();
+    venueService = createMockVenueService();
+    notificationService = createMockNotificationService();
+    service = new CoachingService(
+      repo as unknown as CoachingRepository,
+      userService as any,
+      venueService as any,
+      notificationService as any,
+    );
+  });
+
+  // -----------------------------------------------------------------------
+  // 团课状态流转（§6.3 定时任务 — 课程状态自动流转）
+  // -----------------------------------------------------------------------
+
+  // 业务规则: open/full → in_progress（startTime 已过）（§6.1 团课状态机 / §6.3）
+  it('should transition group classes from open/full to in_progress when startTime has passed', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(3);
+    repo.updateGroupClassesCompleted.mockResolvedValue(0);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(0);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    await service.processStatusTransitions();
+
+    expect(repo.updateGroupClassesStarted).toHaveBeenCalledWith(expect.any(Date));
+  });
+
+  // 业务规则: in_progress → completed（endTime 已过）（§6.1 团课状态机 / §6.3）
+  it('should transition group classes from in_progress to completed when endTime has passed', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(0);
+    repo.updateGroupClassesCompleted.mockResolvedValue(2);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(0);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    await service.processStatusTransitions();
+
+    expect(repo.updateGroupClassesCompleted).toHaveBeenCalledWith(expect.any(Date));
+  });
+
+  // -----------------------------------------------------------------------
+  // 私教课状态流转（§6.3 定时任务 — 课程状态自动流转）
+  // -----------------------------------------------------------------------
+
+  // 业务规则: scheduled → in_progress（startTime 已过）（§6.2 私教课状态机 / §6.3）
+  it('should transition private lessons from scheduled to in_progress when startTime has passed', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(0);
+    repo.updateGroupClassesCompleted.mockResolvedValue(0);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(1);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    await service.processStatusTransitions();
+
+    expect(repo.updatePrivateLessonsStarted).toHaveBeenCalledWith(expect.any(Date));
+  });
+
+  // 业务规则: in_progress → completed（endTime 已过）（§6.2 私教课状态机 / §6.3）
+  it('should transition private lessons from in_progress to completed when endTime has passed', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(0);
+    repo.updateGroupClassesCompleted.mockResolvedValue(0);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(0);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(4);
+
+    await service.processStatusTransitions();
+
+    expect(repo.updatePrivateLessonsCompleted).toHaveBeenCalledWith(expect.any(Date));
+  });
+
+  // -----------------------------------------------------------------------
+  // 完整流转一轮（§6.3）
+  // -----------------------------------------------------------------------
+
+  // 业务规则: 一次执行中同时处理团课和私教课的所有状态流转（§6.3）
+  it('should process all four transitions in a single invocation', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(2);
+    repo.updateGroupClassesCompleted.mockResolvedValue(1);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(3);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(1);
+
+    await service.processStatusTransitions();
+
+    expect(repo.updateGroupClassesStarted).toHaveBeenCalled();
+    expect(repo.updateGroupClassesCompleted).toHaveBeenCalled();
+    expect(repo.updatePrivateLessonsStarted).toHaveBeenCalled();
+    expect(repo.updatePrivateLessonsCompleted).toHaveBeenCalled();
+  });
+
+  // 业务规则: 无需流转时正常完成，不报错（§6.3）
+  it('should complete without error when there are no transitions to process', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(0);
+    repo.updateGroupClassesCompleted.mockResolvedValue(0);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(0);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    await expect(service.processStatusTransitions()).resolves.not.toThrow();
+  });
+
+  // -----------------------------------------------------------------------
+  // 异常处理（§6.3 注意事项）
+  // -----------------------------------------------------------------------
+
+  // 业务规则: 定时任务异常通过 try-catch 捕获，记录 error 日志，不影响服务稳定性（§6.3）
+  it('should catch exceptions and not throw when repository operations fail', async () => {
+    repo.updateGroupClassesStarted.mockRejectedValue(new Error('DB connection lost'));
+    repo.updateGroupClassesCompleted.mockResolvedValue(0);
+    repo.updatePrivateLessonsStarted.mockResolvedValue(0);
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    // processStatusTransitions should swallow the error
+    await expect(service.processStatusTransitions()).resolves.not.toThrow();
+  });
+
+  // 业务规则: 私教课状态流转异常不影响团课流转结果（§6.3）
+  it('should handle partial failure — private lesson error does not block group class transitions', async () => {
+    repo.updateGroupClassesStarted.mockResolvedValue(2);
+    repo.updateGroupClassesCompleted.mockResolvedValue(1);
+    repo.updatePrivateLessonsStarted.mockRejectedValue(new Error('DB error'));
+    repo.updatePrivateLessonsCompleted.mockResolvedValue(0);
+
+    await expect(service.processStatusTransitions()).resolves.not.toThrow();
+
+    // Group class transitions should still have been attempted
+    expect(repo.updateGroupClassesStarted).toHaveBeenCalled();
+    expect(repo.updateGroupClassesCompleted).toHaveBeenCalled();
   });
 });

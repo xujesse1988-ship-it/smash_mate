@@ -8,8 +8,16 @@ import type {
   PrivateLessonListQuery,
   EnrollmentListQuery,
 } from './types.js';
+import type { CoachingRepository } from './repository.js';
 
 export class CoachingService {
+  constructor(
+    private readonly _repository?: CoachingRepository,
+    private readonly _userService?: unknown,
+    private readonly _venueService?: unknown,
+    private readonly _notificationService?: unknown,
+  ) {}
+
   async getCoachList(_query: CoachListQuery) {
     throw new Error('Not implemented');
   }
@@ -84,6 +92,12 @@ export class CoachingService {
     _classId: string,
     _type: 'group-class' | 'private-lesson',
   ): Promise<string[]> {
+    throw new Error('Not implemented');
+  }
+
+  // --- Scheduled task ---
+
+  async processStatusTransitions(): Promise<void> {
     throw new Error('Not implemented');
   }
 }

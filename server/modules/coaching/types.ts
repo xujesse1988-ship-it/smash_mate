@@ -18,17 +18,22 @@ export interface CreateGroupClassInput {
 
 export interface UpdateGroupClassInput {
   title?: string;
+  venueId?: string;
   startTime?: string;
   endTime?: string;
   maxParticipants?: number;
   feeDescription?: string;
 }
 
-export interface SetAvailabilityInput {
+export interface SetAvailabilitySlotInput {
   startTime: string;
   endTime: string;
   venueIds?: string[];
   feeDescription?: string;
+}
+
+export interface SetAvailabilityInput {
+  slots: SetAvailabilitySlotInput[];
 }
 
 export interface BookPrivateLessonInput {
@@ -51,4 +56,6 @@ export interface PrivateLessonListQuery {
 export interface EnrollmentListQuery {
   page?: number;
   pageSize?: number;
+  type?: string;
+  status?: string;
 }

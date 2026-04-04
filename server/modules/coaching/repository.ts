@@ -70,4 +70,20 @@ export class CoachingRepository {
   async getPrivateLessonParticipantIds(_lessonId: string): Promise<string[]> {
     throw new Error('Not implemented');
   }
+
+  async updateGroupClassesStarted(_now: Date): Promise<number> {
+    throw new Error('Not implemented');
+  }
+
+  async updateGroupClassesCompleted(_now: Date): Promise<number> {
+    throw new Error('Not implemented');
+  }
+
+  async updatePrivateLessonsStarted(_now: Date): Promise<number> {
+    throw new Error('Not implemented');
+  }
+
+  async updatePrivateLessonsCompleted(_now: Date): Promise<number> {
+    throw new Error('Not implemented');
+  }
 }

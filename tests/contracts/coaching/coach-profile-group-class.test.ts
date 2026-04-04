@@ -59,6 +59,10 @@ function createMockRepository(): {
     findCoachPrivateLessons: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     getGroupClassParticipantIds: vi.fn().mockResolvedValue([]),
     getPrivateLessonParticipantIds: vi.fn().mockResolvedValue([]),
+    updateGroupClassesStarted: vi.fn().mockResolvedValue(0),
+    updateGroupClassesCompleted: vi.fn().mockResolvedValue(0),
+    updatePrivateLessonsStarted: vi.fn().mockResolvedValue(0),
+    updatePrivateLessonsCompleted: vi.fn().mockResolvedValue(0),
   };
 }
 
@@ -1093,29 +1097,38 @@ describe('GET /api/group-classes/:id — CoachingService.getGroupClassDetail', (
   });
 
   // 业务规则: enrollments 列表按 enrolledAt 升序排列（§4 团课详情 - 业务规则）
-  it('should return enrollments sorted by enrolledAt ascending', async () => {
+  // SF-2: mock 返回乱序数据，验证 service 排序后结果正确
+  it('should return enrollments sorted by enrolledAt ascending even when repository returns unordered data', async () => {
+    // 故意让 repository 返回乱序数据（较晚的在前）
     repo.findGroupClassById.mockResolvedValue(
       createGroupClassRecord({
         enrollments: [
           {
-            id: 'enrollment-uuid-1',
-            groupClassId: 'group-class-uuid-1',
-            userId: 'student-uuid-1',
-            enrolledAt: new Date('2026-04-03T09:00:00.000Z'),
-          },
-          {
             id: 'enrollment-uuid-2',
             groupClassId: 'group-class-uuid-1',
             userId: 'student-uuid-2',
-            enrolledAt: new Date('2026-04-03T10:00:00.000Z'),
+            enrolledAt: new Date('2026-04-03T10:00:00.000Z'), // 较晚
+          },
+          {
+            id: 'enrollment-uuid-3',
+            groupClassId: 'group-class-uuid-1',
+            userId: 'student-uuid-3',
+            enrolledAt: new Date('2026-04-03T08:00:00.000Z'), // 最早
+          },
+          {
+            id: 'enrollment-uuid-1',
+            groupClassId: 'group-class-uuid-1',
+            userId: 'student-uuid-1',
+            enrolledAt: new Date('2026-04-03T09:00:00.000Z'), // 中间
           },
         ],
-        currentParticipants: 2,
+        currentParticipants: 3,
       }),
     );
     userService.getUsersByIds.mockResolvedValue([
       { id: 'student-uuid-1', nickname: '学员1', avatarUrl: null },
       { id: 'student-uuid-2', nickname: '学员2', avatarUrl: null },
+      { id: 'student-uuid-3', nickname: '学员3', avatarUrl: null },
     ]);
     userService.getUserById.mockResolvedValue({
       id: 'user-uuid-coach',
@@ -1126,10 +1139,11 @@ describe('GET /api/group-classes/:id — CoachingService.getGroupClassDetail', (
 
     const result = await service.getGroupClassDetail('group-class-uuid-1');
 
-    expect(result.enrollments).toHaveLength(2);
-    // First enrollment should have earlier enrolledAt
+    expect(result.enrollments).toHaveLength(3);
+    // Verify ascending order: each enrolledAt <= next enrolledAt
     const dates = result.enrollments.map((e: any) => new Date(e.enrolledAt).getTime());
     expect(dates[0]).toBeLessThanOrEqual(dates[1]);
+    expect(dates[1]).toBeLessThanOrEqual(dates[2]);
   });
 
   // 业务规则: venue 为 null 时返回 null（§4 团课详情 - 业务规则）
@@ -1277,8 +1291,8 @@ describe('PUT /api/group-classes/:id — CoachingService.updateGroupClass', () =
     expect(result.status).toBe('open');
   });
 
-  // 业务规则: 修改成功后通知所有已报名学员（§4 修改团课 - 业务规则）
-  it('should notify enrolled students after successful update', async () => {
+  // 业务规则: 修改成功后通知所有已报名学员（§4 修改团课 - 业务规则 / §6.10 通知文案）
+  it('should notify enrolled students after successful update with correct notification fields', async () => {
     repo.findGroupClassById.mockResolvedValue(
       createGroupClassRecord({
         status: 'open',
@@ -1305,7 +1319,16 @@ describe('PUT /api/group-classes/:id — CoachingService.updateGroupClass', () =
 
     await service.updateGroupClass('group-class-uuid-1', 'user-uuid-coach', { title: '更新后' });
 
-    expect(notificationService.createBatch).toHaveBeenCalled();
+    expect(notificationService.createBatch).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'GROUP_CLASS_UPDATED',
+          title: '团课已更新',
+          targetType: 'group-class',
+          targetId: 'group-class-uuid-1',
+        }),
+      ]),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 修改团课 - 业务规则）
@@ -1543,6 +1566,22 @@ describe('PUT /api/group-classes/:id — CoachingService.updateGroupClass', () =
   // 异常流程: COACHING_VENUE_NOT_FOUND (修改)
   // -----------------------------------------------------------------------
 
+  // 错误码: COACHING_INVALID_VENUE — venueId 格式不合法（§4 修改团课 - 错误码）
+  it('should throw COACHING_INVALID_VENUE when updated venueId is empty string', async () => {
+    repo.findGroupClassById.mockResolvedValue(
+      createGroupClassRecord({ status: 'open' }),
+    );
+
+    await expect(
+      service.updateGroupClass('group-class-uuid-1', 'user-uuid-coach', {
+        venueId: '',
+      }),
+    ).rejects.toMatchObject({
+      code: 'COACHING_INVALID_VENUE',
+      statusCode: 400,
+    });
+  });
+
   // 错误码: COACHING_VENUE_NOT_FOUND — 修改 venueId 时球馆不存在（§4 修改团课 - 错误码）
   it('should throw COACHING_VENUE_NOT_FOUND when updated venueId does not exist', async () => {
     repo.findGroupClassById.mockResolvedValue(
@@ -1553,11 +1592,34 @@ describe('PUT /api/group-classes/:id — CoachingService.updateGroupClass', () =
     await expect(
       service.updateGroupClass('group-class-uuid-1', 'user-uuid-coach', {
         venueId: 'nonexistent-venue-uuid',
-      } as any),
+      }),
     ).rejects.toMatchObject({
       code: 'COACHING_VENUE_NOT_FOUND',
       statusCode: 404,
     });
+  });
+
+  // 业务规则: 若修改 venueId，调用 VenueService.getVenueById() 验证球馆存在（§4 修改团课 - 业务规则）
+  it('should call VenueService.getVenueById when venueId is updated', async () => {
+    repo.findGroupClassById.mockResolvedValue(
+      createGroupClassRecord({ status: 'open' }),
+    );
+    repo.updateGroupClass.mockResolvedValue(
+      createGroupClassRecord({ status: 'open', venueId: 'venue-uuid-2' }),
+    );
+    venueService.getVenueById.mockResolvedValue({
+      id: 'venue-uuid-2',
+      name: '海淀体育馆',
+      address: '北京市海淀区',
+      latitude: 39.9,
+      longitude: 116.3,
+    });
+
+    await service.updateGroupClass('group-class-uuid-1', 'user-uuid-coach', {
+      venueId: 'venue-uuid-2',
+    });
+
+    expect(venueService.getVenueById).toHaveBeenCalledWith('venue-uuid-2');
   });
 
   // -----------------------------------------------------------------------
@@ -1651,8 +1713,8 @@ describe('POST /api/group-classes/:id/cancel — CoachingService.cancelGroupClas
     expect(result.status).toBe('cancelled');
   });
 
-  // 业务规则: 取消成功后通知所有已报名学员（§4 取消团课 - 业务规则）
-  it('should notify enrolled students after cancellation', async () => {
+  // 业务规则: 取消成功后通知所有已报名学员（§4 取消团课 - 业务规则 / §6.10 通知文案）
+  it('should notify enrolled students after cancellation with correct notification fields', async () => {
     repo.findGroupClassById.mockResolvedValue(
       createGroupClassRecord({
         status: 'open',
@@ -1673,7 +1735,16 @@ describe('POST /api/group-classes/:id/cancel — CoachingService.cancelGroupClas
 
     await service.cancelGroupClass('group-class-uuid-1', 'user-uuid-coach');
 
-    expect(notificationService.createBatch).toHaveBeenCalled();
+    expect(notificationService.createBatch).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'GROUP_CLASS_CANCELLED',
+          title: '团课已取消',
+          targetType: 'group-class',
+          targetId: 'group-class-uuid-1',
+        }),
+      ]),
+    );
   });
 
   // 业务规则: 通知创建失败不阻塞主流程（§4 取消团课 - 业务规则）
