@@ -257,6 +257,7 @@ describe('POST /api/activities/:id/join — ActivityService.joinActivity', () =>
 
     expect(notificationService.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        userId: 'user-uuid-1', // 通知接收人是活动创建者，不是操作者自己
         type: 'ACTIVITY_JOINED',
         targetType: 'activity',
         targetId: 'activity-uuid-1',
@@ -560,6 +561,7 @@ describe('POST /api/activities/:id/leave — ActivityService.leaveActivity', () 
 
     expect(notificationService.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        userId: 'user-uuid-1', // 通知接收人是活动创建者，不是退出者自己
         type: 'ACTIVITY_LEFT',
         targetType: 'activity',
         targetId: 'activity-uuid-1',
@@ -942,6 +944,12 @@ describe('PUT /api/activities/:id — ActivityService.updateActivity', () => {
         }),
       ]),
     );
+    // 验证通知接收人不包含创建者自己
+    const batchArg = notificationService.createBatch.mock.calls[0][0] as Array<{ userId: string }>;
+    const notifiedUserIds = batchArg.map((n) => n.userId);
+    expect(notifiedUserIds).not.toContain('user-uuid-1'); // creator 应被排除
+    expect(notifiedUserIds).toContain('user-uuid-2');
+    expect(notifiedUserIds).toContain('user-uuid-3');
   });
 
   // 业务规则: 通知文案包含球馆名称和开始日期（§6.5 通知文案 — ACTIVITY_UPDATED）
@@ -1462,6 +1470,12 @@ describe('POST /api/activities/:id/cancel — ActivityService.cancelActivity', (
         }),
       ]),
     );
+    // 验证通知接收人不包含创建者自己
+    const batchArg = notificationService.createBatch.mock.calls[0][0] as Array<{ userId: string }>;
+    const notifiedUserIds = batchArg.map((n) => n.userId);
+    expect(notifiedUserIds).not.toContain('user-uuid-1'); // creator 应被排除
+    expect(notifiedUserIds).toContain('user-uuid-2');
+    expect(notifiedUserIds).toContain('user-uuid-3');
   });
 
   // 业务规则: 通知文案包含球馆名称和原开始日期（§6.5 通知文案 — ACTIVITY_CANCELLED）
@@ -1642,6 +1656,27 @@ describe('定时任务: 活动状态自动流转 — ActivityService.transitionS
     // Should update the found activities to in_progress
     expect(repo.updateStatus).toHaveBeenCalledWith(
       ['activity-past-start'],
+      'in_progress',
+    );
+  });
+
+  // 业务规则: full 状态且 startTime 已过的活动也应流转为 in_progress（§6.2 定时任务）
+  it('should transition full activities to in_progress when startTime has passed', async () => {
+    const fullPastStartActivity = createActivityRecord({
+      id: 'activity-full-past',
+      status: 'full',
+      currentParticipants: 8,
+      maxParticipants: 8,
+      startTime: new Date(Date.now() - 3600000), // 1 hour ago
+    });
+    repo.findActivitiesToTransition.mockResolvedValueOnce([fullPastStartActivity]);
+    repo.findActivitiesToTransition.mockResolvedValueOnce([]); // no in_progress → completed
+
+    await service.transitionStatuses();
+
+    expect(repo.findActivitiesToTransition).toHaveBeenCalled();
+    expect(repo.updateStatus).toHaveBeenCalledWith(
+      ['activity-full-past'],
       'in_progress',
     );
   });
