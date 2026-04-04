@@ -9,7 +9,7 @@ argument-hint: "<module-name>"
 
 模块名：$ARGUMENTS
 
-该前端模块的所有 feature 的 Task 已逐个 Review 通过。本次 Review 关注模块级的一致性和完整性。
+该前端模块的所有 feature 已各自通过 Feature Review。本次 Review 关注跨 feature 的一致性和模块级完整性。
 
 请先阅读以下文件：
 - CLAUDE.md
