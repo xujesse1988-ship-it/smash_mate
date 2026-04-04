@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: venue
@@ -14,7 +14,7 @@ feature:
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
 | user | 后端 | done | done | done | done | done | N/A |
-| venue | 后端 | done | in_progress | | | | |
+| venue | 后端 | done | done | in_progress | | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
@@ -174,3 +174,4 @@ user #19 review LGTM（2026-04-03）。Issue #19 关闭。user 模块所有 Task
 user 模块 Review LGTM（2026-04-03）。user 模块完成（基础层，无 L2 集成测试）。152 个测试全通过。进入 venue 模块。
 venue 契约测试编写完成（2026-04-03）：#20（搜索+详情+跨模块，27 用例）+ #21（城市管理+球馆管理+数据同步，33 用例），共 60 个用例。等待 review。
 venue 契约测试 #20（球馆搜索与详情接口）review 通过（2026-04-04）。#21（城市与球馆管理接口）待确认。
+venue 契约测试 #21（城市与球馆管理接口）review 通过（2026-04-04）。venue 模块契约测试全部完成（62 个用例），进入实现阶段。
