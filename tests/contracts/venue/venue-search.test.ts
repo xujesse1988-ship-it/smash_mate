@@ -130,9 +130,9 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
     const query: VenueSearchQuery = { keyword: '体育' };
     await service.searchVenues(query);
 
-    const callArgs = repo.searchVenues.mock.calls[0];
-    // Verify keyword is passed to repository
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.searchVenues.mock.calls[0][0];
+    // Verify keyword is passed to repository with correct value
+    expect(callArgs).toMatchObject({ keyword: '体育' });
   });
 
   it('should include distance field when latitude and longitude are provided', async () => {
@@ -179,8 +179,10 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
     await service.searchVenues(query);
 
     // Verify coordinates not passed (so repo should sort by name)
-    const callArgs = repo.searchVenues.mock.calls[0];
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.searchVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ keyword: '球馆' });
+    expect(callArgs.latitude).toBeUndefined();
+    expect(callArgs.longitude).toBeUndefined();
   });
 
   it('should use default limit of 10 when not specified', async () => {
@@ -192,8 +194,8 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
     await service.searchVenues(query);
 
     // Verify default limit is applied (10)
-    const callArgs = repo.searchVenues.mock.calls[0];
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.searchVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ limit: 10 });
   });
 
   it('should cap limit to 50 when value exceeds maximum', async () => {
@@ -204,8 +206,8 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
     const query: VenueSearchQuery = { keyword: '球馆', limit: 100 };
     await service.searchVenues(query);
 
-    const callArgs = repo.searchVenues.mock.calls[0];
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.searchVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ limit: 50 });
   });
 
   it('should use default limit when value is less than 1', async () => {
@@ -216,8 +218,8 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
     const query: VenueSearchQuery = { keyword: '球馆', limit: 0 };
     await service.searchVenues(query);
 
-    const callArgs = repo.searchVenues.mock.calls[0];
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.searchVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ limit: 10 });
   });
 
   it('should return cityName with each venue in search results', async () => {
