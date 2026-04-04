@@ -47,4 +47,8 @@ export class ActivityService {
   async getParticipantIds(_activityId: string): Promise<string[]> {
     throw new Error('Not implemented');
   }
+
+  async transitionStatuses(): Promise<void> {
+    throw new Error('Not implemented');
+  }
 }
