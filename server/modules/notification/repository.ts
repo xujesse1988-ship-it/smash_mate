@@ -1,33 +1,88 @@
+import { prisma } from '../../infra/database.js';
+import type { CreateNotificationInput, NotificationListQuery } from './types.js';
+
 export class NotificationRepository {
-  async create(_data: unknown) {
-    throw new Error('Not implemented');
+  async create(data: CreateNotificationInput) {
+    return prisma.notification.create({
+      data: {
+        userId: data.userId,
+        type: data.type,
+        title: data.title,
+        content: data.content,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        isRead: false,
+      },
+    });
   }
 
-  async createMany(_data: unknown[]) {
-    throw new Error('Not implemented');
+  async createMany(data: CreateNotificationInput[]) {
+    return prisma.notification.createMany({
+      data: data.map((item) => ({
+        userId: item.userId,
+        type: item.type,
+        title: item.title,
+        content: item.content,
+        targetType: item.targetType,
+        targetId: item.targetId,
+        isRead: false,
+      })),
+    });
   }
 
-  async findByUser(_userId: string, _query: unknown) {
-    throw new Error('Not implemented');
+  async findByUser(
+    userId: string,
+    query: Required<Pick<NotificationListQuery, 'page' | 'pageSize'>> & { isRead?: boolean },
+  ) {
+    const where: { userId: string; isRead?: boolean } = { userId };
+    if (query.isRead !== undefined) {
+      where.isRead = query.isRead;
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+      prisma.notification.count({ where }),
+    ]);
+
+    return { items, total };
   }
 
-  async countUnread(_userId: string): Promise<number> {
-    throw new Error('Not implemented');
+  async countUnread(userId: string): Promise<number> {
+    return prisma.notification.count({
+      where: { userId, isRead: false },
+    });
   }
 
-  async findById(_id: string) {
-    throw new Error('Not implemented');
+  async findById(id: string) {
+    return prisma.notification.findUnique({ where: { id } });
   }
 
-  async markAsRead(_id: string) {
-    throw new Error('Not implemented');
+  async markAsRead(id: string) {
+    return prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
   }
 
-  async markAllAsRead(_userId: string): Promise<number> {
-    throw new Error('Not implemented');
+  async markAllAsRead(userId: string): Promise<number> {
+    const result = await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+    return result.count;
   }
 
-  async deleteExpired(_cutoffDate: Date): Promise<number> {
-    throw new Error('Not implemented');
+  async deleteExpired(cutoffDate: Date): Promise<number> {
+    const result = await prisma.notification.deleteMany({
+      where: {
+        createdAt: { lt: cutoffDate },
+      },
+    });
+    return result.count;
   }
 }
