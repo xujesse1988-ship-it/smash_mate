@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5e
+substep: 5e-review
 
 ## 当前模块
 module: venue
@@ -177,3 +177,4 @@ venue 契约测试 #20（球馆搜索与详情接口）review 通过（2026-04-0
 venue 契约测试 #21（城市与球馆管理接口）review 通过（2026-04-04）。venue 模块契约测试全部完成（62 个用例），进入实现阶段。
 venue #22 实现完成（2026-04-04）：搜索+详情+跨模块+管理员接口（含 #23 范围）。契约测试 62 通过，L1 集成测试 23 通过，全量 238 通过。
 venue #22 review 有 SHOULD FIX（2026-04-04）：syncVenues 计数不准确（忽略 upsertVenues 返回值）。需修复。
+venue #22 review 问题已修复（2026-04-04）：修复 syncVenues 和 createCity 中 upsertVenues 返回值未使用导致 newVenues/updatedVenues 计数不准确。等待重新 review。
