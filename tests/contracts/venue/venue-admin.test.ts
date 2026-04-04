@@ -157,8 +157,8 @@ describe('POST /api/admin/cities — VenueService.createCity', () => {
     // 来源: venue.md §4 添加城市 - 业务规则 bullet 5
     repo.findCityByName.mockResolvedValue(null);
     repo.createCity.mockResolvedValue(createCityRecord({ name: '深圳' }));
-    // Simulate map service failure — the service should handle this gracefully
-    // (The specific mock depends on how map service is injected; here we verify the contract)
+    // Simulate map service failure — upsertVenues rejects with an error
+    repo.upsertVenues.mockRejectedValue(new Error('Map service unavailable'));
 
     const input: CreateCityInput = { name: '深圳' };
     const result = await service.createCity(input);
@@ -166,6 +166,8 @@ describe('POST /api/admin/cities — VenueService.createCity', () => {
     // City should still be created regardless of map service failure
     expect(result).toHaveProperty('id');
     expect(result).toHaveProperty('name', '深圳');
+    // venueCount should be 0 when map service fails
+    expect(result.venueCount).toBe(0);
   });
 
   it('should use upsertVenues to handle mapPoiId deduplication', async () => {
@@ -177,9 +179,11 @@ describe('POST /api/admin/cities — VenueService.createCity', () => {
     const input: CreateCityInput = { name: '北京' };
     await service.createCity(input);
 
-    // The service should call upsertVenues (which handles deduplication)
-    // This may or may not be called depending on map service result
-    // The key contract is that it handles mapPoiId-based deduplication
+    // The service should call upsertVenues (which handles mapPoiId-based deduplication)
+    expect(repo.upsertVenues).toHaveBeenCalledTimes(1);
+    // upsertVenues should receive the city ID so venues are linked to the correct city
+    const callArgs = repo.upsertVenues.mock.calls[0];
+    expect(callArgs[0]).toBe('city-uuid-1');
   });
 
   it('should perform case-insensitive duplicate check for city name', async () => {
@@ -336,6 +340,17 @@ describe('GET /api/admin/cities — VenueService.getCityList', () => {
     expect(result.items[1].name).toBe('北京');
   });
 
+  it('should cap pageSize to 100 when value exceeds maximum', async () => {
+    // 业务规则: pageSize 最大 100
+    // 来源: venue.md §4 城市列表 - Query Params (每页条数，默认 20，最大 100)
+    repo.findCities.mockResolvedValue({ items: [], total: 0 });
+
+    const query: AdminCityListQuery = { page: 1, pageSize: 200 };
+    const result = await service.getCityList(query);
+
+    expect(result.pageSize).toBe(100);
+  });
+
   it('should return empty list when no cities exist', async () => {
     // 业务规则: 空列表场景
     // 来源: venue.md §4 城市列表 - Response 200
@@ -398,8 +413,8 @@ describe('GET /api/admin/venues — VenueService.getAdminVenueList', () => {
     await service.getAdminVenueList(query);
 
     expect(repo.findAdminVenues).toHaveBeenCalledTimes(1);
-    const callArgs = repo.findAdminVenues.mock.calls[0];
-    expect(callArgs).toBeDefined();
+    const callArgs = repo.findAdminVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ cityId: 'city-uuid-1' });
   });
 
   it('should filter venues by keyword when provided', async () => {
@@ -411,6 +426,8 @@ describe('GET /api/admin/venues — VenueService.getAdminVenueList', () => {
     await service.getAdminVenueList(query);
 
     expect(repo.findAdminVenues).toHaveBeenCalledTimes(1);
+    const callArgs = repo.findAdminVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ keyword: '朝阳' });
   });
 
   it('should support combined filtering by cityId and keyword', async () => {
@@ -427,6 +444,8 @@ describe('GET /api/admin/venues — VenueService.getAdminVenueList', () => {
     await service.getAdminVenueList(query);
 
     expect(repo.findAdminVenues).toHaveBeenCalledTimes(1);
+    const callArgs = repo.findAdminVenues.mock.calls[0][0];
+    expect(callArgs).toMatchObject({ cityId: 'city-uuid-1', keyword: '朝阳' });
   });
 
   it('should use default pagination when not specified', async () => {
@@ -465,6 +484,17 @@ describe('GET /api/admin/venues — VenueService.getAdminVenueList', () => {
 
     expect(result.items[0].name).toBe('新球馆');
     expect(result.items[1].name).toBe('旧球馆');
+  });
+
+  it('should cap pageSize to 100 when value exceeds maximum', async () => {
+    // 业务规则: pageSize 最大 100
+    // 来源: venue.md §4 球馆列表 - Query Params (每页条数，默认 20，最大 100)
+    repo.findAdminVenues.mockResolvedValue({ items: [], total: 0 });
+
+    const query: AdminVenueListQuery = { page: 1, pageSize: 200 };
+    const result = await service.getAdminVenueList(query);
+
+    expect(result.pageSize).toBe(100);
   });
 
   it('should return empty list when no venues match', async () => {
@@ -662,7 +692,10 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
     await service.syncVenues();
 
     // upsertVenues should be called for deduplication-based upsert
-    // The exact call depends on map service response
+    expect(repo.upsertVenues).toHaveBeenCalled();
+    // upsertVenues should receive the city ID for the synced city
+    const callArgs = repo.upsertVenues.mock.calls[0];
+    expect(callArgs[0]).toBe('c1');
   });
 
   it('should not auto-delete venues that are no longer in map service results', async () => {
