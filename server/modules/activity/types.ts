@@ -32,5 +32,6 @@ export interface ActivityListQuery {
 export interface UserActivitiesQuery {
   page?: number;
   pageSize?: number;
-  role?: 'initiated' | 'participated';
+  role?: 'creator' | 'participant';
+  status?: ActivityStatus;
 }
