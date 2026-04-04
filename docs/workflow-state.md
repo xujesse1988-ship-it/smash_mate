@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: notification
@@ -15,7 +15,7 @@ feature:
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
 | user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | done | done | done | done | N/A |
-| notification | 后端 | done | review | | | | |
+| notification | 后端 | done | done | in_progress | | | |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
@@ -181,3 +181,4 @@ venue #22 review 问题已修复（2026-04-04）：修复 syncVenues 和 createC
 venue #22 review LGTM（2026-04-04）。Issue #22 关闭。#22 已包含 #23 全部实现，Issue #23 一并关闭。venue 模块所有 Task 完成，进入模块 Review。
 venue 模块 Review 反馈（2026-04-04）：补全 mock 中 countVenuesByCity + 注册 scheduler cron task。已修复，等待重新 Review。
 venue 模块 Review LGTM（2026-04-04）。venue 模块完成（基础层，无 L2 集成测试）。238 个测试全通过。进入 notification 模块。
+notification 契约测试 #24 review 通过（2026-04-04）。46 个用例，进入实现阶段。
