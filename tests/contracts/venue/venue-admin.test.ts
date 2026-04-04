@@ -46,18 +46,21 @@ function createMockRepository(): {
     findCities: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     findAdminVenues: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     deleteVenue: vi.fn().mockResolvedValue(undefined),
-    upsertVenues: vi.fn().mockResolvedValue(undefined),
+    upsertVenues: vi.fn().mockResolvedValue({ newCount: 0, updatedCount: 0 }),
     getAllCities: vi.fn().mockResolvedValue([]),
+    countVenuesByCity: vi.fn().mockResolvedValue(0),
   };
 }
 
 /** Standard city record as returned by repository */
-function createCityRecord(overrides?: Partial<{
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-}>) {
+function createCityRecord(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }>,
+) {
   return {
     id: 'city-uuid-1',
     name: '北京',
@@ -68,16 +71,18 @@ function createCityRecord(overrides?: Partial<{
 }
 
 /** Standard venue record for admin list */
-function createAdminVenueRecord(overrides?: Partial<{
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  cityId: string;
-  cityName: string;
-  createdAt: Date;
-}>) {
+function createAdminVenueRecord(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    cityId: string;
+    cityName: string;
+    createdAt: Date;
+  }>,
+) {
   return {
     id: 'venue-uuid-1',
     name: '朝阳体育中心羽毛球馆',
@@ -297,9 +302,7 @@ describe('GET /api/admin/cities — VenueService.getCityList', () => {
   it('should calculate venueCount in real-time', async () => {
     // 业务规则: venueCount 为该城市下的球馆数量（实时计算）
     // 来源: venue.md §4 城市列表 - 业务规则 bullet 2
-    const cities = [
-      { ...createCityRecord({ id: 'c1', name: '北京' }), venueCount: 10 },
-    ];
+    const cities = [{ ...createCityRecord({ id: 'c1', name: '北京' }), venueCount: 10 }];
     repo.findCities.mockResolvedValue({ items: cities, total: 1 });
 
     const query: AdminCityListQuery = { page: 1, pageSize: 20 };
@@ -637,9 +640,7 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
   it('should include city info and venue counts in each sync result', async () => {
     // 业务规则: 返回每个城市的同步结果
     // 来源: venue.md §4 手动触发球馆数据更新 - Response 200 syncResults
-    repo.getAllCities.mockResolvedValue([
-      createCityRecord({ id: 'c1', name: '北京' }),
-    ]);
+    repo.getAllCities.mockResolvedValue([createCityRecord({ id: 'c1', name: '北京' })]);
 
     const result = await service.syncVenues();
 
@@ -696,9 +697,7 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
   it('should use mapPoiId for deduplication during sync', async () => {
     // 业务规则: 通过 mapPoiId 去重，已存在的更新名称和地址，不存在的新增
     // 来源: venue.md §4 手动触发球馆数据更新 - 业务规则 bullet 4
-    repo.getAllCities.mockResolvedValue([
-      createCityRecord({ id: 'c1', name: '北京' }),
-    ]);
+    repo.getAllCities.mockResolvedValue([createCityRecord({ id: 'c1', name: '北京' })]);
 
     await service.syncVenues();
 
@@ -712,9 +711,7 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
   it('should not auto-delete venues that are no longer in map service results', async () => {
     // 业务规则: 已关闭球馆不自动删除（由管理员手动处理）
     // 来源: venue.md §4 手动触发球馆数据更新 - 业务规则 bullet 4 + §6.2 步骤 4c
-    repo.getAllCities.mockResolvedValue([
-      createCityRecord({ id: 'c1', name: '北京' }),
-    ]);
+    repo.getAllCities.mockResolvedValue([createCityRecord({ id: 'c1', name: '北京' })]);
 
     await service.syncVenues();
 
@@ -735,9 +732,9 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
     });
 
     // Simulate a long-running sync by making getAllCities block
-    repo.getAllCities.mockImplementation(() => blockingPromise.then(() => [
-      createCityRecord({ id: 'c1', name: '北京' }),
-    ]));
+    repo.getAllCities.mockImplementation(() =>
+      blockingPromise.then(() => [createCityRecord({ id: 'c1', name: '北京' })]),
+    );
 
     // Start first sync (don't await — it's blocked)
     const firstSync = service.syncVenues().catch(() => {
@@ -758,9 +755,7 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
   it('should release the sync lock after successful completion', async () => {
     // 业务规则: 完成后释放内存锁
     // 来源: venue.md §6.4 并发控制
-    repo.getAllCities.mockResolvedValue([
-      createCityRecord({ id: 'c1', name: '北京' }),
-    ]);
+    repo.getAllCities.mockResolvedValue([createCityRecord({ id: 'c1', name: '北京' })]);
 
     // First sync should succeed
     await service.syncVenues();

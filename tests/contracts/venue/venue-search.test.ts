@@ -34,24 +34,27 @@ function createMockRepository(): {
     findCities: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     findAdminVenues: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     deleteVenue: vi.fn().mockResolvedValue(undefined),
-    upsertVenues: vi.fn().mockResolvedValue(undefined),
+    upsertVenues: vi.fn().mockResolvedValue({ newCount: 0, updatedCount: 0 }),
     getAllCities: vi.fn().mockResolvedValue([]),
+    countVenuesByCity: vi.fn().mockResolvedValue(0),
   };
 }
 
 /** Standard venue record as returned by repository (with city info) */
-function createVenueRecord(overrides?: Partial<{
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  cityId: string;
-  mapPoiId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  city: { name: string };
-}>) {
+function createVenueRecord(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    cityId: string;
+    mapPoiId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    city: { name: string };
+  }>,
+) {
   return {
     id: 'venue-uuid-1',
     name: '朝阳体育中心羽毛球馆',
@@ -68,15 +71,17 @@ function createVenueRecord(overrides?: Partial<{
 }
 
 /** Standard search result item as returned by repository */
-function createSearchResultItem(overrides?: Partial<{
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  cityName: string;
-  distance: number | null;
-}>) {
+function createSearchResultItem(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    cityName: string;
+    distance: number | null;
+  }>,
+) {
   return {
     id: 'venue-uuid-1',
     name: '朝阳体育中心羽毛球馆',
@@ -158,9 +163,7 @@ describe('GET /api/venues/search — VenueService.searchVenues', () => {
   it('should not include distance field when coordinates are not provided', async () => {
     // 业务规则: 未传入经纬度时 distance 字段不返回
     // 来源: venue.md §4 球馆搜索 - Response 200 注释
-    const items = [
-      createSearchResultItem({ id: 'v1', distance: null }),
-    ];
+    const items = [createSearchResultItem({ id: 'v1', distance: null })];
     repo.searchVenues.mockResolvedValue(items);
 
     const query: VenueSearchQuery = { keyword: '羽毛球' };
