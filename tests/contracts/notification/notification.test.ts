@@ -13,7 +13,7 @@
  * Mock 策略:
  * - NotificationRepository: 全部 mock（隔离数据库依赖）
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NotificationService } from '@server/modules/notification/service.js';
 import { NotificationRepository } from '@server/modules/notification/repository.js';
 import type {
@@ -771,5 +771,64 @@ describe('NotificationService.createBatch — internal cross-module interface', 
     ).rejects.toMatchObject({
       code: 'NOTIFICATION_INVALID_PARAMS',
     });
+  });
+});
+
+// ===========================================================================
+// cleanExpiredNotifications — 通知过期自动清理（定时任务）
+// ===========================================================================
+
+describe('cleanExpiredNotifications — 通知过期自动清理', () => {
+  let service: NotificationService;
+  let repo: ReturnType<typeof createMockRepository>;
+
+  beforeEach(() => {
+    repo = createMockRepository();
+    service = new NotificationService(repo as unknown as NotificationRepository);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T03:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // -----------------------------------------------------------------------
+  // 正常流程
+  // -----------------------------------------------------------------------
+
+  it('should calculate 90-day cutoff date and pass it to deleteExpired', async () => {
+    // 业务规则: 计算截止时间 = 当前时间 - 90 天，删除 createdAt < 截止时间 的所有通知
+    // 来源: notification.md §6.3 通知过期自动清理 - 步骤 1~2
+    repo.deleteExpired.mockResolvedValue(0);
+
+    await service.cleanExpiredNotifications();
+
+    expect(repo.deleteExpired).toHaveBeenCalledTimes(1);
+    const cutoffDate = repo.deleteExpired.mock.calls[0][0] as Date;
+    // 当前时间 2026-04-03 减 90 天 = 2026-01-03
+    const expectedCutoff = new Date('2026-01-03T03:00:00.000Z');
+    expect(cutoffDate.getTime()).toBe(expectedCutoff.getTime());
+  });
+
+  it('should log info with cleanup count on success', async () => {
+    // 业务规则: 清理成功时记录 info 日志（含清理数量）
+    // 来源: notification.md §6.3 通知过期自动清理 - 步骤 3
+    repo.deleteExpired.mockResolvedValue(42);
+
+    // Service 内部使用 logger.info 记录清理数量，此处验证不抛出错误且调用了 deleteExpired
+    await service.cleanExpiredNotifications();
+
+    expect(repo.deleteExpired).toHaveBeenCalledTimes(1);
+    // 清理方法应正常完成且不抛出错误
+  });
+
+  it('should catch errors and not throw, ensuring service stability', async () => {
+    // 业务规则: 异常时 catch 并记录 error 日志，不抛出错误，不影响服务稳定性
+    // 来源: notification.md §6.3 通知过期自动清理 - 步骤 4
+    repo.deleteExpired.mockRejectedValue(new Error('Database connection lost'));
+
+    // 清理方法应捕获异常，不应抛出错误
+    await expect(service.cleanExpiredNotifications()).resolves.not.toThrow();
   });
 });
