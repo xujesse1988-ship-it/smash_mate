@@ -10,6 +10,9 @@ export function createVenueController(): Router {
   const repo = new VenueRepository();
   const service = new VenueService(repo);
 
+  // Register scheduled tasks (weekly venue data sync)
+  service.registerScheduledTasks();
+
   // GET /api/venues/search
   router.get(
     '/venues/search',

@@ -1,6 +1,7 @@
 import { AppError } from '../../infra/error-handler.js';
 import { createModuleLogger } from '../../infra/logger.js';
 import { config } from '../../infra/config.js';
+import { registerTask } from '../../infra/scheduler.js';
 import { VenueRepository } from './repository.js';
 import type {
   VenueSearchQuery,
@@ -298,6 +299,35 @@ export class VenueService {
       message: '球馆数据更新已触发',
       syncResults,
     };
+  }
+
+  // --- Scheduled tasks ---
+
+  /**
+   * Register cron tasks for venue data sync.
+   * Design doc §6.2: weekly venue data update via infra/scheduler.
+   */
+  registerScheduledTasks(): void {
+    // Every Monday at 03:00 — weekly venue data sync
+    registerTask('venue-sync', '0 3 * * 1', async () => {
+      if (this.isSyncing) {
+        logger.warn({ module: 'venue-sync' }, '定时同步跳过：上一次同步尚未完成');
+        return;
+      }
+
+      try {
+        const result = await this.syncVenues();
+        logger.info(
+          { module: 'venue-sync', citiesCount: result.syncResults.length },
+          '定时球馆数据同步完成',
+        );
+      } catch (err) {
+        logger.error(
+          { module: 'venue-sync', error: (err as Error).message },
+          '定时球馆数据同步失败',
+        );
+      }
+    });
   }
 
   // --- Cross-module service methods ---
