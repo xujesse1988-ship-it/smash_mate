@@ -16,7 +16,7 @@ feature:
 | user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | done | done | done | done | N/A |
 | notification | 后端 | done | done | done | done | done | N/A |
-| activity | 后端 | done | | | | | |
+| activity | 后端 | done | review | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
 | review | 后端 | done | | | | | |
