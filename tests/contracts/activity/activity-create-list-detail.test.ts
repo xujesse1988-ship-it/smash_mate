@@ -267,13 +267,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
     venueService.getVenueById.mockResolvedValue(null);
     const input = validCreateInput();
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_VENUE_NOT_FOUND');
-      expect(error.statusCode).toBe(404);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_VENUE_NOT_FOUND',
+      statusCode: 404,
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -284,13 +281,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
   it('should throw ACTIVITY_INVALID_VENUE when venueId is empty', async () => {
     const input = validCreateInput({ venueId: '' });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_VENUE');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_VENUE',
+      statusCode: 400,
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -303,13 +297,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
       startTime: new Date('2020-01-01T00:00:00.000Z').toISOString(),
     });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_TIME');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TIME',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_TIME — 结束时间不晚于开始时间（§4 创建活动 - 错误码）
@@ -318,13 +309,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
     const end = futureDate(24);
     const input = validCreateInput({ startTime: start, endTime: end });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_TIME');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TIME',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_TIME — 结束时间等于开始时间（§4 创建活动 - 错误码）
@@ -332,13 +320,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
     const sameTime = futureDate(24);
     const input = validCreateInput({ startTime: sameTime, endTime: sameTime });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_TIME');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TIME',
+      statusCode: 400,
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -349,39 +334,30 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
   it('should throw ACTIVITY_INVALID_PARTICIPANTS when maxParticipants is less than 2', async () => {
     const input = validCreateInput({ maxParticipants: 1 });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_PARTICIPANTS');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_PARTICIPANTS',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_PARTICIPANTS — maxParticipants > 50（§4 创建活动 - 错误码）
   it('should throw ACTIVITY_INVALID_PARTICIPANTS when maxParticipants is greater than 50', async () => {
     const input = validCreateInput({ maxParticipants: 51 });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_PARTICIPANTS');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_PARTICIPANTS',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_PARTICIPANTS — maxParticipants 为 0（§4 创建活动 - 错误码）
   it('should throw ACTIVITY_INVALID_PARTICIPANTS when maxParticipants is 0', async () => {
     const input = validCreateInput({ maxParticipants: 0 });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_PARTICIPANTS');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_PARTICIPANTS',
+      statusCode: 400,
+    });
   });
 
   // 边界值: maxParticipants 恰好为 2（最小有效值）
@@ -410,13 +386,10 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
   it('should throw ACTIVITY_INVALID_TITLE when title exceeds 50 characters', async () => {
     const input = validCreateInput({ title: 'a'.repeat(51) });
 
-    await expect(service.createActivity('user-uuid-1', input)).rejects.toThrow();
-    try {
-      await service.createActivity('user-uuid-1', input);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_TITLE');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.createActivity('user-uuid-1', input)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TITLE',
+      statusCode: 400,
+    });
   });
 
   // 边界值: title 恰好为 50 字符（最大有效值）
@@ -548,6 +521,7 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ dateFilter: 'today' });
   });
 
   // 业务规则: 时间筛选 dateFilter=tomorrow（§4 活动列表 - 业务规则）
@@ -558,6 +532,7 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ dateFilter: 'tomorrow' });
   });
 
   // 业务规则: 时间筛选 dateFilter=this_week（§4 活动列表 - 业务规则）
@@ -568,6 +543,7 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ dateFilter: 'this_week' });
   });
 
   // 业务规则: 自定义日期范围（dateStart + dateEnd）（§4 活动列表 - 业务规则）
@@ -581,6 +557,10 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({
+      dateStart: '2026-04-05T00:00:00.000Z',
+      dateEnd: '2026-04-10T23:59:59.000Z',
+    });
   });
 
   // 业务规则: dateFilter 和 dateStart/dateEnd 互斥，dateFilter 优先（§4 活动列表 - 业务规则）
@@ -596,6 +576,7 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
 
     // Should use dateFilter (today) and ignore dateStart/dateEnd
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ dateFilter: 'today' });
   });
 
   // 业务规则: 距离筛选（maxDistance）需 latitude 和 longitude 同时提供（§4 活动列表 - 业务规则）
@@ -610,6 +591,11 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({
+      maxDistance: 5,
+      latitude: 39.9,
+      longitude: 116.4,
+    });
   });
 
   // 业务规则: 空余筛选 hasSlot=true — 仅返回 status 为 open 的活动（§4 活动列表 - 业务规则）
@@ -620,6 +606,7 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ hasSlot: true });
   });
 
   // 业务规则: sortBy=distance 需传入经纬度（§4 活动列表 - 业务规则）
@@ -634,6 +621,11 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({
+      sortBy: 'distance',
+      latitude: 39.9,
+      longitude: 116.4,
+    });
   });
 
   // 业务规则: sortBy=distance 未提供经纬度时回退到 time（§4 活动列表 - 业务规则）
@@ -644,6 +636,8 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
     await service.getActivityList(query);
 
     expect(repo.findList).toHaveBeenCalled();
+    // Without coordinates, sortBy should fallback to 'time'
+    expect(repo.findList.mock.calls[0][0]).toMatchObject({ sortBy: 'time' });
   });
 
   // 业务规则: distance 字段仅当传入经纬度时返回（§4 活动列表 - Response 200 备注）
@@ -677,26 +671,20 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
   it('should throw ACTIVITY_INVALID_COORDINATES when only latitude is provided', async () => {
     const query: ActivityListQuery = { latitude: 39.9 };
 
-    await expect(service.getActivityList(query)).rejects.toThrow();
-    try {
-      await service.getActivityList(query);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_COORDINATES');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_COORDINATES',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_COORDINATES — 经纬度只提供了一个（§4 活动列表 - 错误码）
   it('should throw ACTIVITY_INVALID_COORDINATES when only longitude is provided', async () => {
     const query: ActivityListQuery = { longitude: 116.4 };
 
-    await expect(service.getActivityList(query)).rejects.toThrow();
-    try {
-      await service.getActivityList(query);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_COORDINATES');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_COORDINATES',
+      statusCode: 400,
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -707,26 +695,20 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
   it('should throw ACTIVITY_INVALID_DATE_RANGE when only dateStart is provided', async () => {
     const query: ActivityListQuery = { dateStart: '2026-04-05T00:00:00.000Z' } as any;
 
-    await expect(service.getActivityList(query)).rejects.toThrow();
-    try {
-      await service.getActivityList(query);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_DATE_RANGE');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_DATE_RANGE',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_DATE_RANGE — dateStart 和 dateEnd 只提供了一个（§4 活动列表 - 错误码）
   it('should throw ACTIVITY_INVALID_DATE_RANGE when only dateEnd is provided', async () => {
     const query: ActivityListQuery = { dateEnd: '2026-04-10T23:59:59.000Z' } as any;
 
-    await expect(service.getActivityList(query)).rejects.toThrow();
-    try {
-      await service.getActivityList(query);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_DATE_RANGE');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_DATE_RANGE',
+      statusCode: 400,
+    });
   });
 
   // 错误码: ACTIVITY_INVALID_DATE_RANGE — dateEnd 早于 dateStart（§4 活动列表 - 错误码）
@@ -736,13 +718,10 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
       dateEnd: '2026-04-05T00:00:00.000Z',
     };
 
-    await expect(service.getActivityList(query)).rejects.toThrow();
-    try {
-      await service.getActivityList(query);
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_INVALID_DATE_RANGE');
-      expect(error.statusCode).toBe(400);
-    }
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_DATE_RANGE',
+      statusCode: 400,
+    });
   });
 });
 
@@ -941,13 +920,10 @@ describe('GET /api/activities/:id — ActivityService.getActivityDetail', () => 
   it('should throw ACTIVITY_NOT_FOUND when activity does not exist', async () => {
     repo.findById.mockResolvedValue(null);
 
-    await expect(service.getActivityDetail('non-existent-id')).rejects.toThrow();
-    try {
-      await service.getActivityDetail('non-existent-id');
-    } catch (error: any) {
-      expect(error.code).toBe('ACTIVITY_NOT_FOUND');
-      expect(error.statusCode).toBe(404);
-    }
+    await expect(service.getActivityDetail('non-existent-id')).rejects.toMatchObject({
+      code: 'ACTIVITY_NOT_FOUND',
+      statusCode: 404,
+    });
   });
 });
 
@@ -1007,7 +983,10 @@ describe('GET /api/users/:id/activities — ActivityService.getUserActivities', 
     const query = { role: 'creator' as const };
     await service.getUserActivities('user-uuid-1', query as any);
 
-    expect(repo.findUserActivities).toHaveBeenCalled();
+    expect(repo.findUserActivities).toHaveBeenCalledWith(
+      'user-uuid-1',
+      expect.objectContaining({ role: 'creator' }),
+    );
   });
 
   // 业务规则: role 筛选 participant — 仅返回参与但未发起的活动（§4 用户参与的活动列表 - 业务规则）
@@ -1017,7 +996,10 @@ describe('GET /api/users/:id/activities — ActivityService.getUserActivities', 
     const query = { role: 'participant' as const };
     await service.getUserActivities('user-uuid-1', query as any);
 
-    expect(repo.findUserActivities).toHaveBeenCalled();
+    expect(repo.findUserActivities).toHaveBeenCalledWith(
+      'user-uuid-1',
+      expect.objectContaining({ role: 'participant' }),
+    );
   });
 
   // 业务规则: role 不传则返回所有与该用户相关的活动（§4 用户参与的活动列表 - 业务规则）
@@ -1040,7 +1022,10 @@ describe('GET /api/users/:id/activities — ActivityService.getUserActivities', 
     const query = { status: 'open' as const };
     await service.getUserActivities('user-uuid-1', query as any);
 
-    expect(repo.findUserActivities).toHaveBeenCalled();
+    expect(repo.findUserActivities).toHaveBeenCalledWith(
+      'user-uuid-1',
+      expect.objectContaining({ status: 'open' }),
+    );
   });
 
   // 业务规则: 按 startTime 倒序排列（§4 用户参与的活动列表 - 业务规则）
