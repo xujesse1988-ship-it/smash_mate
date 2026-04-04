@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: notification
@@ -182,3 +182,4 @@ venue #22 review LGTM（2026-04-04）。Issue #22 关闭。#22 已包含 #23 全
 venue 模块 Review 反馈（2026-04-04）：补全 mock 中 countVenuesByCity + 注册 scheduler cron task。已修复，等待重新 Review。
 venue 模块 Review LGTM（2026-04-04）。venue 模块完成（基础层，无 L2 集成测试）。238 个测试全通过。进入 notification 模块。
 notification 契约测试 #24 review 通过（2026-04-04）。46 个用例，进入实现阶段。
+notification #25 实现完成（2026-04-04）：通知列表（分页+筛选）、未读计数、标记已读（单条+全部）、跨模块创建接口（create/createBatch）、定时清理（90天）。契约测试 46 通过，L1 集成测试 38 通过，全量 322 通过。等待 review。
