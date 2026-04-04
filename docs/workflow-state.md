@@ -2,10 +2,10 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
-module: notification
+module: activity
 feature:
 
 ## 模块进度
@@ -15,7 +15,7 @@ feature:
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
 | user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | done | done | done | done | N/A |
-| notification | 后端 | done | done | done | done | | |
+| notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
@@ -136,7 +136,7 @@ L2 集成测试:
 ```
 
 ## 迭代
-current_milestone: Milestone 1: 基础设施 + 基础层
+current_milestone: Milestone 2: 中间层 + 上层后端
 
 ## 备注
 architecture.md Review 通过，进入 Step 3 模块详细设计。
@@ -184,3 +184,4 @@ venue 模块 Review LGTM（2026-04-04）。venue 模块完成（基础层，无 
 notification 契约测试 #24 review 通过（2026-04-04）。46 个用例，进入实现阶段。
 notification #25 实现完成（2026-04-04）：通知列表（分页+筛选）、未读计数、标记已读（单条+全部）、跨模块创建接口（create/createBatch）、定时清理（90天）。契约测试 46 通过，L1 集成测试 38 通过，全量 322 通过。等待 review。
 notification #25 review LGTM（2026-04-04）。Issue #25 关闭。notification 模块所有 Task 完成（#25），进入模块 Review。
+notification 模块 Review LGTM（2026-04-04）。notification 模块完成（基础层，无 L2 集成测试）。322 个测试全通过。Milestone 1 全部完成，进入 Milestone 2 — activity 模块。
