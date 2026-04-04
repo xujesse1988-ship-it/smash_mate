@@ -338,17 +338,10 @@ export class ActivityService {
       throw new AppError(409, 'ACTIVITY_ALREADY_JOINED', '用户已加入该活动');
     }
 
-    // Add participant (repo method is void-returning)
-    await this.repo.addParticipant(activityId, userId);
-
-    // Compute new participant count and status
-    const newCount = activity.currentParticipants + 1;
-    let newStatus = activity.status;
-
-    if (newCount >= activity.maxParticipants) {
-      newStatus = 'full';
-      await this.repo.updateStatus(activityId, 'full');
-    }
+    // Add participant (repo handles count + status update in a single transaction)
+    const result = await this.repo.addParticipant(activityId, userId);
+    const newCount = result?.currentParticipants ?? activity.currentParticipants + 1;
+    const newStatus = result?.status ?? (newCount >= activity.maxParticipants ? 'full' : activity.status);
 
     logger.info(
       { activityId, userId: userId.slice(0, 8), action: 'join' },
@@ -415,17 +408,10 @@ export class ActivityService {
       throw new AppError(409, 'ACTIVITY_NOT_PARTICIPANT', '用户不是该活动的参与者');
     }
 
-    // Remove participant (repo method is void-returning)
-    await this.repo.removeParticipant(activityId, userId);
-
-    // Compute new participant count and status
-    const newCount = activity.currentParticipants - 1;
-    let newStatus = activity.status;
-
-    if (activity.status === 'full' && newCount < activity.maxParticipants) {
-      newStatus = 'open';
-      await this.repo.updateStatus(activityId, 'open');
-    }
+    // Remove participant (repo handles count + status update in a single transaction)
+    const result = await this.repo.removeParticipant(activityId, userId);
+    const newCount = result?.currentParticipants ?? activity.currentParticipants - 1;
+    const newStatus = result?.status ?? (activity.status === 'full' && newCount < activity.maxParticipants ? 'open' : activity.status);
 
     logger.info(
       { activityId, userId: userId.slice(0, 8), action: 'leave' },

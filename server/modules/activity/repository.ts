@@ -164,24 +164,8 @@ export class ActivityRepository {
     // Standard Prisma query without distance
     const where: Prisma.ActivityWhereInput = {
       status: hasSlot ? 'open' : { not: 'cancelled' },
-      ...(dateConditions.startTime
-        ? { startTime: dateConditions.startTime }
-        : { startTime: { gt: now } }),
-      ...(!dateFilter && !dateStart && !dateEnd ? {} : {}),
+      startTime: dateConditions.startTime ?? { gt: now },
     };
-
-    // If dateFilter or custom date range, use that instead of default "future only"
-    if (dateConditions.startTime) {
-      where.startTime = dateConditions.startTime;
-    } else {
-      where.startTime = { gt: now };
-    }
-
-    if (hasSlot) {
-      where.status = 'open';
-    } else {
-      where.status = { not: 'cancelled' };
-    }
 
     const [items, total] = await Promise.all([
       prisma.activity.findMany({
