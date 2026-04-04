@@ -15,7 +15,7 @@ feature:
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
 | user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | done | done | done | done | N/A |
-| notification | 后端 | done | | | | | |
+| notification | 后端 | done | review | | | | |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
