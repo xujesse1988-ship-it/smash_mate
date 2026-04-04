@@ -17,7 +17,7 @@ feature:
 | venue | 后端 | done | done | done | done | done | N/A |
 | notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | done | done | done | done | |
-| coaching | 后端 | done | | | | | |
+| coaching | 后端 | done | review | | | | |
 | match-record | 后端 | done | | | | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
