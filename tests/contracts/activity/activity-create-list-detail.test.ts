@@ -242,8 +242,12 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
     const result = await service.createActivity('user-uuid-1', input);
 
     expect(result).toBeDefined();
-    // Response should include venue info (id, name, address, latitude, longitude)
-    expect(result.venue || result.venueId).toBeDefined();
+    // Response should include venue as an object with id, name, address, latitude, longitude
+    expect(result.venue).toBeDefined();
+    expect(result.venue).toMatchObject({
+      id: expect.any(String),
+      name: expect.any(String),
+    });
   });
 
   // 业务规则: 返回格式包含 participants 列表（§4 创建活动 - Response 201）
@@ -253,9 +257,8 @@ describe('POST /api/activities — ActivityService.createActivity', () => {
 
     expect(result).toBeDefined();
     // Participants should include at least the creator
-    if (result.participants) {
-      expect(result.participants.length).toBeGreaterThanOrEqual(1);
-    }
+    expect(result.participants).toBeDefined();
+    expect(result.participants.length).toBeGreaterThanOrEqual(1);
   });
 
   // -----------------------------------------------------------------------
@@ -680,6 +683,26 @@ describe('GET /api/activities — ActivityService.getActivityList', () => {
   // 错误码: ACTIVITY_INVALID_COORDINATES — 经纬度只提供了一个（§4 活动列表 - 错误码）
   it('should throw ACTIVITY_INVALID_COORDINATES when only longitude is provided', async () => {
     const query: ActivityListQuery = { longitude: 116.4 };
+
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_COORDINATES',
+      statusCode: 400,
+    });
+  });
+
+  // 错误码: ACTIVITY_INVALID_COORDINATES — latitude 超出有效范围 -90~90（§4 活动列表 - 错误码）
+  it('should throw ACTIVITY_INVALID_COORDINATES when latitude is out of range', async () => {
+    const query: ActivityListQuery = { latitude: 91, longitude: 116.4 };
+
+    await expect(service.getActivityList(query)).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_COORDINATES',
+      statusCode: 400,
+    });
+  });
+
+  // 错误码: ACTIVITY_INVALID_COORDINATES — longitude 超出有效范围 -180~180（§4 活动列表 - 错误码）
+  it('should throw ACTIVITY_INVALID_COORDINATES when longitude is out of range', async () => {
+    const query: ActivityListQuery = { latitude: 39.9, longitude: 181 };
 
     await expect(service.getActivityList(query)).rejects.toMatchObject({
       code: 'ACTIVITY_INVALID_COORDINATES',
