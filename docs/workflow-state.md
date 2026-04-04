@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: activity
@@ -16,7 +16,7 @@ feature:
 | user | 后端 | done | done | done | done | done | N/A |
 | venue | 后端 | done | done | done | done | done | N/A |
 | notification | 后端 | done | done | done | done | done | N/A |
-| activity | 后端 | done | review | | | | |
+| activity | 后端 | done | done | in_progress | | | |
 | coaching | 后端 | done | | | | | |
 | match-record | 后端 | done | | | | | |
 | review | 后端 | done | | | | | |
@@ -186,3 +186,4 @@ notification #25 实现完成（2026-04-04）：通知列表（分页+筛选）�
 notification #25 review LGTM（2026-04-04）。Issue #25 关闭。notification 模块所有 Task 完成（#25），进入模块 Review。
 notification 模块 Review LGTM（2026-04-04）。notification 模块完成（基础层，无 L2 集成测试）。322 个测试全通过。Milestone 1 全部完成，进入 Milestone 2 — activity 模块。
 activity 契约测试 #26（创建、列表与详情）review 通过（2026-04-04）。69 个用例。#27（参与、修改与取消）待开始。
+activity 契约测试 #27（参与、修改与取消）review 通过（2026-04-04）。73 个用例。activity 模块契约测试全部完成（142 个用例），进入实现阶段。
