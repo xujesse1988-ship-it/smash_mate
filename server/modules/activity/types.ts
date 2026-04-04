@@ -9,6 +9,7 @@ export interface CreateActivityInput {
 }
 
 export interface UpdateActivityInput {
+  venueId?: string;
   title?: string;
   startTime?: string;
   endTime?: string;

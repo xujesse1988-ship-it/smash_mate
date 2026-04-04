@@ -837,9 +837,7 @@ describe('PUT /api/activities/:id — ActivityService.updateActivity', () => {
     repo.findById.mockResolvedValue(activity);
     repo.update.mockResolvedValue({ ...activity, venueId: 'venue-uuid-2' });
 
-    // UpdateActivityInput in stub does not include venueId, but the design doc specifies it.
-    // The implementation will need to add venueId to UpdateActivityInput.
-    const input = { venueId: 'venue-uuid-2' } as any;
+    const input: UpdateActivityInput = { venueId: 'venue-uuid-2' };
     await service.updateActivity('activity-uuid-1', 'user-uuid-1', input);
 
     expect(venueService.getVenueById).toHaveBeenCalledWith('venue-uuid-2');
@@ -1123,7 +1121,7 @@ describe('PUT /api/activities/:id — ActivityService.updateActivity', () => {
     });
     repo.findById.mockResolvedValue(activity);
 
-    const input = { venueId: '' } as any;
+    const input: UpdateActivityInput = { venueId: '' };
     await expect(
       service.updateActivity('activity-uuid-1', 'user-uuid-1', input),
     ).rejects.toMatchObject({
@@ -1147,7 +1145,7 @@ describe('PUT /api/activities/:id — ActivityService.updateActivity', () => {
     repo.findById.mockResolvedValue(activity);
     venueService.getVenueById.mockResolvedValue(null);
 
-    const input = { venueId: 'non-existent-venue' } as any;
+    const input: UpdateActivityInput = { venueId: 'non-existent-venue' };
     await expect(
       service.updateActivity('activity-uuid-1', 'user-uuid-1', input),
     ).rejects.toMatchObject({
@@ -1641,6 +1639,11 @@ describe('定时任务: 活动状态自动流转 — ActivityService.transitionS
 
     // Should find activities with open/full + past startTime
     expect(repo.findActivitiesToTransition).toHaveBeenCalled();
+    // Should update the found activities to in_progress
+    expect(repo.updateStatus).toHaveBeenCalledWith(
+      ['activity-past-start'],
+      'in_progress',
+    );
   });
 
   // -----------------------------------------------------------------------
@@ -1660,6 +1663,11 @@ describe('定时任务: 活动状态自动流转 — ActivityService.transitionS
     await service.transitionStatuses();
 
     expect(repo.findActivitiesToTransition).toHaveBeenCalled();
+    // Should update the found activities to completed
+    expect(repo.updateStatus).toHaveBeenCalledWith(
+      ['activity-past-end'],
+      'completed',
+    );
   });
 
   // -----------------------------------------------------------------------
