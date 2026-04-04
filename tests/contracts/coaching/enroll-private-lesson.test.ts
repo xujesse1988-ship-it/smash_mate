@@ -1307,6 +1307,64 @@ describe('GET /api/coaches/:id/availability — CoachingService.getCoachAvailabi
   });
 
   // -----------------------------------------------------------------------
+  // 日期范围参数传递（§4 获取教练空闲时间 - Query Params）
+  // -----------------------------------------------------------------------
+
+  // 业务规则: startDate/endDate 参数应传递给 repo（§4 获取教练空闲时间 - Query Params）
+  it('should pass startDate and endDate to repository when provided', async () => {
+    userService.getUserById.mockResolvedValue({
+      id: 'user-uuid-coach',
+      nickname: '教练张',
+      avatarUrl: null,
+      isCoach: true,
+    });
+    repo.findAvailability.mockResolvedValue([]);
+
+    const startDate = '2026-04-10T00:00:00.000Z';
+    const endDate = '2026-04-20T00:00:00.000Z';
+
+    await service.getCoachAvailability('user-uuid-coach', { startDate, endDate });
+
+    expect(repo.findAvailability).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coachId: 'user-uuid-coach',
+        startDate,
+        endDate,
+      }),
+    );
+  });
+
+  // 业务规则: 不传日期参数时使用默认值 — startDate 默认今天，endDate 默认 startDate + 14 天（§4 获取教练空闲时间 - Query Params）
+  it('should use default date range (today + 14 days) when no dates provided', async () => {
+    userService.getUserById.mockResolvedValue({
+      id: 'user-uuid-coach',
+      nickname: '教练张',
+      avatarUrl: null,
+      isCoach: true,
+    });
+    repo.findAvailability.mockResolvedValue([]);
+
+    const before = new Date();
+    await service.getCoachAvailability('user-uuid-coach');
+    const after = new Date();
+
+    expect(repo.findAvailability).toHaveBeenCalledTimes(1);
+    const callArgs = repo.findAvailability.mock.calls[0][0];
+
+    // startDate 应为今天（调用时刻附近）
+    const parsedStart = new Date(callArgs.startDate);
+    expect(parsedStart.getTime()).toBeGreaterThanOrEqual(before.setHours(0, 0, 0, 0));
+    expect(parsedStart.getTime()).toBeLessThanOrEqual(after.getTime());
+
+    // endDate 应为 startDate + 14 天
+    const parsedEnd = new Date(callArgs.endDate);
+    const expectedEnd = new Date(parsedStart);
+    expectedEnd.setDate(expectedEnd.getDate() + 14);
+    // 允许 1 秒误差（测试执行时间）
+    expect(Math.abs(parsedEnd.getTime() - expectedEnd.getTime())).toBeLessThan(1000);
+  });
+
+  // -----------------------------------------------------------------------
   // 异常流程: COACHING_NOT_A_COACH
   // -----------------------------------------------------------------------
 
@@ -1829,8 +1887,8 @@ describe('POST /api/private-lessons/:id/cancel — CoachingService.cancelPrivate
         userId: 'user-uuid-student', // 通知接收人是学员
         type: 'PRIVATE_LESSON_CANCELLED_BY_COACH',
         title: '教练取消私教',
-        targetType: 'private-lesson',
-        targetId: 'private-lesson-uuid-1',
+        targetType: 'coach-profile',
+        targetId: 'user-uuid-coach', // 教练用户 ID（设计文档 §6.10）
       }),
     );
   });
