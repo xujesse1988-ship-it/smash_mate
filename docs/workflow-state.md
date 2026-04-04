@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: venue
