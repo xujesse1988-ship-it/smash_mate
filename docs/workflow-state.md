@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: activity
@@ -187,3 +187,4 @@ notification #25 review LGTM（2026-04-04）。Issue #25 关闭。notification �
 notification 模块 Review LGTM（2026-04-04）。notification 模块完成（基础层，无 L2 集成测试）。322 个测试全通过。Milestone 1 全部完成，进入 Milestone 2 — activity 模块。
 activity 契约测试 #26（创建、列表与详情）review 通过（2026-04-04）。69 个用例。#27（参与、修改与取消）待开始。
 activity 契约测试 #27（参与、修改与取消）review 通过（2026-04-04）。73 个用例。activity 模块契约测试全部完成（142 个用例），进入实现阶段。
+activity #28（活动创建、列表查询与详情）实现完成（2026-04-03）：创建活动（含球馆校验、发起人自动加入）、活动列表（筛选/分页/距离排序）、活动详情（含参与者+创建者信息）、用户活动列表、加入/退出活动（满员联动）、修改/取消活动（通知参与者）、跨模块接口 getActivityById/getParticipantIds、定时任务状态流转。契约测试 142 通过，L1 集成测试 29 通过，全量 493 通过。等待 review。
