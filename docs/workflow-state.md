@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5e-review
+substep: 5f
 
 ## 当前模块
 module: venue
@@ -14,7 +14,7 @@ feature:
 |------|------|------|---------|------|------------|------------|------------|
 | infra | 基础设施 | N/A | N/A | done | N/A | N/A | N/A |
 | user | 后端 | done | done | done | done | done | N/A |
-| venue | 后端 | done | done | in_progress | | | |
+| venue | 后端 | done | done | done | done | | |
 | notification | 后端 | done | | | | | |
 | activity | 后端 | done | | | | | |
 | coaching | 后端 | done | | | | | |
@@ -178,3 +178,4 @@ venue 契约测试 #21（城市与球馆管理接口）review 通过（2026-04-0
 venue #22 实现完成（2026-04-04）：搜索+详情+跨模块+管理员接口（含 #23 范围）。契约测试 62 通过，L1 集成测试 23 通过，全量 238 通过。
 venue #22 review 有 SHOULD FIX（2026-04-04）：syncVenues 计数不准确（忽略 upsertVenues 返回值）。需修复。
 venue #22 review 问题已修复（2026-04-04）：修复 syncVenues 和 createCity 中 upsertVenues 返回值未使用导致 newVenues/updatedVenues 计数不准确。等待重新 review。
+venue #22 review LGTM（2026-04-04）。Issue #22 关闭。#22 已包含 #23 全部实现，Issue #23 一并关闭。venue 模块所有 Task 完成，进入模块 Review。
