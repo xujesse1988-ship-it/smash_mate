@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5e-review
 
 ## 当前模块
 module: venue
@@ -179,3 +179,4 @@ venue #22 实现完成（2026-04-04）：搜索+详情+跨模块+管理员接口
 venue #22 review 有 SHOULD FIX（2026-04-04）：syncVenues 计数不准确（忽略 upsertVenues 返回值）。需修复。
 venue #22 review 问题已修复（2026-04-04）：修复 syncVenues 和 createCity 中 upsertVenues 返回值未使用导致 newVenues/updatedVenues 计数不准确。等待重新 review。
 venue #22 review LGTM（2026-04-04）。Issue #22 关闭。#22 已包含 #23 全部实现，Issue #23 一并关闭。venue 模块所有 Task 完成，进入模块 Review。
+venue 模块 Review 反馈（2026-04-04）：补全 mock 中 countVenuesByCity + 注册 scheduler cron task。已修复，等待重新 Review。
