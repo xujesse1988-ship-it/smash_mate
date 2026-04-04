@@ -168,8 +168,8 @@ export class VenueService {
     let venueCount = 0;
     try {
       const venueData = await fetchVenuesFromMapService(name);
-      await this.repo.upsertVenues(city.id, venueData);
-      venueCount = venueData.length;
+      const { newCount } = await this.repo.upsertVenues(city.id, venueData);
+      venueCount = newCount;
     } catch (err) {
       logger.error(
         { error: (err as Error).message, cityId: city.id, cityName: name },
@@ -251,15 +251,15 @@ export class VenueService {
       for (const city of cities) {
         try {
           const venueData = await fetchVenuesFromMapService(city.name);
-          await this.repo.upsertVenues(city.id, venueData);
+          const { newCount, updatedCount } = await this.repo.upsertVenues(city.id, venueData);
 
           const totalVenues = await this.repo.countVenuesByCity(city.id);
 
           syncResults.push({
             cityId: city.id,
             cityName: city.name,
-            newVenues: venueData.length,
-            updatedVenues: 0,
+            newVenues: newCount,
+            updatedVenues: updatedCount,
             totalVenues,
           });
 
@@ -267,7 +267,8 @@ export class VenueService {
             {
               cityId: city.id,
               cityName: city.name,
-              newVenues: venueData.length,
+              newVenues: newCount,
+              updatedVenues: updatedCount,
               totalVenues,
             },
             '城市球馆数据同步完成',
