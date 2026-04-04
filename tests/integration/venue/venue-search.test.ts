@@ -424,9 +424,7 @@ describe('VenueService.getVenueById — 跨模块 Service 调用', () => {
   });
 
   it('should not throw when venue does not exist', async () => {
-    await expect(
-      service.getVenueById('00000000-0000-0000-0000-000000000000'),
-    ).resolves.toBeNull();
+    await expect(service.getVenueById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
   });
 
   it('should include latitude and longitude in returned info', async () => {
