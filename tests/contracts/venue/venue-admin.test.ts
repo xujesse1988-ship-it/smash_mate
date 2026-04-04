@@ -643,14 +643,14 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
 
     const result = await service.syncVenues();
 
-    if (result.syncResults.length > 0) {
-      const syncResult = result.syncResults[0];
-      expect(syncResult).toHaveProperty('cityId');
-      expect(syncResult).toHaveProperty('cityName');
-      expect(syncResult).toHaveProperty('newVenues');
-      expect(syncResult).toHaveProperty('updatedVenues');
-      expect(syncResult).toHaveProperty('totalVenues');
-    }
+    // S3 fix: 先断言非空，再验证字段，避免空数组时静默通过
+    expect(result.syncResults.length).toBeGreaterThan(0);
+    const syncResult = result.syncResults[0];
+    expect(syncResult).toHaveProperty('cityId');
+    expect(syncResult).toHaveProperty('cityName');
+    expect(syncResult).toHaveProperty('newVenues');
+    expect(syncResult).toHaveProperty('updatedVenues');
+    expect(syncResult).toHaveProperty('totalVenues');
   });
 
   it('should sync all cities (not just one)', async () => {
@@ -664,8 +664,10 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
 
     const result = await service.syncVenues();
 
-    // Should have results for all cities (or at least attempted)
-    expect(result.syncResults).toBeDefined();
+    // S1 fix: 断言 syncResults 长度与城市数一致，验证所有城市都被同步
+    expect(result.syncResults).toHaveLength(3);
+    // 同时验证 upsertVenues 对每个城市都调用了一次
+    expect(repo.upsertVenues).toHaveBeenCalledTimes(3);
   });
 
   it('should continue syncing other cities when one city fails', async () => {
@@ -676,10 +678,19 @@ describe('POST /api/admin/venues/sync — VenueService.syncVenues', () => {
       createCityRecord({ id: 'c2', name: '上海' }),
     ]);
 
-    // Should not reject even if some cities fail
+    // S2 fix: 模拟第一个城市同步失败（地图服务不可用）
+    repo.upsertVenues
+      .mockRejectedValueOnce(new Error('Map service unavailable for 北京'))
+      .mockResolvedValueOnce(undefined);
+
+    // 即使一个城市失败，整体不应 reject
     const result = await service.syncVenues();
 
     expect(result).toHaveProperty('syncResults');
+    // syncResults 应包含所有城市的结果（包括失败的）
+    expect(result.syncResults).toHaveLength(2);
+    // upsertVenues 应对两个城市都被调用
+    expect(repo.upsertVenues).toHaveBeenCalledTimes(2);
   });
 
   it('should use mapPoiId for deduplication during sync', async () => {
