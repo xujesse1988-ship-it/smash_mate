@@ -379,7 +379,7 @@ export class ActivityRepository {
    */
   async addParticipant(activityId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
-      await tx.activityParticipant.create({
+      const participant = await tx.activityParticipant.create({
         data: { activityId, userId },
       });
 
@@ -397,10 +397,10 @@ export class ActivityRepository {
           where: { id: activityId },
           data: { status: 'full' },
         });
-        return { currentParticipants: count, status: 'full' as const };
+        return { currentParticipants: count, status: 'full' as const, joinedAt: participant.joinedAt };
       }
 
-      return { currentParticipants: count, status: activity.status };
+      return { currentParticipants: count, status: activity.status, joinedAt: participant.joinedAt };
     });
   }
 

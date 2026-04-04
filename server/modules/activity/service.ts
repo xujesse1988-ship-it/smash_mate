@@ -378,7 +378,7 @@ export class ActivityService {
       userId,
       currentParticipants: newCount,
       status: newStatus,
-      joinedAt: new Date(),
+      joinedAt: result?.joinedAt ?? new Date(),
     };
   }
 
@@ -543,22 +543,22 @@ export class ActivityService {
 
     const updated = await this.repo.update(activityId, updateData);
 
-    // Get venue info for response and notifications
-    const effectiveVenueId = input.venueId ?? activity.venueId;
-    let venue = null;
-    if (effectiveVenueId) {
-      venue = await this.venueService.getVenueById(effectiveVenueId);
-    }
+    // Get venue info for response — prefer repo-included venue, fall back to venueService
+    const venue = (updated as any).venue ?? (
+      (input.venueId ?? activity.venueId)
+        ? await this.venueService.getVenueById(input.venueId ?? activity.venueId)
+        : null
+    );
 
     logger.info(
       { activityId, userId: userId.slice(0, 8), action: 'update' },
       '活动已更新',
     );
 
-    // Construct response with venue info
+    // Build response using repo return values directly (no redundant fallback)
     const response = {
-      id: updated.id ?? activity.id,
-      creatorId: updated.creatorId ?? activity.creatorId,
+      id: updated.id,
+      creatorId: updated.creatorId,
       venue: venue
         ? {
             id: venue.id,
@@ -568,13 +568,13 @@ export class ActivityService {
             longitude: venue.longitude,
           }
         : null,
-      title: updated.title !== undefined ? updated.title : activity.title,
-      startTime: updated.startTime ?? activity.startTime,
-      endTime: updated.endTime ?? activity.endTime,
-      maxParticipants: updated.maxParticipants ?? activity.maxParticipants,
-      currentParticipants: updated.currentParticipants ?? activity.currentParticipants,
-      status: updated.status ?? activity.status,
-      createdAt: updated.createdAt ?? activity.createdAt,
+      title: updated.title,
+      startTime: updated.startTime,
+      endTime: updated.endTime,
+      maxParticipants: updated.maxParticipants,
+      currentParticipants: updated.currentParticipants,
+      status: updated.status,
+      createdAt: updated.createdAt,
     };
 
     // Notify all participants (except creator) using repo.getParticipantIds
