@@ -5,6 +5,7 @@ import { logger } from './infra/logger.js';
 import { errorHandler } from './infra/error-handler.js';
 import { requestIdMiddleware, requestLogMiddleware } from './infra/request-context.js';
 import { createUserController } from './modules/user/controller.js';
+import { createVenueController } from './modules/venue/controller.js';
 
 const app = express();
 
@@ -21,11 +22,11 @@ app.get('/api/health', (_req, res) => {
 
 // Mount module routes
 app.use('/api', createUserController());
+app.use('/api', createVenueController());
 // TODO: Mount remaining module routes here
 // app.use('/api', activityRoutes);
 // app.use('/api', coachingRoutes);
 // app.use('/api', matchRecordRoutes);
-// app.use('/api', venueRoutes);
 // app.use('/api', notificationRoutes);
 // app.use('/api', reviewRoutes);
 
