@@ -115,7 +115,7 @@ export class ActivityRepository {
    * When coordinates are provided, computes Haversine distance.
    */
   async findList(params: FindListParams) {
-    const { page, pageSize, latitude, longitude, maxDistance, hasSlot, sortBy, dateFilter, dateStart, dateEnd } = params;
+    const { page, pageSize, latitude, longitude, hasSlot, dateFilter, dateStart, dateEnd } = params;
     const skip = (page - 1) * pageSize;
     const now = new Date();
 

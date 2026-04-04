@@ -149,7 +149,7 @@ export function createActivityController(): Router {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
           role: req.query.role as 'creator' | 'participant' | undefined,
-          status: req.query.status as any,
+          status: req.query.status as 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled' | undefined,
         };
 
         const result = await service.getUserActivities(req.params.id, query);
