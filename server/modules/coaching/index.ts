@@ -1,6 +1,6 @@
 export { CoachingService } from './service.js';
 export { CoachingRepository } from './repository.js';
-export { createCoachingController } from './controller.js';
+export { createCoachingController, createCoachingService } from './controller.js';
 export type {
   CoachSpecialty,
   GroupClassStatus,

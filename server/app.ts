@@ -8,6 +8,7 @@ import { createUserController } from './modules/user/controller.js';
 import { createVenueController } from './modules/venue/controller.js';
 import { createNotificationController } from './modules/notification/controller.js';
 import { createActivityController } from './modules/activity/controller.js';
+import { createCoachingController } from './modules/coaching/controller.js';
 
 const app = express();
 
@@ -27,8 +28,8 @@ app.use('/api', createUserController());
 app.use('/api', createVenueController());
 app.use('/api', createNotificationController());
 app.use('/api', createActivityController());
+app.use('/api', createCoachingController());
 // TODO: Mount remaining module routes here
-// app.use('/api', coachingRoutes);
 // app.use('/api', matchRecordRoutes);
 // app.use('/api', reviewRoutes);
 
