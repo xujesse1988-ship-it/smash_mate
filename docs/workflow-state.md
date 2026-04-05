@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: match-record
@@ -18,7 +18,7 @@ feature:
 | notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | done | done | done | done | |
 | coaching | 后端 | done | done | done | done | done | |
-| match-record | 后端 | done | review | | | | |
+| match-record | 后端 | done | done | in_progress | | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
@@ -202,3 +202,4 @@ coaching #33 review LGTM（2026-04-05）。Issue #33 关闭。coaching 模块所
 coaching 模块 Review LGTM（2026-04-05）。coaching 模块后端完成（L2 集成测试 #56 #57 待 match-record/review 完成后触发）。764 个测试全通过。进入 match-record 模块。
 match-record 契约测试 #34（战绩录入与删除）编写完成（2026-04-05）。52 个用例，等待 review。
 match-record 契约测试 #34（战绩录入与删除）review 通过（2026-04-05）。#35（战绩列表与统计）待开始。
+match-record 契约测试 #35（战绩列表与统计）review 通过（2026-04-05）。match-record 模块契约测试全部完成（103 个用例），进入实现阶段。
