@@ -18,7 +18,7 @@ feature:
 | notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | done | done | done | done | |
 | coaching | 后端 | done | done | done | done | done | |
-| match-record | 后端 | done | | | | | |
+| match-record | 后端 | done | review | | | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
@@ -200,3 +200,4 @@ coaching #32 review LGTM（2026-04-05）。Issue #32 关闭。继续实现 #33�
 coaching #33（团课报名、私教预约与状态流转）实现完成（2026-04-05）：报名/取消报名团课（满员联动）、设置/查询私教空闲时间（重叠检测）、预约/取消私教课（时间段锁定/释放）、用户课程报名列表、教练私教预约列表、跨模块 getPrivateLessonById/getParticipantIds、定时任务状态流转（私教课部分）。契约测试 172 通过，L1 集成测试 99 通过，全量 764 通过。等待 review。
 coaching #33 review LGTM（2026-04-05）。Issue #33 关闭。coaching 模块所有 Task 完成（#32 + #33），进入模块 Review。
 coaching 模块 Review LGTM（2026-04-05）。coaching 模块后端完成（L2 集成测试 #56 #57 待 match-record/review 完成后触发）。764 个测试全通过。进入 match-record 模块。
+match-record 契约测试 #34（战绩录入与删除）编写完成（2026-04-05）。52 个用例，等待 review。
