@@ -54,7 +54,10 @@ export class CoachingRepository {
     const { page, pageSize, specialty } = query;
     const skip = (page - 1) * pageSize;
 
-    const where: Record<string, unknown> = {};
+    // Design doc §4: "仅返回 isCoach = true 的用户对应的教练资料"
+    const where: Record<string, unknown> = {
+      user: { isCoach: true },
+    };
     if (specialty) {
       where.specialties = { has: specialty };
     }
@@ -258,8 +261,9 @@ export class CoachingRepository {
   }
 
   async getPrivateLessonParticipantIds(coachId: string): Promise<string[]> {
+    // Design doc §6.8: exclude cancelled private lessons from studentCount
     const lessons = await prisma.privateLesson.findMany({
-      where: { coachId },
+      where: { coachId, status: { not: 'cancelled' } },
       select: { studentId: true },
     });
     return [...new Set(lessons.map((l) => l.studentId))];
@@ -282,9 +286,11 @@ export class CoachingRepository {
     });
 
     // Batch query: all private lesson students for these coaches
+    // Design doc §6.8: exclude cancelled private lessons from studentCount
     const plLessons = await prisma.privateLesson.findMany({
       where: {
         coachId: { in: coachIds },
+        status: { not: 'cancelled' },
       },
       select: {
         studentId: true,
