@@ -762,6 +762,88 @@ describe('GET /api/users/:id/match-records', () => {
     expect(res.body.data.page).toBe(1);
     expect(res.body.data.pageSize).toBe(2);
   });
+
+  it('should filter by sourceType when provided', async () => {
+    const coach = await createTestUser({ nickname: '教练F', isCoach: true });
+    await createTestCoachProfile({ userId: coach.id });
+    const player = await createTestUser({ nickname: '选手F' });
+    const city = await createTestCity({ name: '西安' });
+    const venue = await createTestVenue({ cityId: city.id, mapPoiId: 'poi-mr-filter-1' });
+
+    // Create a completed activity with player as participant
+    const activity = await createTestActivity({
+      creatorId: coach.id,
+      venueId: venue.id,
+      startTime: pastDate(6),
+      endTime: pastDate(4),
+      status: 'completed',
+    });
+    await addTestParticipant(activity.id, player.id);
+
+    // Create a completed group class with player enrolled
+    const gc = await createTestGroupClass({
+      coachId: coach.id,
+      venueId: venue.id,
+      startTime: pastDate(4),
+      endTime: pastDate(2),
+      status: 'completed',
+    });
+    await addTestEnrollment(gc.id, player.id);
+
+    // Create activity record
+    await createTestFullMatchRecord({
+      recordedBy: coach.id,
+      sourceType: 'activity',
+      sourceId: activity.id,
+      matchType: 'singles',
+      players: [
+        { side: 'A', userId: coach.id },
+        { side: 'B', userId: player.id },
+      ],
+      games: [{ gameNumber: 1, scoreA: 21, scoreB: 18 }],
+    });
+
+    // Create group-class record
+    await createTestFullMatchRecord({
+      recordedBy: coach.id,
+      sourceType: 'group-class',
+      sourceId: gc.id,
+      matchType: 'singles',
+      players: [
+        { side: 'A', userId: coach.id },
+        { side: 'B', userId: player.id },
+      ],
+      games: [{ gameNumber: 1, scoreA: 15, scoreB: 21 }],
+    });
+
+    const token = signToken(player.id);
+
+    // Without filter: both records
+    const resAll = await request(app)
+      .get(`/api/users/${player.id}/match-records`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(resAll.status).toBe(200);
+    expect(resAll.body.data.items).toHaveLength(2);
+    expect(resAll.body.data.total).toBe(2);
+
+    // With sourceType=activity: only activity record
+    const resActivity = await request(app)
+      .get(`/api/users/${player.id}/match-records?sourceType=activity`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(resActivity.status).toBe(200);
+    expect(resActivity.body.data.items).toHaveLength(1);
+    expect(resActivity.body.data.items[0].sourceType).toBe('activity');
+    expect(resActivity.body.data.total).toBe(1);
+
+    // With sourceType=group-class: only group-class record
+    const resGC = await request(app)
+      .get(`/api/users/${player.id}/match-records?sourceType=group-class`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(resGC.status).toBe(200);
+    expect(resGC.body.data.items).toHaveLength(1);
+    expect(resGC.body.data.items[0].sourceType).toBe('group-class');
+    expect(resGC.body.data.total).toBe(1);
+  });
 });
 
 // ===========================================================================
