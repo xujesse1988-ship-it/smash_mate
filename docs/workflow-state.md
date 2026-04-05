@@ -201,3 +201,4 @@ coaching #33（团课报名、私教预约与状态流转）实现完成（2026-
 coaching #33 review LGTM（2026-04-05）。Issue #33 关闭。coaching 模块所有 Task 完成（#32 + #33），进入模块 Review。
 coaching 模块 Review LGTM（2026-04-05）。coaching 模块后端完成（L2 集成测试 #56 #57 待 match-record/review 完成后触发）。764 个测试全通过。进入 match-record 模块。
 match-record 契约测试 #34（战绩录入与删除）编写完成（2026-04-05）。52 个用例，等待 review。
+match-record 契约测试 #34（战绩录入与删除）review 通过（2026-04-05）。#35（战绩列表与统计）待开始。
