@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: match-record
@@ -203,3 +203,4 @@ coaching 模块 Review LGTM（2026-04-05）。coaching 模块后端完成（L2 �
 match-record 契约测试 #34（战绩录入与删除）编写完成（2026-04-05）。52 个用例，等待 review。
 match-record 契约测试 #34（战绩录入与删除）review 通过（2026-04-05）。#35（战绩列表与统计）待开始。
 match-record 契约测试 #35（战绩列表与统计）review 通过（2026-04-05）。match-record 模块契约测试全部完成（103 个用例），进入实现阶段。
+match-record #36（战绩录入与删除）实现完成（2026-04-05）：录入战绩（单打/双打，三种来源）、删除战绩（仅录入者）、活动/团课/私教课战绩列表、个人战绩历史（分页+筛选）、个人战绩汇总（winRate 计算）、参与关系校验（跨模块）、GuestPlayer 自动创建、胜负判定算法。契约测试 103 通过，L1 集成测试 20 通过，单元测试 18 通过，全量 905 通过。等待 review。
