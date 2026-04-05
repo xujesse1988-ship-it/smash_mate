@@ -17,7 +17,7 @@ feature:
 | venue | 后端 | done | done | done | done | done | N/A |
 | notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | done | done | done | done | |
-| coaching | 后端 | done | review | | | | |
+| coaching | 后端 | done | in_progress | | | | |
 | match-record | 后端 | done | | | | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
@@ -192,3 +192,4 @@ activity #28 review 有 SHOULD FIX（2026-04-04）：join/leave 状态更新重�
 activity #28 review 问题已修复（2026-04-04）：修复 3 个 SHOULD FIX（join/leave 重复状态更新、findList dead code、确认 #29 覆盖 join/leave 测试）。契约测试 142 通过，L1 集成测试 29 通过，全量 493 通过。等待重新 review。
 activity #28 review LGTM（2026-04-04）。Issue #28 关闭。#28 已包含 #29 全部实现，Issue #29 一并关闭。activity 模块所有 Task 完成，进入模块 Review。
 activity 模块 Review LGTM（2026-04-04）。activity 模块后端完成（L2 集成测试 #55 待 match-record 完成后触发）。进入 coaching 模块。
+coaching 契约测试 #30（教练资料与团课）review 通过（2026-04-05）。172 个用例（含 #31 范围）。#31 待确认。
