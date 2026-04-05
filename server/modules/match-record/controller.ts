@@ -122,7 +122,11 @@ export function createMatchRecordController(): Router {
         const query = {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
-          sourceType: req.query.sourceType as 'activity' | 'group-class' | 'private-lesson' | undefined,
+          sourceType: req.query.sourceType as
+            | 'activity'
+            | 'group-class'
+            | 'private-lesson'
+            | undefined,
         };
         const result = await service.getUserMatchRecords(req.params.id, query);
         success(res, result);
@@ -170,10 +174,5 @@ export function createMatchRecordService(): MatchRecordService {
     venueService,
     notificationService,
   );
-  return new MatchRecordService(
-    matchRecordRepo,
-    activityService,
-    coachingService,
-    userService,
-  );
+  return new MatchRecordService(matchRecordRepo, activityService, coachingService, userService);
 }

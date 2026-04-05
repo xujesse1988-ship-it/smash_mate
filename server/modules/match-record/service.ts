@@ -32,10 +32,7 @@ interface CoachingServiceDep {
     id: string;
     status: string;
   } | null>;
-  getParticipantIds(
-    classId: string,
-    type: 'group-class' | 'private-lesson',
-  ): Promise<string[]>;
+  getParticipantIds(classId: string, type: 'group-class' | 'private-lesson'): Promise<string[]>;
 }
 
 interface UserServiceDep {
@@ -73,10 +70,7 @@ export function determineMatchResult(
  * Determine a specific user's result in a match.
  * §6.2: Based on matchResult and which side the user is on.
  */
-export function determineUserResult(
-  matchResult: MatchResult,
-  userSide: 'A' | 'B',
-): UserResult {
+export function determineUserResult(matchResult: MatchResult, userSide: 'A' | 'B'): UserResult {
   if (matchResult === 'DRAW') return 'DRAW';
   if (matchResult === 'A_WIN') return userSide === 'A' ? 'WIN' : 'LOSE';
   // B_WIN
@@ -120,12 +114,7 @@ export class MatchRecordService {
 
     // 3. Validate player count
     const expectedCount = input.matchType === 'singles' ? 1 : 2;
-    if (
-      !sideA ||
-      !sideB ||
-      sideA.length !== expectedCount ||
-      sideB.length !== expectedCount
-    ) {
+    if (!sideA || !sideB || sideA.length !== expectedCount || sideB.length !== expectedCount) {
       throw new AppError(
         400,
         'MATCH_RECORD_INVALID_PLAYERS',
@@ -140,7 +129,11 @@ export class MatchRecordService {
       const hasGuestName = player.guestName !== undefined && player.guestName !== null;
 
       if (hasUserId && hasGuestName) {
-        throw new AppError(400, 'MATCH_RECORD_INVALID_PLAYER', '选手的 userId 和 guestName 不可同时提供');
+        throw new AppError(
+          400,
+          'MATCH_RECORD_INVALID_PLAYER',
+          '选手的 userId 和 guestName 不可同时提供',
+        );
       }
       if (!hasUserId && !hasGuestName) {
         throw new AppError(400, 'MATCH_RECORD_INVALID_PLAYER', '选手必须提供 userId 或 guestName');
@@ -177,9 +170,7 @@ export class MatchRecordService {
     }
 
     // 7. Check duplicate players (same userId on both sides)
-    const userIds = allPlayers
-      .filter((p) => p.userId)
-      .map((p) => p.userId!);
+    const userIds = allPlayers.filter((p) => p.userId).map((p) => p.userId!);
     const uniqueUserIds = new Set(userIds);
     if (uniqueUserIds.size !== userIds.length) {
       throw new AppError(400, 'MATCH_RECORD_DUPLICATE_PLAYER', '同一选手不可出现在两侧');
@@ -260,10 +251,7 @@ export class MatchRecordService {
 
     await this.repo.deleteById(recordId);
 
-    logger.info(
-      { matchRecordId: recordId, recordedBy: userId.slice(0, 8) },
-      '战绩已删除',
-    );
+    logger.info({ matchRecordId: recordId, recordedBy: userId.slice(0, 8) }, '战绩已删除');
 
     return { id: recordId };
   }
@@ -272,11 +260,7 @@ export class MatchRecordService {
   // GET /api/activities/:id/match-records etc. — Source match records list
   // =========================================================================
 
-  async getSourceMatchRecords(
-    sourceType: string,
-    sourceId: string,
-    query: MatchRecordListQuery,
-  ) {
+  async getSourceMatchRecords(sourceType: string, sourceId: string, query: MatchRecordListQuery) {
     const records = await this.repo.findBySource(sourceType, sourceId, query);
 
     const formattedRecords = await this.formatMatchRecordsWithUserInfo(records);
@@ -318,10 +302,7 @@ export class MatchRecordService {
 
     const { wins, losses } = stats;
     const denominator = wins + losses;
-    const winRate =
-      denominator > 0
-        ? Math.round((wins / denominator) * 1000) / 10
-        : 0;
+    const winRate = denominator > 0 ? Math.round((wins / denominator) * 1000) / 10 : 0;
 
     return {
       ...stats,
@@ -425,9 +406,7 @@ export class MatchRecordService {
     guestNicknameMap?: Map<string, string>,
   ) {
     // Get all user IDs (players + recorder)
-    const userIds = record.players
-      .filter((p) => p.userId)
-      .map((p) => p.userId!);
+    const userIds = record.players.filter((p) => p.userId).map((p) => p.userId!);
     if (!userIds.includes(record.recordedBy)) {
       userIds.push(record.recordedBy);
     }
