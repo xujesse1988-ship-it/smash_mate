@@ -198,28 +198,37 @@ export class MatchRecordService {
       }
     }
 
-    // 12. Create GuestPlayers for guestName entries (§6.5)
+    // 12-14. Create GuestPlayers + MatchRecord atomically within a single transaction (§6.5)
     const guestNicknameMap = new Map<string, string>();
-    const playerDataA = await this.resolvePlayerData('A', sideA, guestNicknameMap);
-    const playerDataB = await this.resolvePlayerData('B', sideB, guestNicknameMap);
-    const playerData = [...playerDataA, ...playerDataB];
 
-    // 13. Build game data with auto-assigned gameNumbers
-    const gameData = input.games.map((g, index) => ({
-      gameNumber: index + 1,
-      scoreA: g.scoreA,
-      scoreB: g.scoreB,
-    }));
+    const createRecordFn = async (repo: MatchRecordRepository) => {
+      // 12. Create GuestPlayers for guestName entries
+      const playerDataA = await this.resolvePlayerData('A', sideA, guestNicknameMap, repo);
+      const playerDataB = await this.resolvePlayerData('B', sideB, guestNicknameMap, repo);
+      const playerData = [...playerDataA, ...playerDataB];
 
-    // 14. Create match record
-    const record = await this.repo.create({
-      sourceType: input.sourceType,
-      sourceId: input.sourceId,
-      matchType: input.matchType,
-      recordedBy: userId,
-      players: playerData,
-      games: gameData,
-    });
+      // 13. Build game data with auto-assigned gameNumbers
+      const gameData = input.games.map((g, index) => ({
+        gameNumber: index + 1,
+        scoreA: g.scoreA,
+        scoreB: g.scoreB,
+      }));
+
+      // 14. Create match record
+      return repo.create({
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        matchType: input.matchType,
+        recordedBy: userId,
+        players: playerData,
+        games: gameData,
+      });
+    };
+
+    // Use transaction when available (real repo), fall back to direct calls (mock in tests)
+    const record = this.repo.transaction
+      ? await this.repo.transaction(createRecordFn)
+      : await createRecordFn(this.repo);
 
     logger.info(
       {
@@ -351,6 +360,7 @@ export class MatchRecordService {
     side: 'A' | 'B',
     players: Array<{ userId?: string; guestName?: string }>,
     guestNicknameMap: Map<string, string>,
+    repo: MatchRecordRepository,
   ) {
     const resolved: Array<{
       side: string;
@@ -366,7 +376,7 @@ export class MatchRecordService {
           guestId: null,
         });
       } else if (player.guestName) {
-        const guest = await this.repo.createGuestPlayer(player.guestName);
+        const guest = await repo.createGuestPlayer(player.guestName);
         guestNicknameMap.set(guest.id, guest.nickname);
         resolved.push({
           side,
