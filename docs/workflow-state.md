@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5e-review
+substep: 5f
 
 ## 当前模块
 module: match-record
@@ -18,7 +18,7 @@ feature:
 | notification | 后端 | done | done | done | done | done | N/A |
 | activity | 后端 | done | done | done | done | done | |
 | coaching | 后端 | done | done | done | done | done | |
-| match-record | 后端 | done | done | in_progress | | | |
+| match-record | 后端 | done | done | done | done | | |
 | review | 后端 | done | | | | | |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
@@ -204,3 +204,4 @@ match-record 契约测试 #34（战绩录入与删除）编写完成（2026-04-0
 match-record 契约测试 #34（战绩录入与删除）review 通过（2026-04-05）。#35（战绩列表与统计）待开始。
 match-record 契约测试 #35（战绩列表与统计）review 通过（2026-04-05）。match-record 模块契约测试全部完成（103 个用例），进入实现阶段。
 match-record #36（战绩录入与删除）实现完成（2026-04-05）：录入战绩（单打/双打，三种来源）、删除战绩（仅录入者）、活动/团课/私教课战绩列表、个人战绩历史（分页+筛选）、个人战绩汇总（winRate 计算）、参与关系校验（跨模块）、GuestPlayer 自动创建、胜负判定算法。契约测试 103 通过，L1 集成测试 20 通过，单元测试 18 通过，全量 905 通过。等待 review。
+match-record #36 review LGTM（2026-04-05）。Issue #36 关闭。#36 已包含 #37 全部实现，Issue #37 一并关闭。match-record 模块所有 Task 完成，进入模块 Review。
