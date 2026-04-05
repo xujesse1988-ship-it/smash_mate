@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: coaching
@@ -197,3 +197,4 @@ coaching 契约测试 #31（团课报名与私教预约）review 通过（2026-0
 coaching #32（教练资料管理与团课发布/修改/取消）实现完成（2026-04-03）：教练列表、教练主页、更新教练资料（含自动创建 CoachProfile）、发布/修改/取消团课、团课详情、课程状态自动流转定时任务、跨模块 getGroupClassById 接口。契约测试 75 通过，L1 集成测试 37 通过。等待 review。
 coaching #32 review 问题已修复（第二轮，2026-04-05）：MUST FIX（findGroupClassesByCoach 契约测试兼容）、SHOULD FIX（bookPrivateLesson 201 响应码、N+1 注释）。契约测试 75 通过，L1 集成测试 37 通过。等待重新 review。
 coaching #32 review LGTM（2026-04-05）。Issue #32 关闭。继续实现 #33（团课报名、私教预约与状态流转）。
+coaching #33（团课报名、私教预约与状态流转）实现完成（2026-04-05）：报名/取消报名团课（满员联动）、设置/查询私教空闲时间（重叠检测）、预约/取消私教课（时间段锁定/释放）、用户课程报名列表、教练私教预约列表、跨模块 getPrivateLessonById/getParticipantIds、定时任务状态流转（私教课部分）。契约测试 172 通过，L1 集成测试 99 通过，全量 764 通过。等待 review。
