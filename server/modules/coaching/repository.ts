@@ -218,7 +218,9 @@ export class CoachingRepository {
   ) {
     const slotsData = Array.isArray(data) ? data : [data];
 
-    const created = await Promise.all(
+    // Use $transaction to ensure atomic batch creation —
+    // if any insert fails, all are rolled back (design doc §4 requirement)
+    const created = await prisma.$transaction(
       slotsData.map((slot) =>
         prisma.privateLessonSlot.create({
           data: {
@@ -348,6 +350,9 @@ export class CoachingRepository {
     });
   }
 
+  // TODO: 当前实现将团课报名和私教预约全量加载到内存后合并排序、切片分页。
+  // 因为需要跨两张表按 startTime 统一排序，无法直接在 DB 层面完成分页。
+  // 一期数据量小可接受，二期应优化为 DB 层分页（如分别限制查询量或使用 raw SQL union）。
   async findUserEnrollments(
     userId: string,
     query: { page: number; pageSize: number; type?: string; status?: string },
