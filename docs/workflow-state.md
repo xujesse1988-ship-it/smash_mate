@@ -195,3 +195,4 @@ activity 模块 Review LGTM（2026-04-04）。activity 模块后端完成（L2 �
 coaching 契约测试 #30（教练资料与团课）review 通过（2026-04-05）。172 个用例（含 #31 范围）。#31 待确认。
 coaching 契约测试 #31（团课报名与私教预约）review 通过（2026-04-05）。coaching 模块契约测试全部完成（172 个用例），进入实现阶段。
 coaching #32（教练资料管理与团课发布/修改/取消）实现完成（2026-04-03）：教练列表、教练主页、更新教练资料（含自动创建 CoachProfile）、发布/修改/取消团课、团课详情、课程状态自动流转定时任务、跨模块 getGroupClassById 接口。契约测试 75 通过，L1 集成测试 37 通过。等待 review。
+coaching #32 review 问题已修复（第二轮，2026-04-05）：MUST FIX（findGroupClassesByCoach 契约测试兼容）、SHOULD FIX（bookPrivateLesson 201 响应码、N+1 注释）。契约测试 75 通过，L1 集成测试 37 通过。等待重新 review。
