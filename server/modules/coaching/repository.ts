@@ -133,7 +133,7 @@ export class CoachingRepository {
 
   async enrollGroupClass(classId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
-      await tx.groupClassEnrollment.create({
+      const enrollment = await tx.groupClassEnrollment.create({
         data: {
           groupClassId: classId,
           userId,
@@ -158,6 +158,7 @@ export class CoachingRepository {
       return {
         currentParticipants: count,
         status: count >= groupClass.maxParticipants ? 'full' : groupClass.status,
+        enrolledAt: enrollment.enrolledAt,
       };
     });
   }

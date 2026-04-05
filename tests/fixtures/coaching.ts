@@ -79,6 +79,62 @@ export async function getEnrollmentCount(groupClassId: string): Promise<number> 
 }
 
 /**
+ * Create a private lesson slot in the database for testing.
+ * Requires a valid coachId (create a user with isCoach=true first).
+ * Returns the created slot record.
+ */
+export async function createTestPrivateLessonSlot(
+  overrides: Partial<{
+    coachId: string;
+    startTime: Date;
+    endTime: Date;
+    venueIds: string[];
+    feeDescription: string | null;
+    isBooked: boolean;
+  }> & { coachId: string },
+) {
+  const defaults = {
+    startTime: new Date(Date.now() + 48 * 60 * 60 * 1000), // day after tomorrow
+    endTime: new Date(Date.now() + 50 * 60 * 60 * 1000), // day after tomorrow + 2h
+    venueIds: [] as string[],
+    feeDescription: null as string | null,
+    isBooked: false,
+  };
+
+  return prisma.privateLessonSlot.create({
+    data: { ...defaults, ...overrides },
+  });
+}
+
+/**
+ * Create a private lesson in the database for testing.
+ * Requires a valid slotId, coachId, and studentId.
+ * Returns the created private lesson record.
+ */
+export async function createTestPrivateLesson(
+  overrides: Partial<{
+    slotId: string;
+    coachId: string;
+    studentId: string;
+    venueId: string | null;
+    startTime: Date;
+    endTime: Date;
+    status: string;
+  }> & { slotId: string; coachId: string; studentId: string },
+) {
+  const defaults = {
+    venueId: null as string | null,
+    startTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
+    status: 'scheduled',
+  };
+
+  return prisma.privateLesson.create({
+    data: { ...defaults, ...overrides },
+  });
+}
+
+/**
  * Clean up all coaching-related test data.
  * Call this in afterEach/afterAll to ensure test isolation.
  */
