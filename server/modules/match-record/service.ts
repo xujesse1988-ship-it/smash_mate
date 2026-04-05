@@ -45,6 +45,31 @@ interface UserServiceDep {
   >;
 }
 
+/** Shape of a match record with its related players and games, as returned by the repository. */
+interface MatchRecordWithRelations {
+  id: string;
+  sourceType: string;
+  sourceId: string;
+  matchType: string;
+  recordedBy: string;
+  createdAt: Date;
+  players: Array<{
+    id: string;
+    matchRecordId: string;
+    side: string;
+    userId: string | null;
+    guestId: string | null;
+    guest?: { id: string; nickname: string; createdAt: Date } | null;
+  }>;
+  games: Array<{
+    id: string;
+    matchRecordId: string;
+    gameNumber: number;
+    scoreA: number;
+    scoreB: number;
+  }>;
+}
+
 /**
  * Determine the match result from game scores.
  * §6.1: Count won games per side; majority wins; equal => DRAW.
@@ -390,95 +415,25 @@ export class MatchRecordService {
   }
 
   private async formatMatchRecordResponse(
-    record: {
-      id: string;
-      sourceType: string;
-      sourceId: string;
-      matchType: string;
-      recordedBy: string;
-      createdAt: Date;
-      players: Array<{
-        id: string;
-        matchRecordId: string;
-        side: string;
-        userId: string | null;
-        guestId: string | null;
-        guest?: { id: string; nickname: string; createdAt: Date } | null;
-      }>;
-      games: Array<{
-        id: string;
-        matchRecordId: string;
-        gameNumber: number;
-        scoreA: number;
-        scoreB: number;
-      }>;
-    },
+    record: MatchRecordWithRelations,
     guestNicknameMap?: Map<string, string>,
   ) {
-    // Get all user IDs (players + recorder)
-    const userIds = record.players.filter((p) => p.userId).map((p) => p.userId!);
-    if (!userIds.includes(record.recordedBy)) {
-      userIds.push(record.recordedBy);
-    }
-
-    const users = await this.userService.getUsersByIds(userIds);
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const result = determineMatchResult(record.games);
-
-    const recorder = userMap.get(record.recordedBy);
-
-    return {
-      id: record.id,
-      sourceType: record.sourceType,
-      sourceId: record.sourceId,
-      matchType: record.matchType,
-      recordedBy: record.recordedBy,
-      recorder: {
-        id: record.recordedBy,
-        nickname: recorder?.nickname ?? '未知用户',
-        avatarUrl: recorder?.avatarUrl ?? null,
-      },
-      players: this.formatPlayers(record.players, userMap, guestNicknameMap),
-      games: record.games.map((g) => ({
-        gameNumber: g.gameNumber,
-        scoreA: g.scoreA,
-        scoreB: g.scoreB,
-      })),
-      result,
-      createdAt: record.createdAt,
-    };
+    const [formatted] = await this.formatMatchRecordsWithUserInfo(
+      [record],
+      undefined,
+      guestNicknameMap,
+    );
+    return formatted;
   }
 
   private async formatMatchRecordsWithUserInfo(
-    records: Array<{
-      id: string;
-      sourceType: string;
-      sourceId: string;
-      matchType: string;
-      recordedBy: string;
-      createdAt: Date;
-      players: Array<{
-        id: string;
-        matchRecordId: string;
-        side: string;
-        userId: string | null;
-        guestId: string | null;
-        guest?: { id: string; nickname: string; createdAt: Date } | null;
-      }>;
-      games: Array<{
-        id: string;
-        matchRecordId: string;
-        gameNumber: number;
-        scoreA: number;
-        scoreB: number;
-      }>;
-    }>,
+    records: MatchRecordWithRelations[],
     targetUserId?: string,
+    guestNicknameMap?: Map<string, string>,
   ) {
     if (records.length === 0) return [];
 
-    // Collect all user IDs
+    // Collect all user IDs (players + recorders) in one batch
     const allUserIds = new Set<string>();
     for (const record of records) {
       allUserIds.add(record.recordedBy);
@@ -505,7 +460,7 @@ export class MatchRecordService {
           nickname: recorder?.nickname ?? '未知用户',
           avatarUrl: recorder?.avatarUrl ?? null,
         },
-        players: this.formatPlayers(record.players, userMap),
+        players: this.formatPlayers(record.players, userMap, guestNicknameMap),
         games: record.games.map((g) => ({
           gameNumber: g.gameNumber,
           scoreA: g.scoreA,

@@ -78,20 +78,20 @@ export class MatchRecordRepository {
   }
 
   async findById(id: string) {
-    return prisma.matchRecord.findUnique({
+    return this.db.matchRecord.findUnique({
       where: { id },
       include: matchRecordInclude,
     });
   }
 
   async deleteById(id: string) {
-    await prisma.matchRecord.delete({
+    await this.db.matchRecord.delete({
       where: { id },
     });
   }
 
   async findBySource(sourceType: string, sourceId: string, _query: Record<string, unknown>) {
-    return prisma.matchRecord.findMany({
+    return this.db.matchRecord.findMany({
       where: {
         sourceType,
         sourceId,
@@ -122,14 +122,14 @@ export class MatchRecordRepository {
     }
 
     const [items, total] = await Promise.all([
-      prisma.matchRecord.findMany({
+      this.db.matchRecord.findMany({
         where,
         include: matchRecordInclude,
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),
-      prisma.matchRecord.count({ where }),
+      this.db.matchRecord.count({ where }),
     ]);
 
     return { items, total };
@@ -142,7 +142,7 @@ export class MatchRecordRepository {
     // 2. Determines match result (A_WIN / B_WIN / DRAW) by comparing side wins
     // 3. Maps match result + user side to user result (WIN / LOSE / DRAW)
     // 4. Aggregates counts of wins, losses, draws
-    const result = await prisma.$queryRaw<
+    const result = await this.db.$queryRaw<
       Array<{ wins: bigint; losses: bigint; draws: bigint }>
     >`
       WITH match_results AS (
