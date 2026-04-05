@@ -1159,7 +1159,7 @@ describe('GET /api/coaches/:id/private-lessons', () => {
     expect(res.body.data.total).toBe(0);
   });
 
-  it('should return 403 for non-coach user', async () => {
+  it('should return 404 for non-coach user', async () => {
     const normalUser = await createTestUser({ isCoach: false });
     const token = signToken(normalUser.id);
 
@@ -1167,7 +1167,7 @@ describe('GET /api/coaches/:id/private-lessons', () => {
       .get(`/api/coaches/${normalUser.id}/private-lessons`)
       .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('COACHING_NOT_A_COACH');
   });
 });

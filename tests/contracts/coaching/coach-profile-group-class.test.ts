@@ -59,6 +59,8 @@ function createMockRepository(): {
     findCoachPrivateLessons: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     getGroupClassParticipantIds: vi.fn().mockResolvedValue([]),
     getPrivateLessonParticipantIds: vi.fn().mockResolvedValue([]),
+    findGroupClassesByCoach: vi.fn().mockResolvedValue([]),
+    getBatchCoachStudentCounts: vi.fn().mockResolvedValue(new Map()),
     updateGroupClassesStarted: vi.fn().mockResolvedValue(0),
     updateGroupClassesCompleted: vi.fn().mockResolvedValue(0),
     updatePrivateLessonsStarted: vi.fn().mockResolvedValue(0),

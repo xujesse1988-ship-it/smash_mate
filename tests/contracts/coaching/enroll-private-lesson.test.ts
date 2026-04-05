@@ -2366,7 +2366,7 @@ describe('GET /api/coaches/:id/private-lessons — CoachingService.getCoachPriva
       service.getCoachPrivateLessons('nonexistent-uuid', {}),
     ).rejects.toMatchObject({
       code: 'COACHING_NOT_A_COACH',
-      statusCode: 403,
+      statusCode: 404,
     });
   });
 
@@ -2383,7 +2383,7 @@ describe('GET /api/coaches/:id/private-lessons — CoachingService.getCoachPriva
       service.getCoachPrivateLessons('user-uuid-normal', {}),
     ).rejects.toMatchObject({
       code: 'COACHING_NOT_A_COACH',
-      statusCode: 403,
+      statusCode: 404,
     });
   });
 });

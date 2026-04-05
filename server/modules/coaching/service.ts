@@ -192,11 +192,7 @@ export class CoachingService {
       feeDescription: string | null;
       status: string;
     }> = [];
-    try {
-      rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
-    } catch {
-      rawGroupClasses = [];
-    }
+    rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
 
     // Collect all venue IDs (from group classes + private lesson slots)
     const gcVenueIds = rawGroupClasses.map((gc) => gc.venueId).filter(Boolean) as string[];
@@ -370,6 +366,11 @@ export class CoachingService {
       maxParticipants: input.maxParticipants,
       feeDescription: input.feeDescription,
     });
+
+    logger.info(
+      { coachId: userId.slice(0, 8), title: input.title, venueId: input.venueId, startTime },
+      '团课发布',
+    );
 
     return {
       id: groupClass.id,
@@ -564,6 +565,11 @@ export class CoachingService {
 
     const updated = await this.repository.updateGroupClass(classId, updateData);
 
+    logger.info(
+      { groupClassId: classId, coachId: userId.slice(0, 8) },
+      '团课修改',
+    );
+
     // Get venue for response
     let venue = null;
     const venueId = updated.venueId;
@@ -642,6 +648,11 @@ export class CoachingService {
     }
 
     const updated = await this.repository.updateGroupClass(classId, { status: 'cancelled' });
+
+    logger.info(
+      { groupClassId: classId, coachId: userId.slice(0, 8) },
+      '团课取消',
+    );
 
     // Notify enrolled students (non-blocking)
     if (groupClass.enrollments && groupClass.enrollments.length > 0) {
@@ -1264,7 +1275,7 @@ export class CoachingService {
     // Check user exists and is a coach
     const user = await this.userService.getUserById(coachId);
     if (!user || !user.isCoach) {
-      throw new AppError(403, 'COACHING_NOT_A_COACH', '用户不存在或不是教练角色');
+      throw new AppError(404, 'COACHING_NOT_A_COACH', '用户不存在或不是教练角色');
     }
 
     const page = query.page ?? 1;
