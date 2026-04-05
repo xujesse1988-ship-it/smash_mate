@@ -14,10 +14,11 @@ import { UserRepository } from '../user/repository.js';
 import { NotificationService } from '../notification/service.js';
 import { NotificationRepository } from '../notification/repository.js';
 
-export function createMatchRecordController(): Router {
-  const router = Router();
-
-  // Wire up dependencies
+/**
+ * Create a MatchRecordService instance with all dependencies wired up.
+ * Shared by createMatchRecordController and exported for use by other modules or tests.
+ */
+export function createMatchRecordService(): MatchRecordService {
   const matchRecordRepo = new MatchRecordRepository();
   const venueService = new VenueService(new VenueRepository());
   const userService = new UserService(new UserRepository());
@@ -34,12 +35,12 @@ export function createMatchRecordController(): Router {
     venueService,
     notificationService,
   );
-  const service = new MatchRecordService(
-    matchRecordRepo,
-    activityService,
-    coachingService,
-    userService,
-  );
+  return new MatchRecordService(matchRecordRepo, activityService, coachingService, userService);
+}
+
+export function createMatchRecordController(): Router {
+  const router = Router();
+  const service = createMatchRecordService();
 
   // POST /api/match-records
   router.post(
@@ -151,28 +152,4 @@ export function createMatchRecordController(): Router {
   );
 
   return router;
-}
-
-/**
- * Create a MatchRecordService instance for use by other modules or integration tests.
- * This factory creates the full dependency chain.
- */
-export function createMatchRecordService(): MatchRecordService {
-  const matchRecordRepo = new MatchRecordRepository();
-  const venueService = new VenueService(new VenueRepository());
-  const userService = new UserService(new UserRepository());
-  const notificationService = new NotificationService(new NotificationRepository());
-  const activityService = new ActivityService(
-    new ActivityRepository(),
-    venueService,
-    userService,
-    notificationService,
-  );
-  const coachingService = new CoachingService(
-    new CoachingRepository(),
-    userService,
-    venueService,
-    notificationService,
-  );
-  return new MatchRecordService(matchRecordRepo, activityService, coachingService, userService);
 }
