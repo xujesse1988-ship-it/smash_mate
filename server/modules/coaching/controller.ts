@@ -181,7 +181,10 @@ export function createCoachingController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getCoachAvailability(req.params.id);
+        const options: { startDate?: string; endDate?: string } = {};
+        if (req.query.startDate) options.startDate = req.query.startDate as string;
+        if (req.query.endDate) options.endDate = req.query.endDate as string;
+        const result = await service.getCoachAvailability(req.params.id, options);
         success(res, result);
       } catch (err) {
         next(err);
