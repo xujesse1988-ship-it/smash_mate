@@ -1,14 +1,19 @@
 export type SourceType = 'activity' | 'group-class' | 'private-lesson';
 export type MatchType = 'singles' | 'doubles';
+export type MatchResult = 'A_WIN' | 'B_WIN' | 'DRAW';
+export type UserResult = 'WIN' | 'LOSE' | 'DRAW';
 
 export interface PlayerInput {
-  side: 'A' | 'B';
   userId?: string;
   guestName?: string;
 }
 
+export interface PlayersInput {
+  sideA: PlayerInput[];
+  sideB: PlayerInput[];
+}
+
 export interface GameInput {
-  gameNumber: number;
   scoreA: number;
   scoreB: number;
 }
@@ -17,7 +22,7 @@ export interface CreateMatchRecordInput {
   sourceType: SourceType;
   sourceId: string;
   matchType: MatchType;
-  players: PlayerInput[];
+  players: PlayersInput;
   games: GameInput[];
 }
 
@@ -29,4 +34,5 @@ export interface MatchRecordListQuery {
 export interface UserMatchRecordQuery {
   page?: number;
   pageSize?: number;
+  sourceType?: SourceType;
 }
