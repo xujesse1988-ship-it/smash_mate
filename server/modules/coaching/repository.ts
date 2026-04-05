@@ -511,27 +511,30 @@ export class CoachingRepository {
   }
 
   /**
-   * Get participant user IDs for group classes.
-   * When called with a coachId: returns all unique student userIds enrolled in this coach's classes
-   *   (used by calculateStudentCount).
-   * When called with a groupClassId: returns the coach + all enrolled student userIds
-   *   (used by getParticipantIds cross-module method).
-   * Prisma will try both interpretations via OR query.
+   * Get participant user IDs for a group class or a coach's students.
+   * @param id - groupClassId or coachId, distinguished by the `type` parameter
+   * @param type - 'class' to query by groupClassId (returns coach + enrolled students),
+   *               'coach' to query by coachId (returns all unique students across coach's classes)
    */
-  async getGroupClassParticipantIds(id: string): Promise<string[]> {
-    // First try as a groupClassId (exact match on GroupClass.id)
-    const groupClass = await prisma.groupClass.findUnique({
-      where: { id },
-      select: { coachId: true, enrollments: { select: { userId: true } } },
-    });
+  async getGroupClassParticipantIds(
+    id: string,
+    type: 'class' | 'coach' = 'class',
+  ): Promise<string[]> {
+    if (type === 'class') {
+      const groupClass = await prisma.groupClass.findUnique({
+        where: { id },
+        select: { coachId: true, enrollments: { select: { userId: true } } },
+      });
 
-    if (groupClass) {
-      // id is a groupClassId — return coach + enrolled students
+      if (!groupClass) {
+        return [];
+      }
+
       const studentIds = groupClass.enrollments.map((e) => e.userId);
       return [...new Set([groupClass.coachId, ...studentIds])];
     }
 
-    // Otherwise treat as coachId — return all unique students across coach's classes
+    // type === 'coach' — return all unique students across coach's classes
     const enrollments = await prisma.groupClassEnrollment.findMany({
       where: {
         groupClass: {
@@ -544,24 +547,29 @@ export class CoachingRepository {
   }
 
   /**
-   * Get participant user IDs for private lessons.
-   * When called with a coachId: returns all unique studentIds of this coach's non-cancelled lessons
-   *   (used by calculateStudentCount).
-   * When called with a privateLessonId: returns [coachId, studentId]
-   *   (used by getParticipantIds cross-module method).
+   * Get participant user IDs for a private lesson or a coach's students.
+   * @param id - privateLessonId or coachId, distinguished by the `type` parameter
+   * @param type - 'lesson' to query by privateLessonId (returns [coachId, studentId]),
+   *               'coach' to query by coachId (returns all unique students, excluding cancelled)
    */
-  async getPrivateLessonParticipantIds(id: string): Promise<string[]> {
-    // First try as a privateLessonId (exact match on PrivateLesson.id)
-    const lesson = await prisma.privateLesson.findUnique({
-      where: { id },
-      select: { coachId: true, studentId: true },
-    });
+  async getPrivateLessonParticipantIds(
+    id: string,
+    type: 'lesson' | 'coach' = 'lesson',
+  ): Promise<string[]> {
+    if (type === 'lesson') {
+      const lesson = await prisma.privateLesson.findUnique({
+        where: { id },
+        select: { coachId: true, studentId: true },
+      });
 
-    if (lesson) {
+      if (!lesson) {
+        return [];
+      }
+
       return [lesson.coachId, lesson.studentId];
     }
 
-    // Otherwise treat as coachId — return all unique students
+    // type === 'coach' — return all unique students
     // Design doc §6.8: exclude cancelled private lessons from studentCount
     const lessons = await prisma.privateLesson.findMany({
       where: { coachId: id, status: { not: 'cancelled' } },

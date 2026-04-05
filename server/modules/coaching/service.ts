@@ -97,11 +97,11 @@ export class CoachingService {
   // =========================================================================
 
   private async calculateStudentCount(coachId: string): Promise<number> {
-    const [gcParticipants, plParticipants] = await Promise.all([
-      this.repository.getGroupClassParticipantIds(coachId),
-      this.repository.getPrivateLessonParticipantIds(coachId),
+    const [gcStudents, plStudents] = await Promise.all([
+      this.repository.getGroupClassParticipantIds(coachId, 'coach'),
+      this.repository.getPrivateLessonParticipantIds(coachId, 'coach'),
     ]);
-    const uniqueIds = new Set([...gcParticipants, ...plParticipants]);
+    const uniqueIds = new Set([...gcStudents, ...plStudents]);
     return uniqueIds.size;
   }
 
@@ -1064,13 +1064,26 @@ export class CoachingService {
       '学员预约私教课',
     );
 
+    // Fetch venue info if venueId is present
+    let venue: { id: string; name: string; address: string } | null = null;
+    if (lesson.venueId) {
+      const venueInfo = await this.venueService.getVenueById(lesson.venueId);
+      if (venueInfo) {
+        venue = {
+          id: venueInfo.id,
+          name: venueInfo.name,
+          address: venueInfo.address,
+        };
+      }
+    }
+
     return {
       id: lesson.id,
       slotId: lesson.slotId,
       coachId: lesson.coachId,
       studentId: lesson.studentId,
       venueId: lesson.venueId,
-      venue: null, // Will be enriched in controller if needed
+      venue,
       startTime: lesson.startTime,
       endTime: lesson.endTime,
       status: lesson.status,
