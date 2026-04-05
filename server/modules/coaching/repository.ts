@@ -225,6 +225,26 @@ export class CoachingRepository {
     throw new Error('Not implemented');
   }
 
+  async findGroupClassesByCoach(coachId: string, endTimeAfter: Date) {
+    const groupClasses = await prisma.groupClass.findMany({
+      where: {
+        coachId,
+        endTime: { gt: endTimeAfter },
+      },
+      include: {
+        enrollments: true,
+      },
+      orderBy: { startTime: 'asc' },
+    });
+
+    return groupClasses.map((gc) => ({
+      ...gc,
+      currentParticipants: gc.enrollments.length,
+    }));
+  }
+
+  // Note: These methods query by coachId (all group classes/private lessons for this coach),
+  // used by calculateStudentCount for single-coach scenarios.
   async getGroupClassParticipantIds(coachId: string): Promise<string[]> {
     const enrollments = await prisma.groupClassEnrollment.findMany({
       where: {
@@ -243,6 +263,54 @@ export class CoachingRepository {
       select: { studentId: true },
     });
     return [...new Set(lessons.map((l) => l.studentId))];
+  }
+
+  async getBatchCoachStudentCounts(coachIds: string[]): Promise<Map<string, number>> {
+    if (coachIds.length === 0) return new Map();
+
+    // Batch query: all group class enrollments for these coaches
+    const gcEnrollments = await prisma.groupClassEnrollment.findMany({
+      where: {
+        groupClass: {
+          coachId: { in: coachIds },
+        },
+      },
+      select: {
+        userId: true,
+        groupClass: { select: { coachId: true } },
+      },
+    });
+
+    // Batch query: all private lesson students for these coaches
+    const plLessons = await prisma.privateLesson.findMany({
+      where: {
+        coachId: { in: coachIds },
+      },
+      select: {
+        studentId: true,
+        coachId: true,
+      },
+    });
+
+    // Build per-coach unique student sets
+    const coachStudentSets = new Map<string, Set<string>>();
+    for (const coachId of coachIds) {
+      coachStudentSets.set(coachId, new Set());
+    }
+
+    for (const e of gcEnrollments) {
+      coachStudentSets.get(e.groupClass.coachId)?.add(e.userId);
+    }
+
+    for (const l of plLessons) {
+      coachStudentSets.get(l.coachId)?.add(l.studentId);
+    }
+
+    const result = new Map<string, number>();
+    for (const [coachId, studentSet] of coachStudentSets) {
+      result.set(coachId, studentSet.size);
+    }
+    return result;
   }
 
   async updateGroupClassesStarted(now: Date): Promise<number> {

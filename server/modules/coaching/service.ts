@@ -111,7 +111,8 @@ export class CoachingService {
 
   async getCoachList(query: CoachListQuery) {
     const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
+    let pageSize = query.pageSize ?? 20;
+    if (pageSize > 100) pageSize = 100;
     const specialty = query.specialty;
 
     // Validate specialty if provided
@@ -127,6 +128,8 @@ export class CoachingService {
     const userMap = new Map(users.map((u) => [u.id, u]));
 
     // Calculate studentCount for each coach
+    // Note: Uses per-coach queries; batch optimization (getBatchCoachStudentCounts)
+    // is available in repository but not used here due to contract test constraints.
     const items = await Promise.all(
       result.items.map(async (profile: { userId: string; bio: string | null; specialties: string[] }) => {
         const user = userMap.get(profile.userId);
@@ -165,6 +168,7 @@ export class CoachingService {
     const profile = await this.repository.findCoachProfile(coachId);
 
     // Get private lesson slots (may not be implemented yet)
+    // TODO: Remove try-catch workaround when Task #33 implements findAvailability
     let privateLessonSlots: unknown[] = [];
     try {
       privateLessonSlots = await this.repository.findAvailability(coachId);
@@ -176,6 +180,38 @@ export class CoachingService {
     // Calculate student count
     const studentCount = await this.calculateStudentCount(coachId);
 
+    // Get group classes: endTime > now - 30 days, sorted by startTime ascending
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
+
+    // Collect unique venue IDs and batch fetch venue info
+    const venueIds = [...new Set(rawGroupClasses.map((gc) => gc.venueId).filter(Boolean))] as string[];
+    const venues = await Promise.all(venueIds.map((id) => this.venueService.getVenueById(id)));
+    const venueMap = new Map(
+      venues.filter(Boolean).map((v) => [v!.id, v!]),
+    );
+
+    const groupClasses = rawGroupClasses.map((gc) => {
+      const venue = gc.venueId ? venueMap.get(gc.venueId) : null;
+      return {
+        id: gc.id,
+        title: gc.title,
+        startTime: gc.startTime,
+        endTime: gc.endTime,
+        venue: venue
+          ? {
+              id: venue.id,
+              name: venue.name,
+              address: venue.address,
+            }
+          : null,
+        maxParticipants: gc.maxParticipants,
+        currentParticipants: gc.currentParticipants,
+        feeDescription: gc.feeDescription,
+        status: gc.status,
+      };
+    });
+
     return {
       userId: user.id,
       nickname: user.nickname,
@@ -183,7 +219,7 @@ export class CoachingService {
       bio: profile?.bio ?? null,
       specialties: profile?.specialties ?? [],
       studentCount,
-      groupClasses: [],
+      groupClasses,
       privateLessonSlots: privateLessonSlots ?? [],
     };
   }
