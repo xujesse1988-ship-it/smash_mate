@@ -197,7 +197,7 @@ export function createCoachingController(): Router {
       try {
         const userId = (req as AuthRequest).userId!;
         const result = await service.bookPrivateLesson(userId, req.body);
-        success(res, result);
+        created(res, result);
       } catch (err) {
         next(err);
       }

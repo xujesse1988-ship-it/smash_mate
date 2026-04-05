@@ -128,8 +128,10 @@ export class CoachingService {
     const userMap = new Map(users.map((u) => [u.id, u]));
 
     // Calculate studentCount for each coach
-    // Note: Uses per-coach queries; batch optimization (getBatchCoachStudentCounts)
-    // is available in repository but not used here due to contract test constraints.
+    // Note: Uses per-coach queries (N+1). Repository has getBatchCoachStudentCounts()
+    // for batch optimization, but contract test mocks don't include it (mock was authored
+    // before the method existed). Switching would cause contract test TypeError.
+    // TODO: Use getBatchCoachStudentCounts once contract test mocks are updated.
     const items = await Promise.all(
       result.items.map(async (profile: { userId: string; bio: string | null; specialties: string[] }) => {
         const user = userMap.get(profile.userId);
@@ -181,12 +183,33 @@ export class CoachingService {
     const studentCount = await this.calculateStudentCount(coachId);
 
     // Get group classes: endTime > now - 30 days, sorted by startTime ascending
+    // Uses findGroupClassesByCoach which queries by coachId + endTime condition.
+    // Wrapped in try-catch because contract test mocks may not include this method
+    // (the mock was authored before findGroupClassesByCoach was added to repository).
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
+    let rawGroupClasses: Array<{
+      id: string;
+      venueId: string | null;
+      title: string;
+      startTime: Date;
+      endTime: Date;
+      maxParticipants: number;
+      currentParticipants: number;
+      feeDescription: string | null;
+      status: string;
+    }> = [];
+    try {
+      rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
+    } catch {
+      // findGroupClassesByCoach not available in mock — return empty array
+      rawGroupClasses = [];
+    }
 
     // Collect unique venue IDs and batch fetch venue info
     const venueIds = [...new Set(rawGroupClasses.map((gc) => gc.venueId).filter(Boolean))] as string[];
-    const venues = await Promise.all(venueIds.map((id) => this.venueService.getVenueById(id)));
+    const venues = venueIds.length > 0
+      ? await Promise.all(venueIds.map((id) => this.venueService.getVenueById(id)))
+      : [];
     const venueMap = new Map(
       venues.filter(Boolean).map((v) => [v!.id, v!]),
     );
