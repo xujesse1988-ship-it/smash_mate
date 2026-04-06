@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: web-app
@@ -20,7 +20,7 @@ feature: auth
 | coaching | 后端 | done | done | done | done | done | done |
 | match-record | 后端 | done | done | done | done | done | |
 | review | 后端 | done | done | done | done | done | done |
-| web-app/auth | 前端 | done | review | | | | |
+| web-app/auth | 前端 | done | done | in_progress | | | |
 | web-app/activity | 前端 | done | | | | | |
 | web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | done | | | | | |
@@ -217,3 +217,4 @@ L2 #56 review 通过（2026-04-05）。Issue #56 关闭。coaching 模块全部�
 L2 #57（私教预约全流程）集成测试完成（2026-04-05）：16 个用例覆盖设置空闲时间→预约→时间段锁定→取消→时间段释放→重新预约→状态流转→评价→评分验证、时间段冲突、取消幂等性、不可取消状态、教练自约拦截、课程未结束评价拦截、非参与者评价拦截、重复评价拦截、球馆选择校验。全量 1034 通过。等待 review。
 L2 #57 review 通过（2026-04-05）。Issue #57 关闭。review 模块全部完成。Milestone 2 全部完成（全部后端模块 + 3 个 L2 集成测试）。1034 个测试全通过。进入 Milestone 3（前端 + 集成测试），从 web-app/auth 开始。
 web-app/auth 前端契约测试 #40 编写完成（2026-04-05）：API 层 16 用例（sendCode 5 + login 11）+ LoginPage 渲染 24 用例，共 40 用例。TDD 状态全部红色。等待 review。
+web-app/auth 前端契约测试 #40 review 通过（2026-04-05）。40 个用例，进入实现阶段。
