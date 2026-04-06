@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LoginPage } from './features/auth/pages/LoginPage';
 
 // Placeholder pages - will be replaced with actual implementations
 function PlaceholderPage({ name }: { name: string }) {
@@ -8,7 +9,7 @@ function PlaceholderPage({ name }: { name: string }) {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<PlaceholderPage name="LoginPage" />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/activities" element={<PlaceholderPage name="ActivityListPage" />} />
       <Route path="/activities/create" element={<PlaceholderPage name="CreateActivityPage" />} />
       <Route path="/activities/:id" element={<PlaceholderPage name="ActivityDetailPage" />} />
