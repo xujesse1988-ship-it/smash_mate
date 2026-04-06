@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: review
@@ -208,3 +208,4 @@ match-record #36 review LGTM（2026-04-05）。Issue #36 关闭。#36 已包含 
 match-record 模块 Review LGTM（2026-04-05）。match-record 模块后端完成。L2 #55（约球活动全流程）依赖已满足（activity + match-record），可触发。进入 L2 集成测试阶段。
 L2 #55（约球活动全流程）review 通过（2026-04-05）。12 个用例，Issue #55 关闭。activity 模块全部完成。进入 review 模块。
 review 契约测试 #38（评价提交、列表与评分查询）review 通过（2026-04-05）。65 个用例，进入实现阶段。
+review #39（评价提交、列表与评分计算）实现完成（2026-04-05）：评价提交（教练/课程/参与者校验、去重、通知）、教练评价列表（分页、批量获取评价者信息、已注销用户占位）、教练评分查询（实时聚合计算）、批量教练评分查询（GROUP BY 避免 N+1）、模块间接口 getCoachAverageRating。契约测试 65 通过，L1 集成测试 25 通过。等待 review。
