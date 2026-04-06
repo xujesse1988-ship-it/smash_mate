@@ -23,7 +23,7 @@ export function LoginPage() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   const sendCodeHook = useSendCode();
-  const loginMutation = useLogin({ isRegisterTab: activeTab === 'register' });
+  const loginMutation = useLogin(activeTab === 'register');
 
   // Redirect if already logged in
   useEffect(() => {
