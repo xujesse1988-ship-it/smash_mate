@@ -24,17 +24,20 @@ export default defineConfig({
       {
         test: {
           name: 'web-app',
+          globals: true,
           environment: 'jsdom',
           include: [
             'tests/contracts/web-app/**/*.test.{ts,tsx}',
             'tests/integration/web-app/**/*.test.{ts,tsx}',
           ],
+          setupFiles: ['tests/setup-jsdom.ts'],
         },
         resolve: sharedResolve,
       },
       {
         test: {
           name: 'server',
+          globals: true,
           environment: 'node',
           include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
           exclude: [
