@@ -1,3 +1,11 @@
+// TODO: Migrate to shared API Client (web/shared/utils/api-client.ts) when it is created.
+// The shared client should provide:
+// - Request interceptor: auto-attach Authorization header from authStore
+// - Response interceptor: 401 clears authStore and redirects to /login
+// - Unified error extraction (error.code + error.message)
+// Auth endpoints don't need the Authorization header, but the 401 interceptor
+// should still apply. See web-app.md §6 "API Client 配置".
+
 interface ApiError {
   code: string;
   message: string;
