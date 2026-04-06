@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c-review
+substep: 5e-review
 
 ## 当前模块
 module: web-app
@@ -218,4 +218,5 @@ L2 #57（私教预约全流程）集成测试完成（2026-04-05）：16 个用�
 L2 #57 review 通过（2026-04-05）。Issue #57 关闭。review 模块全部完成。Milestone 2 全部完成（全部后端模块 + 3 个 L2 集成测试）。1034 个测试全通过。进入 Milestone 3（前端 + 集成测试），从 web-app/auth 开始。
 web-app/auth 前端契约测试 #40 编写完成（2026-04-05）：API 层 16 用例（sendCode 5 + login 11）+ LoginPage 渲染 24 用例，共 40 用例。TDD 状态全部红色。等待 review。
 web-app/auth 前端契约测试 #40 review 通过（2026-04-05）。40 个用例，进入实现阶段。
-web-app/auth #41 实现完成（2026-04-05）：LoginPage 页面（登录/注册 Tab、手机号+验证码表单、教练复选框、路由保护）、API 层（sendCode/login）、Hooks（useSendCode/useLogin/useRedirectUrl）、路由注册。契约测试 40 通过，L1 集成测试 14 通过，全量 1088 通过。等待 review。
+web-app/auth #41 实现完成（2026-04-05）：LoginPage 页面（登录/注册 Tab、手机号+验证码表单、教练复选框、路由保护）、API 层（sendCode/login）、Hooks（useSendCode/useLogin/useRedirectUrl）、路由注册。契约测试 40 通过，L1 集成测试 14 通过，全量 1088 通过。
+web-app/auth #41 review 问题已修复（2026-04-05）：hooks 改用 useMutation、useLogin 参数改为直接 boolean、auth-api 添加 TODO 标注统一 API Client、移除无效 polyfill、L1 集成测试添加 QueryClientProvider。全量 1088 通过。等待重新 review。
