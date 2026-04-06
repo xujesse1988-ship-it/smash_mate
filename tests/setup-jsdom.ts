@@ -35,11 +35,3 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
   });
 }
 
-// Polyfill getComputedStyle for jsdom (used by Ant Design animations)
-if (typeof window !== 'undefined') {
-  const originalGetComputedStyle = window.getComputedStyle;
-  window.getComputedStyle = (elt: Element, pseudoElt?: string | null) => {
-    const style = originalGetComputedStyle(elt, pseudoElt);
-    return style;
-  };
-}
