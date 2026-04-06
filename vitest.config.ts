@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
+const sharedResolve = {
+  alias: {
+    '@server': path.resolve(__dirname, 'server'),
+    '@web': path.resolve(__dirname, 'web'),
+    '@admin': path.resolve(__dirname, 'admin'),
+    '@tests': path.resolve(__dirname, 'tests'),
+  },
+};
+
 export default defineConfig({
   test: {
     globals: true,
@@ -11,14 +20,32 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
     },
-    environmentMatchGlobs: [['tests/integration/web-app/**', 'jsdom']],
+    projects: [
+      {
+        test: {
+          name: 'web-app',
+          environment: 'jsdom',
+          include: [
+            'tests/contracts/web-app/**/*.test.{ts,tsx}',
+            'tests/integration/web-app/**/*.test.{ts,tsx}',
+          ],
+        },
+        resolve: sharedResolve,
+      },
+      {
+        test: {
+          name: 'server',
+          environment: 'node',
+          include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+          exclude: [
+            'tests/e2e/**',
+            'tests/contracts/web-app/**',
+            'tests/integration/web-app/**',
+          ],
+        },
+        resolve: sharedResolve,
+      },
+    ],
   },
-  resolve: {
-    alias: {
-      '@server': path.resolve(__dirname, 'server'),
-      '@web': path.resolve(__dirname, 'web'),
-      '@admin': path.resolve(__dirname, 'admin'),
-      '@tests': path.resolve(__dirname, 'tests'),
-    },
-  },
+  resolve: sharedResolve,
 });
