@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: review
@@ -19,7 +19,7 @@ feature:
 | activity | 后端 | done | done | done | done | done | done |
 | coaching | 后端 | done | done | done | done | done | |
 | match-record | 后端 | done | done | done | done | done | |
-| review | 后端 | done | review | | | | |
+| review | 后端 | done | done | in_progress | | | |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
 | web-app/coaching | 前端 | done | | | | | |
@@ -207,3 +207,4 @@ match-record #36（战绩录入与删除）实现完成（2026-04-05）：录入
 match-record #36 review LGTM（2026-04-05）。Issue #36 关闭。#36 已包含 #37 全部实现，Issue #37 一并关闭。match-record 模块所有 Task 完成，进入模块 Review。
 match-record 模块 Review LGTM（2026-04-05）。match-record 模块后端完成。L2 #55（约球活动全流程）依赖已满足（activity + match-record），可触发。进入 L2 集成测试阶段。
 L2 #55（约球活动全流程）review 通过（2026-04-05）。12 个用例，Issue #55 关闭。activity 模块全部完成。进入 review 模块。
+review 契约测试 #38（评价提交、列表与评分查询）review 通过（2026-04-05）。65 个用例，进入实现阶段。
