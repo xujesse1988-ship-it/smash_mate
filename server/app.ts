@@ -10,6 +10,7 @@ import { createNotificationController } from './modules/notification/controller.
 import { createActivityController } from './modules/activity/controller.js';
 import { createCoachingController } from './modules/coaching/controller.js';
 import { createMatchRecordController } from './modules/match-record/controller.js';
+import { createReviewController } from './modules/review/controller.js';
 
 const app = express();
 
@@ -31,8 +32,7 @@ app.use('/api', createNotificationController());
 app.use('/api', createActivityController());
 app.use('/api', createCoachingController());
 app.use('/api', createMatchRecordController());
-// TODO: Mount remaining module routes here
-// app.use('/api', reviewRoutes);
+app.use('/api', createReviewController());
 
 // Error handler (must be last)
 app.use(errorHandler);
