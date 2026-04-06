@@ -2,11 +2,11 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
 module: web-app
-feature: auth
+feature: activity
 
 ## 模块进度
 
@@ -221,3 +221,4 @@ web-app/auth 前端契约测试 #40 review 通过（2026-04-05）。40 个用例
 web-app/auth #41 实现完成（2026-04-05）：LoginPage 页面（登录/注册 Tab、手机号+验证码表单、教练复选框、路由保护）、API 层（sendCode/login）、Hooks（useSendCode/useLogin/useRedirectUrl）、路由注册。契约测试 40 通过，L1 集成测试 14 通过，全量 1088 通过。
 web-app/auth #41 review 问题已修复（2026-04-05）：hooks 改用 useMutation、useLogin 参数改为直接 boolean、auth-api 添加 TODO 标注统一 API Client、移除无效 polyfill、L1 集成测试添加 QueryClientProvider。全量 1088 通过。等待重新 review。
 web-app/auth #41 review LGTM（2026-04-05）。Issue #41 关闭。web-app/auth feature 所有 Task 完成（#41），进入 Feature Review。
+web-app/auth Feature Review LGTM（2026-04-05）。auth feature 完成。进入下一个 feature: web-app/activity。
