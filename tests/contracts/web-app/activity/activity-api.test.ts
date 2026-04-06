@@ -940,6 +940,24 @@ describe('leaveActivity API', () => {
     });
   });
 
+  // 来源: activity.md §4 — 退出活动 — 错误码 ACTIVITY_NOT_FOUND
+  it('should throw error with code ACTIVITY_NOT_FOUND', async () => {
+    server.use(
+      http.post('/api/activities/:id/leave', () => {
+        return HttpResponse.json(
+          {
+            error: { code: 'ACTIVITY_NOT_FOUND', message: '活动不存在' },
+          },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(leaveActivity('non-existent')).rejects.toMatchObject({
+      code: 'ACTIVITY_NOT_FOUND',
+    });
+  });
+
   // 来源: activity.md §4 — 退出活动 — 错误码 ACTIVITY_CREATOR_CANNOT_LEAVE
   it('should throw error with code ACTIVITY_CREATOR_CANNOT_LEAVE', async () => {
     server.use(
@@ -1181,6 +1199,124 @@ describe('updateActivity API', () => {
     });
   });
 
+  // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_INVALID_VENUE
+  it('should throw error with code ACTIVITY_INVALID_VENUE', async () => {
+    server.use(
+      http.put('/api/activities/:id', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_INVALID_VENUE',
+              message: 'venueId 格式不合法',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateActivity('activity-uuid-1', { venueId: '' }),
+    ).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_VENUE',
+    });
+  });
+
+  // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_INVALID_TIME
+  it('should throw error with code ACTIVITY_INVALID_TIME', async () => {
+    server.use(
+      http.put('/api/activities/:id', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_INVALID_TIME',
+              message: '开始时间不晚于当前时间，或结束时间不晚于开始时间',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateActivity('activity-uuid-1', {
+        startTime: '2020-01-01T00:00:00.000Z',
+        endTime: '2020-01-01T02:00:00.000Z',
+      }),
+    ).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TIME',
+    });
+  });
+
+  // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_INVALID_PARTICIPANTS
+  it('should throw error with code ACTIVITY_INVALID_PARTICIPANTS', async () => {
+    server.use(
+      http.put('/api/activities/:id', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_INVALID_PARTICIPANTS',
+              message: 'maxParticipants 不在 2-50 范围内',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateActivity('activity-uuid-1', { maxParticipants: 0 }),
+    ).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_PARTICIPANTS',
+    });
+  });
+
+  // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_INVALID_TITLE
+  it('should throw error with code ACTIVITY_INVALID_TITLE', async () => {
+    server.use(
+      http.put('/api/activities/:id', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_INVALID_TITLE',
+              message: 'title 超过 50 字符',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateActivity('activity-uuid-1', { title: 'a'.repeat(51) }),
+    ).rejects.toMatchObject({
+      code: 'ACTIVITY_INVALID_TITLE',
+    });
+  });
+
+  // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_NOT_FOUND
+  it('should throw error with code ACTIVITY_NOT_FOUND', async () => {
+    server.use(
+      http.put('/api/activities/:id', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_NOT_FOUND',
+              message: '活动不存在',
+            },
+          },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      updateActivity('non-existent-id', { title: '新标题' }),
+    ).rejects.toMatchObject({
+      code: 'ACTIVITY_NOT_FOUND',
+    });
+  });
+
   // 来源: activity.md §4 — 修改活动 — 错误码 ACTIVITY_VENUE_NOT_FOUND
   it('should throw error with code ACTIVITY_VENUE_NOT_FOUND when changing to non-existent venue', async () => {
     server.use(
@@ -1243,6 +1379,27 @@ describe('cancelActivity API', () => {
     expect(result).toEqual({
       id: 'activity-uuid-1',
       status: 'cancelled',
+    });
+  });
+
+  // 来源: activity.md §4 — 取消活动 — 错误码 ACTIVITY_NOT_FOUND
+  it('should throw error with code ACTIVITY_NOT_FOUND', async () => {
+    server.use(
+      http.post('/api/activities/:id/cancel', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'ACTIVITY_NOT_FOUND',
+              message: '活动不存在',
+            },
+          },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(cancelActivity('non-existent')).rejects.toMatchObject({
+      code: 'ACTIVITY_NOT_FOUND',
     });
   });
 
