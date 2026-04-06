@@ -306,7 +306,9 @@ describe('LoginPage', () => {
     await user.type(screen.getByPlaceholderText(/验证码/i), '123456');
     await user.click(screen.getByRole('button', { name: /^登录$/i }));
 
-    expect(mockLogin).toHaveBeenCalled();
+    expect(mockLogin).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '13800001234', code: '123456' }),
+    );
   });
 
   // 来源: web-app-auth.md §6.1 — 前端表单校验规则 — code 格式
@@ -359,7 +361,9 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('checkbox', { name: /教练/i }));
     await user.click(screen.getByRole('button', { name: /^注册$/i }));
 
-    expect(mockLogin).toHaveBeenCalled();
+    expect(mockLogin).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '13800001234', code: '123456', isCoach: true }),
+    );
   });
 
   // 来源: web-app-auth.md §2 — 交互流程 — 注册（注册 Tab，不勾选教练）
@@ -372,7 +376,12 @@ describe('LoginPage', () => {
     await user.type(screen.getByPlaceholderText(/验证码/i), '123456');
     await user.click(screen.getByRole('button', { name: /^注册$/i }));
 
-    expect(mockLogin).toHaveBeenCalled();
+    expect(mockLogin).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '13800001234', code: '123456' }),
+    );
+    expect(mockLogin).not.toHaveBeenCalledWith(
+      expect.objectContaining({ isCoach: true }),
+    );
   });
 
   // =========================================================================
