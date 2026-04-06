@@ -18,3 +18,8 @@ export interface CoachRating {
   averageRating: number | null;
   totalCount: number;
 }
+
+export interface AverageRatingResult {
+  averageRating: number | null;
+  totalCount: number;
+}

@@ -1,4 +1,10 @@
 export { ReviewService } from './service.js';
 export { ReviewRepository } from './repository.js';
 export { createReviewController } from './controller.js';
-export type { CourseType, CreateReviewInput, ReviewListQuery, CoachRating } from './types.js';
+export type {
+  CourseType,
+  CreateReviewInput,
+  ReviewListQuery,
+  CoachRating,
+  AverageRatingResult,
+} from './types.js';

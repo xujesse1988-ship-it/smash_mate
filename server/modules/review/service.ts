@@ -1,7 +1,13 @@
 import { AppError } from '../../infra/error-handler.js';
 import { createModuleLogger } from '../../infra/logger.js';
 import { ReviewRepository } from './repository.js';
-import type { CreateReviewInput, ReviewListQuery, CoachRating, CourseType } from './types.js';
+import type {
+  CreateReviewInput,
+  ReviewListQuery,
+  CoachRating,
+  AverageRatingResult,
+  CourseType,
+} from './types.js';
 
 const logger = createModuleLogger('review');
 
@@ -287,12 +293,12 @@ export class ReviewService {
   // Cross-module service methods
   // =========================================================================
 
-  async getCoachAverageRating(coachId: string): Promise<CoachRating> {
+  async getCoachAverageRating(coachId: string): Promise<AverageRatingResult> {
     const result = await this.repo.getCoachAverageRating(coachId);
     return {
       averageRating: result.averageRating,
       totalCount: result.totalCount,
-    } as CoachRating;
+    };
   }
 
   // =========================================================================
