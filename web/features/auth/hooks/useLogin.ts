@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../api/auth-api';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuthStore } from '../../../stores/auth-store';
 import { useRedirectUrl } from './useRedirectUrl';
 
 interface LoginParams {
