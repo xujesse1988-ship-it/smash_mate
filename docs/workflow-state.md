@@ -2,11 +2,11 @@
 
 ## 当前阶段
 step: 5
-substep: 5g
+substep: 5b
 
 ## 当前模块
-module: review
-feature:
+module: web-app
+feature: auth
 
 ## 模块进度
 
@@ -19,7 +19,7 @@ feature:
 | activity | 后端 | done | done | done | done | done | done |
 | coaching | 后端 | done | done | done | done | done | done |
 | match-record | 后端 | done | done | done | done | done | |
-| review | 后端 | done | done | done | done | done | review |
+| review | 后端 | done | done | done | done | done | done |
 | web-app/auth | 前端 | done | | | | | |
 | web-app/activity | 前端 | done | | | | | |
 | web-app/coaching | 前端 | done | | | | | |
@@ -136,7 +136,7 @@ L2 集成测试:
 ```
 
 ## 迭代
-current_milestone: Milestone 2: 中间层 + 上层后端
+current_milestone: Milestone 3: 前端 + 集成测试
 
 ## 备注
 architecture.md Review 通过，进入 Step 3 模块详细设计。
@@ -215,3 +215,4 @@ review 模块 Review LGTM（2026-04-05）。review 模块后端完成。全部�
 L2 #56（教练团课全流程）集成测试完成（2026-04-05）：10 个用例覆盖发布→报名→状态流转→评价→评分验证→战绩录入→战绩列表→满员联动。全量 1018 通过。等待 review。
 L2 #56 review 通过（2026-04-05）。Issue #56 关闭。coaching 模块全部完成。
 L2 #57（私教预约全流程）集成测试完成（2026-04-05）：16 个用例覆盖设置空闲时间→预约→时间段锁定→取消→时间段释放→重新预约→状态流转→评价→评分验证、时间段冲突、取消幂等性、不可取消状态、教练自约拦截、课程未结束评价拦截、非参与者评价拦截、重复评价拦截、球馆选择校验。全量 1034 通过。等待 review。
+L2 #57 review 通过（2026-04-05）。Issue #57 关闭。review 模块全部完成。Milestone 2 全部完成（全部后端模块 + 3 个 L2 集成测试）。1034 个测试全通过。进入 Milestone 3（前端 + 集成测试），从 web-app/auth 开始。
