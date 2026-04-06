@@ -38,6 +38,7 @@ export async function leaveActivity(_id: string) {
 export async function updateActivity(
   _id: string,
   _data: {
+    venueId?: string;
     title?: string;
     startTime?: string;
     endTime?: string;
@@ -53,7 +54,7 @@ export async function cancelActivity(_id: string) {
 
 export async function getUserActivities(
   _userId: string,
-  _params: { page?: number; pageSize?: number; role?: string },
+  _params: { page?: number; pageSize?: number; role?: string; status?: string },
 ) {
   throw new Error('Not implemented');
 }
