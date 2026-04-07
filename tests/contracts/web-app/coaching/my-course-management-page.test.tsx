@@ -484,4 +484,36 @@ describe('MyCourseManagementPage', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/group-classes/gc-uuid-1');
   });
+
+  // =========================================================================
+  // 修改团课弹窗交互
+  // =========================================================================
+
+  // 来源: web-app-coaching.md §2 — MyCourseManagementPage — 交互流程 — 修改团课
+  it('should open edit group class modal with pre-filled values when modify button is clicked', async () => {
+    mockCoachProfileState = { data: mockCoachProfileData, isLoading: false, error: null };
+    renderPage();
+
+    const modifyButton = screen.getByText(/修改/i);
+    await userEvent.click(modifyButton);
+
+    // Edit modal should appear with pre-filled course name
+    expect(screen.getByDisplayValue('初级单打提升班')).toBeInTheDocument();
+  });
+
+  // =========================================================================
+  // CoachGuard — 非教练用户场景
+  // =========================================================================
+
+  // 来源: web-app-coaching.md §6.7 — 权限控制 — CoachGuard 非教练用户
+  it('should show coach role required prompt when user is not a coach', () => {
+    mockCurrentUserState = {
+      data: { id: 'user-uuid-1', isCoach: false, nickname: '普通用户' },
+      isLoading: false,
+    };
+    renderPage();
+
+    // Should prompt user to enable coach role
+    expect(screen.getByText(/教练角色|需要教练/i)).toBeInTheDocument();
+  });
 });

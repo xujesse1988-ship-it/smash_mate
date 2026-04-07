@@ -537,6 +537,153 @@ describe('createGroupClass API', () => {
       }),
     ).rejects.toMatchObject({ code: 'COACHING_VENUE_NOT_FOUND' });
   });
+
+  // 来源: coaching.md §4 — 发布团课 — 错误码 COACHING_INVALID_VENUE
+  it('should throw error for invalid venue', async () => {
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_VENUE', message: 'venueId 缺失或格式不合法' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createGroupClass({
+        title: '测试',
+        venueId: '',
+        startTime: '2026-04-10T14:00:00.000Z',
+        endTime: '2026-04-10T16:00:00.000Z',
+        maxParticipants: 10,
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_VENUE' });
+  });
+
+  // 来源: coaching.md §4 — 发布团课 — 错误码 COACHING_INVALID_TIME
+  it('should throw error for invalid time', async () => {
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_TIME', message: '开始时间不晚于当前时间，或结束时间不晚于开始时间' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createGroupClass({
+        title: '测试',
+        venueId: 'venue-uuid-1',
+        startTime: '2020-01-01T00:00:00.000Z',
+        endTime: '2020-01-01T01:00:00.000Z',
+        maxParticipants: 10,
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_TIME' });
+  });
+
+  // 来源: coaching.md §4 — 发布团课 — 错误码 COACHING_INVALID_PARTICIPANTS
+  it('should throw error for invalid participants', async () => {
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_PARTICIPANTS', message: 'maxParticipants 不在 2-30 范围内' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createGroupClass({
+        title: '测试',
+        venueId: 'venue-uuid-1',
+        startTime: '2026-04-10T14:00:00.000Z',
+        endTime: '2026-04-10T16:00:00.000Z',
+        maxParticipants: 50,
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_PARTICIPANTS' });
+  });
+
+  // 来源: coaching.md §4 — 发布团课 — 错误码 COACHING_INVALID_FEE_DESCRIPTION
+  it('should throw error for invalid fee description', async () => {
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_FEE_DESCRIPTION', message: 'feeDescription 超过 200 字符' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createGroupClass({
+        title: '测试',
+        venueId: 'venue-uuid-1',
+        startTime: '2026-04-10T14:00:00.000Z',
+        endTime: '2026-04-10T16:00:00.000Z',
+        maxParticipants: 10,
+        feeDescription: 'x'.repeat(201),
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_FEE_DESCRIPTION' });
+  });
+
+  // 来源: coaching.md §4 — 发布团课 — 错误码 AUTH_UNAUTHORIZED
+  it('should throw error when not authenticated', async () => {
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json(
+          { error: { code: 'AUTH_UNAUTHORIZED', message: 'Token 缺失或无效' } },
+          { status: 401 },
+        );
+      }),
+    );
+
+    await expect(
+      createGroupClass({
+        title: '测试',
+        venueId: 'venue-uuid-1',
+        startTime: '2026-04-10T14:00:00.000Z',
+        endTime: '2026-04-10T16:00:00.000Z',
+        maxParticipants: 10,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTH_UNAUTHORIZED' });
+  });
+
+  // 来源: SF-1 — 发布团课成功响应关键字段独立断言
+  it('should return response with status open and currentParticipants 0 for new group class', async () => {
+    const responseData = {
+      id: 'gc-uuid-new',
+      coachId: 'coach-uuid-1',
+      title: '初级单打提升班',
+      venue: mockVenue,
+      startTime: '2026-04-10T14:00:00.000Z',
+      endTime: '2026-04-10T16:00:00.000Z',
+      maxParticipants: 10,
+      currentParticipants: 0,
+      feeDescription: '200元/人',
+      status: 'open',
+      createdAt: '2026-04-02T10:00:00.000Z',
+    };
+
+    server.use(
+      http.post('/api/group-classes', () => {
+        return HttpResponse.json({ data: responseData }, { status: 201 });
+      }),
+    );
+
+    const result = await createGroupClass({
+      title: '初级单打提升班',
+      venueId: 'venue-uuid-1',
+      startTime: '2026-04-10T14:00:00.000Z',
+      endTime: '2026-04-10T16:00:00.000Z',
+      maxParticipants: 10,
+    });
+
+    expect(result.status).toBe('open');
+    expect(result.currentParticipants).toBe(0);
+    expect(result.id).toBeDefined();
+    expect(result.coachId).toBeDefined();
+  });
 });
 
 // ===========================================================================
@@ -678,6 +825,134 @@ describe('updateGroupClass API', () => {
       updateGroupClass('gc-uuid-1', { maxParticipants: 1 }),
     ).rejects.toMatchObject({ code: 'COACHING_PARTICIPANTS_EXCEED' });
   });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_INVALID_TITLE
+  it('should throw error for invalid title', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_TITLE', message: 'title 为空或超过 50 字符' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { title: '' }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_TITLE' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_INVALID_VENUE
+  it('should throw error for invalid venue', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_VENUE', message: 'venueId 格式不合法' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { venueId: '' }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_VENUE' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_INVALID_TIME
+  it('should throw error for invalid time', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_TIME', message: '开始时间不晚于当前时间，或结束时间不晚于开始时间' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { startTime: '2020-01-01T00:00:00.000Z' }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_TIME' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_INVALID_PARTICIPANTS
+  it('should throw error for invalid participants', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_PARTICIPANTS', message: 'maxParticipants 不在 2-30 范围内' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { maxParticipants: 50 }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_PARTICIPANTS' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_INVALID_FEE_DESCRIPTION
+  it('should throw error for invalid fee description', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_FEE_DESCRIPTION', message: 'feeDescription 超过 200 字符' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { feeDescription: 'x'.repeat(201) }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_FEE_DESCRIPTION' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_GROUP_CLASS_NOT_FOUND
+  it('should throw error when group class not found', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_GROUP_CLASS_NOT_FOUND', message: '团课不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('non-existent', { title: '新标题' }),
+    ).rejects.toMatchObject({ code: 'COACHING_GROUP_CLASS_NOT_FOUND' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 COACHING_VENUE_NOT_FOUND
+  it('should throw error when venue not found', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_VENUE_NOT_FOUND', message: '球馆不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { venueId: 'non-existent' }),
+    ).rejects.toMatchObject({ code: 'COACHING_VENUE_NOT_FOUND' });
+  });
+
+  // 来源: coaching.md §4 — 修改团课 — 错误码 AUTH_UNAUTHORIZED
+  it('should throw error when not authenticated', async () => {
+    server.use(
+      http.put('/api/group-classes/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'AUTH_UNAUTHORIZED', message: 'Token 缺失或无效' } },
+          { status: 401 },
+        );
+      }),
+    );
+
+    await expect(
+      updateGroupClass('gc-uuid-1', { title: '新标题' }),
+    ).rejects.toMatchObject({ code: 'AUTH_UNAUTHORIZED' });
+  });
 });
 
 // ===========================================================================
@@ -747,6 +1022,22 @@ describe('cancelGroupClass API', () => {
 
     await expect(cancelGroupClass('gc-uuid-1')).rejects.toMatchObject({
       code: 'COACHING_NOT_COACH_OWNER',
+    });
+  });
+
+  // 来源: coaching.md §4 — 取消团课 — 错误码 COACHING_GROUP_CLASS_NOT_FOUND
+  it('should throw error when group class not found', async () => {
+    server.use(
+      http.post('/api/group-classes/:id/cancel', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_GROUP_CLASS_NOT_FOUND', message: '团课不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(cancelGroupClass('non-existent')).rejects.toMatchObject({
+      code: 'COACHING_GROUP_CLASS_NOT_FOUND',
     });
   });
 });
@@ -864,6 +1155,22 @@ describe('enrollGroupClass API', () => {
       code: 'COACHING_CLASS_NOT_ENROLLABLE',
     });
   });
+
+  // 来源: coaching.md §4 — 报名团课 — 错误码 COACHING_GROUP_CLASS_NOT_FOUND
+  it('should throw error when group class not found', async () => {
+    server.use(
+      http.post('/api/group-classes/:id/enroll', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_GROUP_CLASS_NOT_FOUND', message: '团课不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(enrollGroupClass('non-existent')).rejects.toMatchObject({
+      code: 'COACHING_GROUP_CLASS_NOT_FOUND',
+    });
+  });
 });
 
 // ===========================================================================
@@ -948,6 +1255,22 @@ describe('cancelEnrollment API', () => {
 
     await expect(cancelEnrollment('gc-uuid-1')).rejects.toMatchObject({
       code: 'COACHING_CLASS_NOT_CANCELLABLE_ENROLLMENT',
+    });
+  });
+
+  // 来源: coaching.md §4 — 取消团课报名 — 错误码 COACHING_GROUP_CLASS_NOT_FOUND
+  it('should throw error when group class not found', async () => {
+    server.use(
+      http.post('/api/group-classes/:id/cancel-enrollment', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_GROUP_CLASS_NOT_FOUND', message: '团课不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(cancelEnrollment('non-existent')).rejects.toMatchObject({
+      code: 'COACHING_GROUP_CLASS_NOT_FOUND',
     });
   });
 });
@@ -1062,6 +1385,100 @@ describe('setAvailability API', () => {
         ],
       }),
     ).rejects.toMatchObject({ code: 'COACHING_SLOT_TOO_SHORT' });
+  });
+
+  // 来源: coaching.md §4 — 设置私教空闲时间 — 错误码 COACHING_INVALID_SLOT_TIME
+  it('should throw error for invalid slot time', async () => {
+    server.use(
+      http.post('/api/private-lessons/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_SLOT_TIME', message: '时间段开始时间不晚于当前时间，或结束时间不晚于开始时间' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      setAvailability({
+        slots: [
+          {
+            startTime: '2020-01-01T10:00:00.000Z',
+            endTime: '2020-01-01T12:00:00.000Z',
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_SLOT_TIME' });
+  });
+
+  // 来源: coaching.md §4 — 设置私教空闲时间 — 错误码 COACHING_INVALID_FEE_DESCRIPTION
+  it('should throw error for invalid fee description', async () => {
+    server.use(
+      http.post('/api/private-lessons/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_FEE_DESCRIPTION', message: 'feeDescription 超过 200 字符' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      setAvailability({
+        slots: [
+          {
+            startTime: '2026-04-11T10:00:00.000Z',
+            endTime: '2026-04-11T12:00:00.000Z',
+            feeDescription: 'x'.repeat(201),
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_FEE_DESCRIPTION' });
+  });
+
+  // 来源: coaching.md §4 — 设置私教空闲时间 — 错误码 COACHING_COACH_ROLE_REQUIRED
+  it('should throw error when user is not a coach', async () => {
+    server.use(
+      http.post('/api/private-lessons/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_COACH_ROLE_REQUIRED', message: '当前用户不是教练角色，无权执行此操作' } },
+          { status: 403 },
+        );
+      }),
+    );
+
+    await expect(
+      setAvailability({
+        slots: [
+          {
+            startTime: '2026-04-11T10:00:00.000Z',
+            endTime: '2026-04-11T12:00:00.000Z',
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_COACH_ROLE_REQUIRED' });
+  });
+
+  // 来源: coaching.md §4 — 设置私教空闲时间 — 错误码 COACHING_VENUE_NOT_FOUND
+  it('should throw error when venue not found', async () => {
+    server.use(
+      http.post('/api/private-lessons/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_VENUE_NOT_FOUND', message: 'venueIds 中有球馆不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      setAvailability({
+        slots: [
+          {
+            startTime: '2026-04-11T10:00:00.000Z',
+            endTime: '2026-04-11T12:00:00.000Z',
+            venueIds: ['non-existent'],
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'COACHING_VENUE_NOT_FOUND' });
   });
 });
 
@@ -1294,6 +1711,54 @@ describe('bookPrivateLesson API', () => {
       bookPrivateLesson({ slotId: 'slot-uuid-1', venueId: 'invalid-venue' }),
     ).rejects.toMatchObject({ code: 'COACHING_INVALID_VENUE_CHOICE' });
   });
+
+  // 来源: coaching.md §4 — 预约私教课 — 错误码 COACHING_INVALID_SLOT
+  it('should throw error for invalid slot', async () => {
+    server.use(
+      http.post('/api/private-lessons/book', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_SLOT', message: 'slotId 缺失或格式不合法' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      bookPrivateLesson({ slotId: '' }),
+    ).rejects.toMatchObject({ code: 'COACHING_INVALID_SLOT' });
+  });
+
+  // 来源: coaching.md §4 — 预约私教课 — 错误码 COACHING_SLOT_NOT_FOUND
+  it('should throw error when slot not found', async () => {
+    server.use(
+      http.post('/api/private-lessons/book', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_SLOT_NOT_FOUND', message: '时间段不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      bookPrivateLesson({ slotId: 'non-existent' }),
+    ).rejects.toMatchObject({ code: 'COACHING_SLOT_NOT_FOUND' });
+  });
+
+  // 来源: coaching.md §4 — 预约私教课 — 错误码 COACHING_VENUE_NOT_FOUND
+  it('should throw error when venue not found', async () => {
+    server.use(
+      http.post('/api/private-lessons/book', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_VENUE_NOT_FOUND', message: '球馆不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      bookPrivateLesson({ slotId: 'slot-uuid-1', venueId: 'non-existent' }),
+    ).rejects.toMatchObject({ code: 'COACHING_VENUE_NOT_FOUND' });
+  });
 });
 
 // ===========================================================================
@@ -1363,6 +1828,22 @@ describe('cancelPrivateLesson API', () => {
 
     await expect(cancelPrivateLesson('pl-uuid-1')).rejects.toMatchObject({
       code: 'COACHING_NOT_LESSON_PARTICIPANT',
+    });
+  });
+
+  // 来源: coaching.md §4 — 取消私教预约 — 错误码 COACHING_PRIVATE_LESSON_NOT_FOUND
+  it('should throw error when private lesson not found', async () => {
+    server.use(
+      http.post('/api/private-lessons/:id/cancel', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_PRIVATE_LESSON_NOT_FOUND', message: '私教课不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(cancelPrivateLesson('non-existent')).rejects.toMatchObject({
+      code: 'COACHING_PRIVATE_LESSON_NOT_FOUND',
     });
   });
 });
@@ -1526,6 +2007,22 @@ describe('getCoachPrivateLessons API', () => {
     expect(result.items[0]).toEqual(mockPrivateLesson);
     expect(result.items[0].student).toBeDefined();
     expect(result.items[0].slot).toBeDefined();
+  });
+
+  // 来源: coaching.md §4 — 教练私教预约列表 — 错误码 COACHING_NOT_A_COACH
+  it('should throw error when user is not a coach', async () => {
+    server.use(
+      http.get('/api/coaches/:id/private-lessons', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_NOT_A_COACH', message: '用户不存在或不是教练角色' } },
+          { status: 403 },
+        );
+      }),
+    );
+
+    await expect(getCoachPrivateLessons('non-coach-id', {})).rejects.toMatchObject({
+      code: 'COACHING_NOT_A_COACH',
+    });
   });
 });
 
@@ -1889,6 +2386,48 @@ describe('createReview API', () => {
         rating: 5,
       }),
     ).rejects.toMatchObject({ code: 'REVIEW_COURSE_COACH_MISMATCH' });
+  });
+
+  // 来源: review.md §4 — 提交评价 — 错误码 REVIEW_COACH_NOT_FOUND
+  it('should throw error when coach not found', async () => {
+    server.use(
+      http.post('/api/reviews', () => {
+        return HttpResponse.json(
+          { error: { code: 'REVIEW_COACH_NOT_FOUND', message: 'coachId 对应的用户不存在或不是教练角色' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      createReview({
+        coachId: 'non-existent',
+        courseType: 'group-class',
+        courseId: 'gc-uuid-1',
+        rating: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'REVIEW_COACH_NOT_FOUND' });
+  });
+
+  // 来源: review.md §4 — 提交评价 — 错误码 REVIEW_COURSE_NOT_FOUND
+  it('should throw error when course not found', async () => {
+    server.use(
+      http.post('/api/reviews', () => {
+        return HttpResponse.json(
+          { error: { code: 'REVIEW_COURSE_NOT_FOUND', message: '课程不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    await expect(
+      createReview({
+        coachId: 'coach-uuid-1',
+        courseType: 'group-class',
+        courseId: 'non-existent',
+        rating: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'REVIEW_COURSE_NOT_FOUND' });
   });
 });
 
