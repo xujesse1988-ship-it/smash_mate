@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Switch } from 'antd';
 import { useActivities } from '../hooks/useActivities';
 import { useGeolocation } from '../../../shared/hooks/useGeolocation';
+import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
 import { ActivityCard } from '../components/ActivityCard';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,12 @@ export function ActivityListPage() {
 
   const allActivities =
     activitiesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: activitiesQuery.hasNextPage,
+    isFetchingNextPage: activitiesQuery.isFetchingNextPage,
+    fetchNextPage: activitiesQuery.fetchNextPage,
+  });
 
   // Handle distance filter click
   const handleDistanceClick = () => {
@@ -121,7 +128,7 @@ export function ActivityListPage() {
         >
           按时间
         </span>
-        {geolocation.permission !== 'denied' && (
+        {geolocation.permission === 'granted' && (
           <span
             onClick={() => setSortBy('distance')}
             style={{ cursor: 'pointer', color: sortBy === 'distance' ? '#00C853' : '#666', fontWeight: sortBy === 'distance' ? 600 : 400 }}
@@ -161,6 +168,13 @@ export function ActivityListPage() {
           onClick={() => navigate(`/activities/${activity.id}`)}
         />
       ))}
+
+      {/* Infinite scroll sentinel */}
+      {activitiesQuery.hasNextPage && (
+        <div ref={sentinelRef} style={{ textAlign: 'center', padding: 16 }}>
+          {activitiesQuery.isFetchingNextPage ? '加载更多...' : ''}
+        </div>
+      )}
 
       {/* FAB - Create Activity */}
       <button

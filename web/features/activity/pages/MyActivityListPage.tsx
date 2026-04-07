@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
 import { useMyActivities } from '../hooks/useMyActivities';
+import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
 import { ActivityCard } from '../components/ActivityCard';
 import { STATUS_LABELS } from '../constants';
 
@@ -40,6 +41,12 @@ export function MyActivityListPage() {
     () => activitiesQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [activitiesQuery.data],
   );
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: activitiesQuery.hasNextPage,
+    isFetchingNextPage: activitiesQuery.isFetchingNextPage,
+    fetchNextPage: activitiesQuery.fetchNextPage,
+  });
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -156,6 +163,13 @@ export function MyActivityListPage() {
           onClick={() => navigate(`/activities/${activity.id}`)}
         />
       ))}
+
+      {/* Infinite scroll sentinel */}
+      {activitiesQuery.hasNextPage && (
+        <div ref={sentinelRef} style={{ textAlign: 'center', padding: 16 }}>
+          {activitiesQuery.isFetchingNextPage ? '加载更多...' : ''}
+        </div>
+      )}
     </div>
   );
 }
