@@ -13,7 +13,7 @@
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
@@ -235,7 +235,9 @@ describe('MyEnrollmentListPage', () => {
     };
     renderPage();
 
-    expect(screen.getByText(/已结束/i)).toBeInTheDocument();
+    // "已结束" appears in both filter button and card status tag, use within() on card
+    const card = screen.getByTestId('enrollment-card-gc-uuid-2');
+    expect(within(card).getByText(/已结束/i)).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -262,7 +264,9 @@ describe('MyEnrollmentListPage', () => {
     };
     renderPage();
 
-    expect(screen.getByText(/已取消/i)).toBeInTheDocument();
+    // "已取消" appears in both filter button and card status tag, use within() on card
+    const card = screen.getByTestId('enrollment-card-pl-uuid-2');
+    expect(within(card).getByText(/已取消/i)).toBeInTheDocument();
   });
 
   // =========================================================================

@@ -556,3 +556,22 @@ export async function getCoachPrivateLessons(
 
   return handleResponse<PaginatedResult<CoachPrivateLesson>>(response);
 }
+
+// ---------------------------------------------------------------------------
+// DELETE /api/match-records/:id
+// ---------------------------------------------------------------------------
+
+export async function deleteMatchRecord(recordId: string): Promise<void> {
+  const response = await fetch(resolveUrl(`/api/match-records/${recordId}`), {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const body = await response.json();
+    const error = body.error as ApiError;
+    const err = new Error(error.message) as Error & { code: string };
+    err.code = error.code;
+    throw err;
+  }
+}

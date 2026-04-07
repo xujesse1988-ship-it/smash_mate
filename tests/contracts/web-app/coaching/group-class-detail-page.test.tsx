@@ -93,9 +93,9 @@ vi.mock('@web/features/coaching/hooks/useGroupClassMatchRecords', () => ({
   useGroupClassMatchRecords: () => mockMatchRecordsState,
 }));
 
-// Mock useDeleteMatchRecord hook (from activity feature or shared)
+// Mock useDeleteMatchRecord hook (coaching-local, invalidates group-class-match-records)
 const mockDeleteRecordMutate = vi.fn();
-vi.mock('@web/features/activity/hooks/useDeleteMatchRecord', () => ({
+vi.mock('@web/features/coaching/hooks/useDeleteMatchRecord', () => ({
   useDeleteMatchRecord: () => ({
     mutate: mockDeleteRecordMutate,
     isPending: false,

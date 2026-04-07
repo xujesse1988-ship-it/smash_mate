@@ -5,7 +5,7 @@ import { useGroupClassDetail } from '../hooks/useGroupClassDetail';
 import { useEnrollGroupClass } from '../hooks/useEnrollGroupClass';
 import { useCancelEnrollment } from '../hooks/useCancelEnrollment';
 import { useGroupClassMatchRecords } from '../hooks/useGroupClassMatchRecords';
-import { useDeleteMatchRecord } from '../../activity/hooks/useDeleteMatchRecord';
+import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
 
 const STATUS_MAP: Record<string, string> = {
   open: '报名中',

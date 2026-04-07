@@ -248,7 +248,9 @@ describe('CoachProfilePage', () => {
     mockCoachProfileState = { data: mockCoachProfile, isLoading: false, error: null };
     renderPage();
 
-    expect(screen.getByText(/单打/i)).toBeInTheDocument();
+    // "单打" appears in both bio and specialty tag, so use getAllByText
+    const singlesElements = screen.getAllByText(/单打/i);
+    expect(singlesElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/步法/i)).toBeInTheDocument();
   });
 
@@ -339,7 +341,7 @@ describe('CoachProfilePage', () => {
     renderPage();
 
     // 应显示可预约的时间段数量
-    expect(screen.getByText(/1/)).toBeInTheDocument();
+    expect(screen.getByText(/个可预约时间段/)).toBeInTheDocument();
     expect(screen.getByText(/预约私教/i)).toBeInTheDocument();
   });
 
@@ -393,11 +395,15 @@ describe('CoachProfilePage', () => {
     mockCoachProfileState = { data: mockCoachProfile, isLoading: false, error: null };
     renderPage();
 
+    // Switch to reviews tab first (写评价 button is only in reviews tab)
+    const reviewsTab = screen.getByRole('button', { name: '评价' });
+    await userEvent.click(reviewsTab);
+
     const writeReviewButton = screen.getByText(/写评价/i);
     await userEvent.click(writeReviewButton);
 
     // Modal should be visible with course selector and rating input
-    expect(screen.getByText(/选择课程|课程/i)).toBeInTheDocument();
+    expect(screen.getByText('选择课程')).toBeInTheDocument();
     expect(screen.getByText(/评分/i)).toBeInTheDocument();
   });
 

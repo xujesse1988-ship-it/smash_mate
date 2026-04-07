@@ -256,7 +256,8 @@ describe('MyCourseManagementPage', () => {
     mockCoachProfileState = { data: mockCoachProfileData, isLoading: false, error: null };
     renderPage();
 
-    expect(screen.getByText(/团课/i)).toBeInTheDocument();
+    // "团课" appears in both the tab and "发布团课" button, so use exact match for tab
+    expect(screen.getByRole('button', { name: '团课' })).toBeInTheDocument();
     expect(screen.getByText(/私教时间/i)).toBeInTheDocument();
     expect(screen.getByText(/私教预约/i)).toBeInTheDocument();
   });
@@ -281,7 +282,8 @@ describe('MyCourseManagementPage', () => {
     expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
     // Open status class should have edit and cancel buttons
     expect(screen.getByText(/修改/i)).toBeInTheDocument();
-    expect(screen.getByText(/取消/i)).toBeInTheDocument();
+    // Use exact button role to distinguish "取消" button from "已取消" status text
+    expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument();
   });
 
   // 来源: web-app-coaching.md §2 — MyCourseManagementPage — 交互流程 — 修改/取消按钮仅 open/full 显示
