@@ -237,6 +237,56 @@ export function ActivityDetailPage() {
             />
           </div>
           <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 13, color: '#666' }}>开始时间</label>
+            <input
+              type="datetime-local"
+              value={
+                editForm.startTime
+                  ? new Date(editForm.startTime).toISOString().slice(0, 16)
+                  : ''
+              }
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  startTime: e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : '',
+                })
+              }
+              style={{
+                width: '100%',
+                padding: '4px 8px',
+                border: '1px solid #d9d9d9',
+                borderRadius: 4,
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 13, color: '#666' }}>结束时间</label>
+            <input
+              type="datetime-local"
+              value={
+                editForm.endTime
+                  ? new Date(editForm.endTime).toISOString().slice(0, 16)
+                  : ''
+              }
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  endTime: e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : '',
+                })
+              }
+              style={{
+                width: '100%',
+                padding: '4px 8px',
+                border: '1px solid #d9d9d9',
+                borderRadius: 4,
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
             <label style={{ fontSize: 13, color: '#666' }}>限定人数</label>
             <input
               type="number"
