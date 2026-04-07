@@ -235,3 +235,4 @@ web-app/coaching #45（教练列表、教练主页、团课详情）实现完成
 web-app/coaching #45 review 修复（部分，2026-04-07）：修复 5 个契约测试失败（时间格式、确认弹窗文案、卡片导航）+ 4 个 lint 错误。剩余 7 个失败为契约测试选择器冲突（getByText regex 过于宽泛导致多元素匹配），已在 Issue #45 详细报告。MUST FIX #1（useDeleteMatchRecord 跨 feature 导入）因与契约测试 mock 路径冲突暂未修改。等待重新 review。
 web-app/coaching #45 第二轮修复（2026-04-07）：创建 coaching 内部 useDeleteMatchRecord hook、修复 7 个契约测试选择器（改用 getByRole/within/getAllByText）。199 契约测试 + 32 L1 集成测试全通过。
 web-app/coaching #45 review LGTM（2026-04-07）。Issue #45 关闭。继续实现 #46（私教预约与课程管理）。
+web-app/coaching #46 第二轮 review 修复（2026-04-07）：S1（球馆选择 disabled + 提示）、S2（报名卡片补充课程时间）、S3（AddSlotModal 批量添加支持）。199 契约测试 + 62 L1 集成测试全通过。等待重新 review。
