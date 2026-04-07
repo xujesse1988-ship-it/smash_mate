@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5c
+substep: 5c-review
 
 ## 当前模块
 module: web-app
@@ -231,3 +231,4 @@ web-app/activity #43 review LGTM（2026-04-07）。Issue #43 关闭。web-app/ac
 web-app/activity Feature Review LGTM（2026-04-07）。activity feature 完成。进入下一个 feature: web-app/coaching。
 web-app/coaching 前端契约测试 #44 编写完成（2026-04-07）：API 层 108 用例（21 接口）+ 6 页面渲染测试 89 用例，共约 197 用例。第一轮 review 有 9 MUST FIX（错误码覆盖不全），补充 29 用例后第二轮 LGTM。
 web-app/coaching 契约测试 #44 review 通过（2026-04-07）。进入实现阶段。
+web-app/coaching #45（教练列表、教练主页、团课详情）实现完成（2026-04-07）：CoachListPage（擅长方向筛选、评分聚合排序）、CoachProfilePage（教练资料/团课列表/私教概览/评价 Tab/提交评价）、GroupClassDetailPage（报名/取消报名/战绩/状态展示）、19 个 hooks、API 层（coaching + review + match-record）、路由注册。契约测试 108 通过，L1 集成测试 32 通过。等待 review。
