@@ -226,3 +226,4 @@ web-app/activity 前端契约测试 #42 编写完成（2026-04-05）：API 层 6
 web-app/activity 契约测试 #42 review 通过（2026-04-07）。132 个用例，进入实现阶段。
 web-app/activity #43 实现完成（2026-04-07）：ActivityListPage（筛选/排序/距离联动）、CreateActivityPage（表单校验）、ActivityDetailPage（加入/退出/编辑/取消/战绩）、MyActivityListPage（角色+状态筛选）、10 个 hooks、API 层。契约测试 142 通过，L1 集成测试 26 通过，全量 222 通过（web-app project）。
 web-app/activity #43 review 问题已修复（2026-04-07）：SHOULD FIX 1（match-record HTTP 请求移至 API 层）、SHOULD FIX 2（共享代码 useGeolocation 事后报备）、SHOULD FIX 3（ActivityCard 提取为共享组件）、SHOULD FIX 4（STATUS_LABELS 提取为常量）。契约测试 168 通过，L1 集成测试 26 通过。等待重新 review。
+web-app/activity #43 第二轮 review 问题已修复（2026-04-07）：SHOULD FIX 1（编辑模式添加时间选择器）、SHOULD FIX 2（实现无限滚动 useInfiniteScroll）、SHOULD FIX 3（移除 maxLength={60}）、SHOULD FIX 4（距离排序仅 granted 可用）、SHOULD FIX 5（修复 flaky 集成测试）。契约测试 168 通过，L1 集成测试 26 通过。等待重新 review。
