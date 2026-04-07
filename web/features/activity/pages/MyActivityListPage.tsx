@@ -23,11 +23,6 @@ const ROLE_MAP: Record<string, string | null> = {
   participated: 'participant',
 };
 
-const ROLE_REVERSE_MAP: Record<string, string> = {
-  creator: 'initiated',
-  participant: 'participated',
-};
-
 // ---------------------------------------------------------------------------
 // ActivityCard (reused from list page)
 // ---------------------------------------------------------------------------

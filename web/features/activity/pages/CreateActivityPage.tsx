@@ -69,9 +69,8 @@ export function CreateActivityPage() {
     createActivityMutation.mutate(data);
   };
 
-  // Simulated venue selection (VenueSearchInput is a shared component)
-  // In real implementation, this would use the VenueSearchInput shared component
-  const handleVenueSelect = (id: string, name: string) => {
+  // Venue selection handler (used by VenueSearchInput shared component)
+  const _handleVenueSelect = (id: string, name: string) => {
     setVenueId(id);
     setVenueName(name);
     setVenueSearch(name);

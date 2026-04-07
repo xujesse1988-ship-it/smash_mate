@@ -75,7 +75,7 @@ vi.mock('@web/stores/auth-store', () => ({
 
 // Mock geolocation store for ActivityListPage
 vi.mock('@web/stores/geolocation-store', () => {
-  let state = {
+  const state = {
     latitude: null as number | null,
     longitude: null as number | null,
     permission: 'prompt' as 'granted' | 'denied' | 'prompt',
