@@ -22,7 +22,7 @@ feature: coaching
 | review | 后端 | done | done | done | done | done | done |
 | web-app/auth | 前端 | done | done | done | done | | |
 | web-app/activity | 前端 | done | done | done | done | done | |
-| web-app/coaching | 前端 | done | | | | | |
+| web-app/coaching | 前端 | done | review | | | | |
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
 | web-app/notification | 前端 | done | | | | | |
