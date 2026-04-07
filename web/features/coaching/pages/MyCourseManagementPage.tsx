@@ -20,16 +20,16 @@ export function MyCourseManagementPage() {
   const { data: availability } = useCoachAvailability(userId || '');
   const { data: privateLessonsData } = useCoachPrivateLessons(userId || '');
 
-  const createGroupClassMutation = useCreateGroupClass();
-  const updateGroupClassMutation = useUpdateGroupClass();
+  const _createGroupClassMutation = useCreateGroupClass();
+  const _updateGroupClassMutation = useUpdateGroupClass();
   const cancelGroupClassMutation = useCancelGroupClass();
-  const setAvailabilityMutation = useSetAvailability();
+  const _setAvailabilityMutation = useSetAvailability();
   const cancelPrivateLessonMutation = useCancelPrivateLesson();
 
   const [activeTab, setActiveTab] = useState<'group-classes' | 'private-schedule' | 'private-lessons'>('group-classes');
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
   const [showEditClassModal, setShowEditClassModal] = useState(false);
-  const [editingClassId, setEditingClassId] = useState<string | null>(null);
+  const [_editingClassId, setEditingClassId] = useState<string | null>(null);
   const [showCancelClassConfirm, setShowCancelClassConfirm] = useState(false);
   const [cancellingClassId, setCancellingClassId] = useState<string | null>(null);
   const [showAddSlotModal, setShowAddSlotModal] = useState(false);
@@ -119,12 +119,10 @@ export function MyCourseManagementPage() {
             <div
               key={gc.id}
               data-testid={`manageable-group-class-${gc.id}`}
-              style={{ padding: '12px', border: '1px solid #f0f0f0', borderRadius: '8px', marginBottom: '8px' }}
+              onClick={() => navigate(`/group-classes/${gc.id}`)}
+              style={{ padding: '12px', border: '1px solid #f0f0f0', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer' }}
             >
-              <div
-                onClick={() => navigate(`/group-classes/${gc.id}`)}
-                style={{ cursor: 'pointer' }}
-              >
+              <div>
                 <div style={{ fontWeight: 600 }}>{gc.title}</div>
                 <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
                   {gc.venue?.name || '地点待定'}
@@ -293,9 +291,9 @@ export function MyCourseManagementPage() {
       {showCancelClassConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
-            <p>确认取消团课？</p>
+            <p>是否取消该团课？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowCancelClassConfirm(false); setCancellingClassId(null); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
+              <button onClick={() => { setShowCancelClassConfirm(false); setCancellingClassId(null); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>返回</button>
               <button onClick={handleCancelGroupClass} style={{ padding: '6px 16px', background: '#ff5252', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>确认</button>
             </div>
           </div>
@@ -306,9 +304,9 @@ export function MyCourseManagementPage() {
       {showCancelLessonConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
-            <p>确认取消私教预约？</p>
+            <p>是否取消该私教预约？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowCancelLessonConfirm(false); setCancellingLessonId(null); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
+              <button onClick={() => { setShowCancelLessonConfirm(false); setCancellingLessonId(null); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>返回</button>
               <button onClick={handleCancelPrivateLesson} style={{ padding: '6px 16px', background: '#ff5252', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>确认</button>
             </div>
           </div>

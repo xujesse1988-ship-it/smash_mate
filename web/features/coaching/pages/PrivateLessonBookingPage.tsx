@@ -77,9 +77,9 @@ export function PrivateLessonBookingPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <span>
-                {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                 {' - '}
-                {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </span>
               {slot.feeDescription && (
                 <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{slot.feeDescription}</div>
@@ -117,7 +117,7 @@ export function PrivateLessonBookingPage() {
       )}
 
       {/* Confirm Button */}
-      {selectedSlot && canConfirm && (
+      {selectedSlot && canConfirm && !showBookingConfirm && (
         <button
           onClick={() => setShowBookingConfirm(true)}
           style={{
@@ -147,7 +147,7 @@ export function PrivateLessonBookingPage() {
           zIndex: 1000,
         }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
-            <p>确认预约？</p>
+            <p>是否预约该时间段？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowBookingConfirm(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>
                 取消
