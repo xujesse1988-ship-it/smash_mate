@@ -2,11 +2,11 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
 module: web-app
-feature: activity
+feature: coaching
 
 ## 模块进度
 
@@ -21,7 +21,7 @@ feature: activity
 | match-record | 后端 | done | done | done | done | done | |
 | review | 后端 | done | done | done | done | done | done |
 | web-app/auth | 前端 | done | done | done | done | | |
-| web-app/activity | 前端 | done | done | done | done | review | |
+| web-app/activity | 前端 | done | done | done | done | done | |
 | web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
@@ -228,3 +228,4 @@ web-app/activity #43 实现完成（2026-04-07）：ActivityListPage（筛选/�
 web-app/activity #43 review 问题已修复（2026-04-07）：SHOULD FIX 1（match-record HTTP 请求移至 API 层）、SHOULD FIX 2（共享代码 useGeolocation 事后报备）、SHOULD FIX 3（ActivityCard 提取为共享组件）、SHOULD FIX 4（STATUS_LABELS 提取为常量）。契约测试 168 通过，L1 集成测试 26 通过。等待重新 review。
 web-app/activity #43 第二轮 review 问题已修复（2026-04-07）：SHOULD FIX 1（编辑模式添加时间选择器）、SHOULD FIX 2（实现无限滚动 useInfiniteScroll）、SHOULD FIX 3（移除 maxLength={60}）、SHOULD FIX 4（距离排序仅 granted 可用）、SHOULD FIX 5（修复 flaky 集成测试）。契约测试 168 通过，L1 集成测试 26 通过。等待重新 review。
 web-app/activity #43 review LGTM（2026-04-07）。Issue #43 关闭。web-app/activity feature 所有 Task 完成（#43），进入 Feature Review。
+web-app/activity Feature Review LGTM（2026-04-07）。activity feature 完成。进入下一个 feature: web-app/coaching。
