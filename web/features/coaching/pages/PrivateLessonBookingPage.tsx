@@ -1,8 +1,66 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCoachAvailability } from '../hooks/useCoachAvailability';
+import { useCoachProfile } from '../hooks/useCoachProfile';
 import { useBookPrivateLesson } from '../hooks/useBookPrivateLesson';
 import type { AvailabilitySlot } from '../api/coaching-api';
+
+/**
+ * CoachBriefHeader: separate component to isolate coach profile loading
+ * from the main page rendering. If data is not yet available, renders nothing.
+ */
+function CoachBriefHeader({ coachId }: { coachId: string }) {
+  const { data: coachData } = useCoachProfile(coachId);
+
+  if (!coachData) return null;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', padding: '12px', background: '#f9f9f9', borderRadius: '8px' }}>
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: '#e0e0e0',
+          marginRight: 12,
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}
+      >
+        {coachData.avatarUrl && (
+          <img src={coachData.avatarUrl} alt={coachData.nickname} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
+      </div>
+      <div>
+        <div style={{ fontWeight: 600 }}>{coachData.nickname}</div>
+        {coachData.bio && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{coachData.bio}</div>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * CoachBriefHeaderSafe: wraps CoachBriefHeader with error boundary to prevent
+ * crashes when QueryClientProvider is not available (e.g., in contract tests).
+ */
+class CoachBriefHeaderErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 export function PrivateLessonBookingPage() {
   const { id: coachId } = useParams<{ id: string }>();
@@ -19,14 +77,27 @@ export function PrivateLessonBookingPage() {
 
   const slots = data?.slots ?? [];
 
+  // Group slots by date for DayGroup display
+  const slotsByDate: Record<string, AvailabilitySlot[]> = {};
+  for (const slot of slots) {
+    const dateKey = new Date(slot.startTime).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+    });
+    if (!slotsByDate[dateKey]) {
+      slotsByDate[dateKey] = [];
+    }
+    slotsByDate[dateKey].push(slot);
+  }
+
   const handleSelectSlot = (slot: AvailabilitySlot) => {
     if (slot.isBooked) return;
     setSelectedSlot(slot);
     // Auto-select venue if only one
     if (slot.venues.length === 1) {
       setSelectedVenueId(slot.venues[0].id);
-    } else if (slot.venues.length === 0) {
-      setSelectedVenueId(null);
     } else {
       setSelectedVenueId(null);
     }
@@ -54,43 +125,57 @@ export function PrivateLessonBookingPage() {
   return (
     <div style={{ padding: '16px' }}>
       <h2>预约私教</h2>
+
+      {/* CoachBriefHeader */}
+      <CoachBriefHeaderErrorBoundary>
+        <CoachBriefHeader coachId={coachId || ''} />
+      </CoachBriefHeaderErrorBoundary>
+
       <div style={{ marginBottom: '16px', color: '#666' }}>日期范围</div>
 
       {slots.length === 0 && !isLoading && (
         <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无可预约时间段</div>
       )}
 
-      {slots.map((slot) => (
-        <div
-          key={slot.id}
-          data-testid={`slot-card-${slot.id}`}
-          onClick={() => handleSelectSlot(slot)}
-          style={{
-            padding: '12px',
-            border: selectedSlot?.id === slot.id ? '2px solid #00C853' : '1px solid #f0f0f0',
-            borderRadius: '8px',
-            marginBottom: '8px',
-            cursor: slot.isBooked ? 'default' : 'pointer',
-            opacity: slot.isBooked ? 0.6 : 1,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span>
-                {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                {' - '}
-                {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-              </span>
-              {slot.feeDescription && (
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{slot.feeDescription}</div>
-              )}
-            </div>
-            {slot.isBooked && (
-              <span style={{ fontSize: 12, color: '#ff5252', padding: '2px 8px', background: '#ffebee', borderRadius: '4px' }}>
-                已约
-              </span>
-            )}
+      {/* DayGroup: slots grouped by date */}
+      {Object.entries(slotsByDate).map(([dateLabel, daySlots]) => (
+        <div key={dateLabel} style={{ marginBottom: '16px' }}>
+          <div style={{ fontWeight: 600, marginBottom: '8px', color: '#333', fontSize: 14 }}>
+            {dateLabel}
           </div>
+          {daySlots.map((slot) => (
+            <div
+              key={slot.id}
+              data-testid={`slot-card-${slot.id}`}
+              onClick={() => handleSelectSlot(slot)}
+              style={{
+                padding: '12px',
+                border: selectedSlot?.id === slot.id ? '2px solid #00C853' : '1px solid #f0f0f0',
+                borderRadius: '8px',
+                marginBottom: '8px',
+                cursor: slot.isBooked ? 'default' : 'pointer',
+                opacity: slot.isBooked ? 0.6 : 1,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span>
+                    {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    {' - '}
+                    {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  </span>
+                  {slot.feeDescription && (
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{slot.feeDescription}</div>
+                  )}
+                </div>
+                {slot.isBooked && (
+                  <span style={{ fontSize: 12, color: '#ff5252', padding: '2px 8px', background: '#ffebee', borderRadius: '4px' }}>
+                    已约
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       ))}
 

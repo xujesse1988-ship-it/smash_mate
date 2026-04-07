@@ -1599,6 +1599,9 @@ describe('PrivateLessonBookingPage Integration', () => {
             data: { slots: [mockSlotWithVenues, mockSlotNoVenue, mockSlotBooked] },
           });
         }),
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfile });
+        }),
       );
 
       renderPage();
@@ -1629,6 +1632,9 @@ describe('PrivateLessonBookingPage Integration', () => {
       http.get('/api/coaches/:id/availability', () => {
         return HttpResponse.json({ data: { slots: [] } });
       }),
+      http.get('/api/coaches/:id', () => {
+        return HttpResponse.json({ data: mockCoachProfile });
+      }),
     );
 
     renderPage();
@@ -1641,6 +1647,12 @@ describe('PrivateLessonBookingPage Integration', () => {
   it('should show error state when API fails', async () => {
     server.use(
       http.get('/api/coaches/:id/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_NOT_A_COACH', message: '教练不存在' } },
+          { status: 404 },
+        );
+      }),
+      http.get('/api/coaches/:id', () => {
         return HttpResponse.json(
           { error: { code: 'COACHING_NOT_A_COACH', message: '教练不存在' } },
           { status: 404 },
@@ -1666,6 +1678,9 @@ describe('PrivateLessonBookingPage Integration', () => {
           return HttpResponse.json({
             data: { slots: [mockSlotNoVenue] },
           });
+        }),
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfile });
         }),
         http.post('/api/private-lessons/book', async ({ request }) => {
           bookCalled = true;
@@ -1740,6 +1755,9 @@ describe('PrivateLessonBookingPage Integration', () => {
           return HttpResponse.json({
             data: { slots: [mockSlotWithVenues] },
           });
+        }),
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfile });
         }),
         http.post('/api/private-lessons/book', async ({ request }) => {
           bookCalled = true;
@@ -1820,6 +1838,9 @@ describe('PrivateLessonBookingPage Integration', () => {
             data: { slots: [mockSlotBooked] },
           });
         }),
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfile });
+        }),
       );
 
       const user = userEvent.setup();
@@ -1848,6 +1869,9 @@ describe('PrivateLessonBookingPage Integration', () => {
       server.use(
         http.get('/api/coaches/:id/availability', () => {
           return HttpResponse.json({ data: { slots: [mockSlotWithVenues] } });
+        }),
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfile });
         }),
       );
 
