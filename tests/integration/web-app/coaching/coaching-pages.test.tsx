@@ -57,14 +57,16 @@ vi.mock('react-router-dom', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Mock auth store
+// Mock auth store (configurable userId for different test contexts)
 // ---------------------------------------------------------------------------
+
+let mockAuthUserId = 'current-user-id';
 
 vi.mock('@web/stores/auth-store', () => ({
   useAuthStore: vi.fn((selector?: (state: unknown) => unknown) => {
     const state = {
       token: 'test-jwt-token',
-      userId: 'current-user-id',
+      userId: mockAuthUserId,
       isLoggedIn: true,
     };
     if (typeof selector === 'function') {
@@ -247,12 +249,29 @@ const mockMatchRecord = {
 };
 
 // ---------------------------------------------------------------------------
+// Mock useCurrentUser (needed for MyCourseManagementPage)
+// ---------------------------------------------------------------------------
+
+let mockCurrentUserData: unknown = { id: 'coach-uuid-1', isCoach: true, nickname: '教练张' };
+let mockCurrentUserIsLoading = false;
+
+vi.mock('@web/shared/hooks/useCurrentUser', () => ({
+  useCurrentUser: () => ({
+    data: mockCurrentUserData,
+    isLoading: mockCurrentUserIsLoading,
+  }),
+}));
+
+// ---------------------------------------------------------------------------
 // Import components (after mocks)
 // ---------------------------------------------------------------------------
 
 import { CoachListPage } from '@web/features/coaching/pages/CoachListPage';
 import { CoachProfilePage } from '@web/features/coaching/pages/CoachProfilePage';
 import { GroupClassDetailPage } from '@web/features/coaching/pages/GroupClassDetailPage';
+import { PrivateLessonBookingPage } from '@web/features/coaching/pages/PrivateLessonBookingPage';
+import { MyCourseManagementPage } from '@web/features/coaching/pages/MyCourseManagementPage';
+import { MyEnrollmentListPage } from '@web/features/coaching/pages/MyEnrollmentListPage';
 
 // =========================================================================
 // CoachListPage Integration Tests
@@ -1514,6 +1533,1334 @@ describe('GroupClassDetailPage Integration', () => {
         },
         { timeout: 10000 },
       );
+    },
+    15000,
+  );
+});
+
+// =========================================================================
+// PrivateLessonBookingPage Integration Tests
+// =========================================================================
+
+describe('PrivateLessonBookingPage Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockParamsId = 'coach-uuid-1';
+    mockAuthUserId = 'current-user-id';
+  });
+
+  function renderPage() {
+    const queryClient = createQueryClient();
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <PrivateLessonBookingPage />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  const mockSlotWithVenues = {
+    id: 'slot-uuid-1',
+    startTime: '2026-04-11T10:00:00.000Z',
+    endTime: '2026-04-11T12:00:00.000Z',
+    venues: [
+      { id: 'venue-uuid-1', name: '朝阳体育中心羽毛球馆', address: '北京市朝阳区...' },
+      { id: 'venue-uuid-2', name: '海淀体育馆', address: '北京市海淀区...' },
+    ],
+    feeDescription: '300元/小时',
+    isBooked: false,
+  };
+
+  const mockSlotNoVenue = {
+    id: 'slot-uuid-3',
+    startTime: '2026-04-13T09:00:00.000Z',
+    endTime: '2026-04-13T11:00:00.000Z',
+    venues: [],
+    feeDescription: null,
+    isBooked: false,
+  };
+
+  const mockSlotBooked = {
+    id: 'slot-uuid-4',
+    startTime: '2026-04-14T10:00:00.000Z',
+    endTime: '2026-04-14T12:00:00.000Z',
+    venues: [],
+    feeDescription: null,
+    isBooked: true,
+  };
+
+  it(
+    'should load and display available time slots from API',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({
+            data: { slots: [mockSlotWithVenues, mockSlotNoVenue, mockSlotBooked] },
+          });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(
+        () => {
+          // Multiple slots have 10:00, use getAllByText
+          const timeElements = screen.getAllByText(/10:00/);
+          expect(timeElements.length).toBeGreaterThanOrEqual(1);
+        },
+        { timeout: 10000 },
+      );
+
+      // Verify fee description
+      expect(screen.getByText(/300元\/小时/)).toBeInTheDocument();
+
+      // Verify booked slot shows "已约"
+      expect(screen.getByText(/已约/)).toBeInTheDocument();
+
+      // Verify slot without venues is also rendered
+      expect(screen.getByText(/09:00/)).toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it('should show empty state when no slots available', async () => {
+    server.use(
+      http.get('/api/coaches/:id/availability', () => {
+        return HttpResponse.json({ data: { slots: [] } });
+      }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/暂无/)).toBeInTheDocument();
+    });
+  });
+
+  it('should show error state when API fails', async () => {
+    server.use(
+      http.get('/api/coaches/:id/availability', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_NOT_A_COACH', message: '教练不存在' } },
+          { status: 404 },
+        );
+      }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/不存在|失败/)).toBeInTheDocument();
+    });
+  });
+
+  it(
+    'should select a slot with no venues and show confirm button, then book via API',
+    async () => {
+      let bookCalled = false;
+      let bookBody: Record<string, unknown> = {};
+
+      server.use(
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({
+            data: { slots: [mockSlotNoVenue] },
+          });
+        }),
+        http.post('/api/private-lessons/book', async ({ request }) => {
+          bookCalled = true;
+          bookBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json(
+            {
+              data: {
+                id: 'pl-uuid-new',
+                slotId: 'slot-uuid-3',
+                coachId: 'coach-uuid-1',
+                studentId: 'current-user-id',
+                venue: null,
+                startTime: '2026-04-13T09:00:00.000Z',
+                endTime: '2026-04-13T11:00:00.000Z',
+                status: 'scheduled',
+                createdAt: '2026-04-07T10:00:00.000Z',
+              },
+            },
+            { status: 201 },
+          );
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for slot to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText(/09:00/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Click to select slot
+      await user.click(screen.getByTestId('slot-card-slot-uuid-3'));
+
+      // Confirm button should appear
+      await waitFor(() => {
+        expect(screen.getByText(/确认预约/)).toBeInTheDocument();
+      });
+
+      // Click confirm to open dialog
+      await user.click(screen.getByText(/确认预约/));
+
+      // Confirm dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText(/确定/)).toBeInTheDocument();
+      });
+
+      // Click 确定 in dialog
+      await user.click(screen.getByText(/确定/));
+
+      // Verify API was called
+      await waitFor(() => {
+        expect(bookCalled).toBe(true);
+      });
+
+      expect(bookBody.slotId).toBe('slot-uuid-3');
+    },
+    15000,
+  );
+
+  it(
+    'should select a slot with multiple venues, select venue, then book via API',
+    async () => {
+      let bookCalled = false;
+      let bookBody: Record<string, unknown> = {};
+
+      server.use(
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({
+            data: { slots: [mockSlotWithVenues] },
+          });
+        }),
+        http.post('/api/private-lessons/book', async ({ request }) => {
+          bookCalled = true;
+          bookBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json(
+            {
+              data: {
+                id: 'pl-uuid-new',
+                slotId: 'slot-uuid-1',
+                coachId: 'coach-uuid-1',
+                studentId: 'current-user-id',
+                venue: { id: 'venue-uuid-2', name: '海淀体育馆', address: '北京市海淀区...' },
+                startTime: '2026-04-11T10:00:00.000Z',
+                endTime: '2026-04-11T12:00:00.000Z',
+                status: 'scheduled',
+                createdAt: '2026-04-07T10:00:00.000Z',
+              },
+            },
+            { status: 201 },
+          );
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for slot to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText(/10:00/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Click to select slot
+      await user.click(screen.getByTestId('slot-card-slot-uuid-1'));
+
+      // Venue selector should appear
+      await waitFor(() => {
+        expect(screen.getByText('朝阳体育中心羽毛球馆')).toBeInTheDocument();
+        expect(screen.getByText('海淀体育馆')).toBeInTheDocument();
+      });
+
+      // Select a venue
+      await user.click(screen.getByText('海淀体育馆'));
+
+      // Confirm button should appear
+      await waitFor(() => {
+        expect(screen.getByText(/确认预约/)).toBeInTheDocument();
+      });
+
+      // Click confirm to open dialog
+      await user.click(screen.getByText(/确认预约/));
+
+      // Confirm dialog
+      await waitFor(() => {
+        expect(screen.getByText(/确定/)).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText(/确定/));
+
+      await waitFor(() => {
+        expect(bookCalled).toBe(true);
+      });
+
+      expect(bookBody.slotId).toBe('slot-uuid-1');
+      expect(bookBody.venueId).toBe('venue-uuid-2');
+    },
+    15000,
+  );
+
+  it(
+    'should not allow clicking on booked slots',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({
+            data: { slots: [mockSlotBooked] },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for slot to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText(/已约/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Click on the booked slot
+      await user.click(screen.getByTestId('slot-card-slot-uuid-4'));
+
+      // Confirm button should NOT appear
+      expect(screen.queryByText(/确认预约/)).not.toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it(
+    'should show date range picker',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({ data: { slots: [mockSlotWithVenues] } });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/日期/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+    },
+    15000,
+  );
+});
+
+// =========================================================================
+// MyCourseManagementPage Integration Tests
+// =========================================================================
+
+describe('MyCourseManagementPage Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockParamsId = 'coach-uuid-1';
+    mockAuthUserId = 'coach-uuid-1';
+    mockCurrentUserData = { id: 'coach-uuid-1', isCoach: true, nickname: '教练张' };
+    mockCurrentUserIsLoading = false;
+  });
+
+  function renderPage() {
+    const queryClient = createQueryClient();
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <MyCourseManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  const mockCoachProfileForManagement = {
+    userId: 'coach-uuid-1',
+    nickname: '教练张',
+    avatarUrl: null,
+    bio: '10年教学经验',
+    specialties: ['singles'],
+    studentCount: 42,
+    groupClasses: [
+      {
+        id: 'gc-uuid-1',
+        title: '初级单打提升班',
+        startTime: '2026-04-10T14:00:00.000Z',
+        endTime: '2026-04-10T16:00:00.000Z',
+        venue: mockSlotVenue,
+        maxParticipants: 10,
+        currentParticipants: 5,
+        feeDescription: '200元/人',
+        status: 'open',
+      },
+      {
+        id: 'gc-uuid-2',
+        title: '已取消的课程',
+        startTime: '2026-04-08T14:00:00.000Z',
+        endTime: '2026-04-08T16:00:00.000Z',
+        venue: mockSlotVenue,
+        maxParticipants: 8,
+        currentParticipants: 3,
+        feeDescription: null,
+        status: 'cancelled',
+      },
+    ],
+    privateLessonSlots: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  const mockMgmtAvailabilitySlot = {
+    id: 'slot-uuid-1',
+    startTime: '2026-04-11T10:00:00.000Z',
+    endTime: '2026-04-11T12:00:00.000Z',
+    venues: [mockSlotVenue],
+    feeDescription: '300元/小时',
+    isBooked: false,
+  };
+
+  const mockMgmtBookedSlot = {
+    id: 'slot-uuid-2',
+    startTime: '2026-04-12T14:00:00.000Z',
+    endTime: '2026-04-12T16:00:00.000Z',
+    venues: [],
+    feeDescription: null,
+    isBooked: true,
+  };
+
+  const mockMgmtPrivateLesson = {
+    id: 'pl-uuid-1',
+    slot: {
+      startTime: '2026-04-12T14:00:00.000Z',
+      endTime: '2026-04-12T16:00:00.000Z',
+    },
+    venue: mockSlotVenue,
+    student: {
+      id: 'user-uuid-1',
+      nickname: '羽球达人',
+      avatarUrl: null,
+    },
+    status: 'scheduled',
+    createdAt: '2026-04-03T10:00:00.000Z',
+  };
+
+  it(
+    'should load coach profile and render group classes tab with management actions',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      renderPage();
+
+      // Wait for group classes to load
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Verify tabs exist
+      expect(screen.getByRole('button', { name: '团课' })).toBeInTheDocument();
+      expect(screen.getByText(/私教时间/)).toBeInTheDocument();
+      expect(screen.getByText(/私教预约/)).toBeInTheDocument();
+
+      // Verify "发布团课" button
+      expect(screen.getByText(/发布团课/)).toBeInTheDocument();
+
+      // Verify management buttons for open class
+      expect(screen.getByText(/修改/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument();
+
+      // Cancelled class should not have management buttons
+      expect(screen.getByText('已取消的课程')).toBeInTheDocument();
+      const modifyButtons = screen.getAllByText(/修改/);
+      expect(modifyButtons).toHaveLength(1);
+    },
+    15000,
+  );
+
+  it(
+    'should show coach role required prompt when user is not a coach',
+    async () => {
+      mockCurrentUserData = { id: 'user-uuid-1', isCoach: false, nickname: '普通用户' };
+
+      server.use(
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'user-uuid-1', isCoach: false, nickname: '普通用户', phone: '13800000002', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByText(/教练角色/)).toBeInTheDocument();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should navigate to group class detail when clicking on a class card',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Click on a class card (the div with data-testid)
+      const classCard = screen.getByTestId('manageable-group-class-gc-uuid-1');
+      await user.click(classCard);
+      expect(mockNavigate).toHaveBeenCalledWith('/group-classes/gc-uuid-1');
+    },
+    15000,
+  );
+
+  it(
+    'should cancel group class through full flow: button → confirm → API call',
+    async () => {
+      let cancelCalled = false;
+
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.post('/api/group-classes/:id/cancel', () => {
+          cancelCalled = true;
+          return HttpResponse.json({
+            data: { id: 'gc-uuid-1', status: 'cancelled' },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Click cancel button (not the "取消" tab text)
+      await user.click(screen.getByRole('button', { name: '取消' }));
+
+      // Confirm dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText(/确认/)).toBeInTheDocument();
+      });
+
+      // Confirm the cancellation
+      await user.click(screen.getByText(/确认/));
+
+      await waitFor(() => {
+        expect(cancelCalled).toBe(true);
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should open create group class modal when "发布团课" is clicked',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/发布团课/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      await user.click(screen.getByText(/发布团课/));
+
+      // Modal should appear with form fields
+      await waitFor(() => {
+        expect(screen.getByText(/课程名称/)).toBeInTheDocument();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should open edit group class modal with pre-filled values',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/修改/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      await user.click(screen.getByText(/修改/));
+
+      // Edit modal should show with pre-filled title
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('初级单打提升班')).toBeInTheDocument();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should switch to private schedule tab and display slots from API',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({
+            data: { slots: [mockMgmtAvailabilitySlot, mockMgmtBookedSlot] },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for page to load
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Switch to private schedule tab
+      await user.click(screen.getByText(/私教时间/));
+
+      // Slots should be rendered with booking status
+      await waitFor(() => {
+        expect(screen.getByText(/添加时间段/)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/空闲/)).toBeInTheDocument();
+        expect(screen.getByText(/已预约/)).toBeInTheDocument();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should open add slot modal from private schedule tab',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.get('/api/coaches/:id/availability', () => {
+          return HttpResponse.json({ data: { slots: [] } });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Switch to private schedule tab
+      await user.click(screen.getByText(/私教时间/));
+
+      await waitFor(() => {
+        expect(screen.getByText(/添加时间段/)).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText(/添加时间段/));
+
+      // Modal should appear with time inputs
+      await waitFor(() => {
+        expect(screen.getByText(/开始时间/)).toBeInTheDocument();
+        expect(screen.getByText(/结束时间/)).toBeInTheDocument();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should switch to private lessons tab and display lessons from API',
+    async () => {
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.get('/api/coaches/:id/private-lessons', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockMgmtPrivateLesson],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Switch to private lessons tab
+      await user.click(screen.getByText(/私教预约/));
+
+      // Private lesson card should appear
+      await waitFor(() => {
+        expect(screen.getByText('羽球达人')).toBeInTheDocument();
+      });
+
+      // Scheduled lesson should have cancel button
+      expect(screen.getByText(/取消/)).toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it(
+    'should cancel private lesson through full flow: button → confirm → API call',
+    async () => {
+      let cancelCalled = false;
+
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.get('/api/coaches/:id/private-lessons', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockMgmtPrivateLesson],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+        http.post('/api/private-lessons/:id/cancel', () => {
+          cancelCalled = true;
+          return HttpResponse.json({
+            data: { id: 'pl-uuid-1', status: 'cancelled' },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Switch to private lessons tab
+      await user.click(screen.getByText(/私教预约/));
+
+      await waitFor(() => {
+        expect(screen.getByText('羽球达人')).toBeInTheDocument();
+      });
+
+      // Click cancel button
+      await user.click(screen.getByText(/取消/));
+
+      // Confirm dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText(/确认/)).toBeInTheDocument();
+      });
+
+      // Confirm
+      await user.click(screen.getByText(/确认/));
+
+      await waitFor(() => {
+        expect(cancelCalled).toBe(true);
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should not show cancel button for completed private lessons',
+    async () => {
+      const completedLesson = { ...mockMgmtPrivateLesson, id: 'pl-uuid-2', status: 'completed' };
+
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: mockCoachProfileForManagement });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+        http.get('/api/coaches/:id/private-lessons', () => {
+          return HttpResponse.json({
+            data: {
+              items: [completedLesson],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Switch to private lessons tab
+      await user.click(screen.getByText(/私教预约/));
+
+      await waitFor(() => {
+        expect(screen.getByText('羽球达人')).toBeInTheDocument();
+      });
+
+      // No cancel button should be shown for completed lessons
+      expect(screen.queryByRole('button', { name: /取消/ })).not.toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it(
+    'should show empty state when no group classes',
+    async () => {
+      const emptyProfile = { ...mockCoachProfileForManagement, groupClasses: [] };
+
+      server.use(
+        http.get('/api/coaches/:id', () => {
+          return HttpResponse.json({ data: emptyProfile });
+        }),
+        http.get('/api/users/me', () => {
+          return HttpResponse.json({
+            data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张', phone: '13800000001', avatarUrl: null, bio: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/暂无/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+    },
+    15000,
+  );
+});
+
+// =========================================================================
+// MyEnrollmentListPage Integration Tests
+// =========================================================================
+
+describe('MyEnrollmentListPage Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockParamsId = 'current-user-id';
+    mockAuthUserId = 'current-user-id';
+    mockCurrentUserData = { id: 'current-user-id', isCoach: false, nickname: '当前用户' };
+    mockCurrentUserIsLoading = false;
+  });
+
+  function renderPage() {
+    const queryClient = createQueryClient();
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <MyEnrollmentListPage />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  const mockGroupClassEnrollment = {
+    type: 'group-class',
+    groupClass: {
+      id: 'gc-uuid-1',
+      title: '初级单打提升班',
+      coachId: 'coach-uuid-1',
+      coachNickname: '教练张',
+      venue: { id: 'venue-uuid-1', name: '朝阳体育中心羽毛球馆' },
+      startTime: '2026-04-10T14:00:00.000Z',
+      endTime: '2026-04-10T16:00:00.000Z',
+      status: 'open',
+      enrolledAt: '2026-04-03T09:00:00.000Z',
+    },
+    privateLesson: null,
+  };
+
+  const mockPrivateLessonEnrollment = {
+    type: 'private-lesson',
+    groupClass: null,
+    privateLesson: {
+      id: 'pl-uuid-1',
+      coachId: 'coach-uuid-1',
+      coachNickname: '教练张',
+      venue: { id: 'venue-uuid-1', name: '朝阳体育中心羽毛球馆' },
+      startTime: '2026-04-11T10:00:00.000Z',
+      endTime: '2026-04-11T12:00:00.000Z',
+      status: 'scheduled',
+      createdAt: '2026-04-03T10:00:00.000Z',
+    },
+  };
+
+  const mockCompletedEnrollment = {
+    type: 'group-class',
+    groupClass: {
+      id: 'gc-uuid-2',
+      title: '高级战术课',
+      coachId: 'coach-uuid-2',
+      coachNickname: '教练李',
+      venue: { id: 'venue-uuid-2', name: '海淀体育馆' },
+      startTime: '2026-03-15T14:00:00.000Z',
+      endTime: '2026-03-15T16:00:00.000Z',
+      status: 'completed',
+      enrolledAt: '2026-03-10T09:00:00.000Z',
+    },
+    privateLesson: null,
+  };
+
+  const mockCancelledEnrollment = {
+    type: 'private-lesson',
+    groupClass: null,
+    privateLesson: {
+      id: 'pl-uuid-2',
+      coachId: 'coach-uuid-2',
+      coachNickname: '教练李',
+      venue: null,
+      startTime: '2026-03-20T10:00:00.000Z',
+      endTime: '2026-03-20T12:00:00.000Z',
+      status: 'cancelled',
+      createdAt: '2026-03-15T10:00:00.000Z',
+    },
+  };
+
+  it(
+    'should load and display mixed enrollment list from API',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockGroupClassEnrollment, mockPrivateLessonEnrollment],
+              total: 2,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Both items should be rendered
+      const coachNames = screen.getAllByText(/教练张/);
+      expect(coachNames.length).toBeGreaterThanOrEqual(2);
+    },
+    15000,
+  );
+
+  it('should show empty state when no enrollments', async () => {
+    server.use(
+      http.get('/api/users/:id/enrollments', () => {
+        return HttpResponse.json({
+          data: { items: [], total: 0, page: 1, pageSize: 20 },
+        });
+      }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/暂无/)).toBeInTheDocument();
+    });
+  });
+
+  it('should show error state when API fails', async () => {
+    server.use(
+      http.get('/api/users/:id/enrollments', () => {
+        return HttpResponse.json(
+          { error: { code: 'INTERNAL_ERROR', message: '服务器错误' } },
+          { status: 500 },
+        );
+      }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/失败|错误|重试/)).toBeInTheDocument();
+    });
+  });
+
+  it(
+    'should render filter buttons for type and status',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: { items: [], total: 0, page: 1, pageSize: 20 },
+          });
+        }),
+      );
+
+      renderPage();
+
+      // Type filters
+      expect(screen.getByText('全部')).toBeInTheDocument();
+      expect(screen.getByText('团课')).toBeInTheDocument();
+      expect(screen.getByText('私教')).toBeInTheDocument();
+
+      // Status filters
+      expect(screen.getByText('待开课')).toBeInTheDocument();
+      expect(screen.getByText('进行中')).toBeInTheDocument();
+      expect(screen.getByText('已结束')).toBeInTheDocument();
+      expect(screen.getByText('已取消')).toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it(
+    'should filter by type and reload data from API',
+    async () => {
+      const capturedUrls: string[] = [];
+
+      server.use(
+        http.get('/api/users/:id/enrollments', ({ request }) => {
+          capturedUrls.push(request.url);
+          return HttpResponse.json({
+            data: { items: [], total: 0, page: 1, pageSize: 20 },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(capturedUrls.length).toBeGreaterThanOrEqual(1);
+      });
+
+      // Click "团课" filter
+      await user.click(screen.getByText('团课'));
+
+      // Verify the API was called with type=group-class
+      await waitFor(() => {
+        const groupClassRequest = capturedUrls.find((url) =>
+          url.includes('type=group-class'),
+        );
+        expect(groupClassRequest).toBeDefined();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should filter by status and reload data from API',
+    async () => {
+      const capturedUrls: string[] = [];
+
+      server.use(
+        http.get('/api/users/:id/enrollments', ({ request }) => {
+          capturedUrls.push(request.url);
+          return HttpResponse.json({
+            data: { items: [], total: 0, page: 1, pageSize: 20 },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(capturedUrls.length).toBeGreaterThanOrEqual(1);
+      });
+
+      // Click "已结束" status filter
+      await user.click(screen.getByText('已结束'));
+
+      // Verify the API was called with status=completed
+      await waitFor(() => {
+        const completedRequest = capturedUrls.find((url) =>
+          url.includes('status=completed'),
+        );
+        expect(completedRequest).toBeDefined();
+      });
+    },
+    15000,
+  );
+
+  it(
+    'should display status tags on enrollment cards',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockCompletedEnrollment, mockCancelledEnrollment],
+              total: 2,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('高级战术课')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      // Verify status tags on cards (use within to distinguish from filter buttons)
+      const completedCard = screen.getByTestId('enrollment-card-gc-uuid-2');
+      expect(completedCard).toBeInTheDocument();
+
+      const cancelledCard = screen.getByTestId('enrollment-card-pl-uuid-2');
+      expect(cancelledCard).toBeInTheDocument();
+    },
+    15000,
+  );
+
+  it(
+    'should navigate to group class detail when clicking group class enrollment',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockGroupClassEnrollment],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText('初级单打提升班')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      const card = screen.getByTestId('enrollment-card-gc-uuid-1');
+      await user.click(card);
+
+      expect(mockNavigate).toHaveBeenCalledWith('/group-classes/gc-uuid-1');
+    },
+    15000,
+  );
+
+  it(
+    'should navigate to coach profile when clicking private lesson enrollment',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockPrivateLessonEnrollment],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/教练张/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+
+      const card = screen.getByTestId('enrollment-card-pl-uuid-1');
+      await user.click(card);
+
+      expect(mockNavigate).toHaveBeenCalledWith('/coaches/coach-uuid-1');
+    },
+    15000,
+  );
+
+  it(
+    'should handle null venue gracefully',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockCancelledEnrollment],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
+
+      renderPage();
+
+      // Should not crash with null venue
+      await waitFor(
+        () => {
+          expect(screen.getByText(/教练李/)).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+    },
+    15000,
+  );
+
+  it(
+    'should show loading state while data is being fetched',
+    async () => {
+      server.use(
+        http.get('/api/users/:id/enrollments', async () => {
+          // Delay response to test loading state
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          return HttpResponse.json({
+            data: { items: [], total: 0, page: 1, pageSize: 20 },
+          });
+        }),
+      );
+
+      renderPage();
+
+      // Loading state should be shown initially
+      expect(screen.getByText(/加载/)).toBeInTheDocument();
+
+      // Wait for data to load
+      await waitFor(() => {
+        expect(screen.getByText(/暂无/)).toBeInTheDocument();
+      });
     },
     15000,
   );
