@@ -69,7 +69,7 @@ export function CreateActivityPage() {
     createActivityMutation.mutate(data);
   };
 
-  // Venue selection handler (used by VenueSearchInput shared component)
+  // TODO: 待 VenueSearchInput 共享组件实现后接入，届时移除下划线前缀并绑定到 VenueSearchInput 的 onSelect
   const _handleVenueSelect = (id: string, name: string) => {
     setVenueId(id);
     setVenueName(name);
@@ -130,7 +130,6 @@ export function CreateActivityPage() {
           placeholder="输入活动标题"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          maxLength={60}
         />
         {formErrors.title && (
           <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
