@@ -116,13 +116,15 @@ export function CoachProfilePage() {
       {/* Stats */}
       <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
         <div>
-          {rating && rating.averageRating !== null ? (
-            <span style={{ fontWeight: 600, color: '#ff9800' }}>
-              {rating.averageRating} <span style={{ fontSize: 12, color: '#999' }}>({rating.totalCount}条评价)</span>
-            </span>
-          ) : (
-            <span style={{ color: '#999' }}>暂无评价</span>
-          )}
+          {rating ? (
+            rating.averageRating !== null ? (
+              <span style={{ fontWeight: 600, color: '#ff9800' }}>
+                {rating.averageRating} <span style={{ fontSize: 12, color: '#999' }}>({rating.totalCount}条)</span>
+              </span>
+            ) : (
+              <span style={{ color: '#999' }}>暂无评价</span>
+            )
+          ) : null}
         </div>
         <div>
           <span style={{ color: '#666' }}>{coach.studentCount} 名学员</span>

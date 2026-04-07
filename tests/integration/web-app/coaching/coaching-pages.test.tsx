@@ -602,7 +602,7 @@ describe('CoachProfilePage Integration', () => {
 
       // Verify rating display
       expect(screen.getByText(/4.5/)).toBeInTheDocument();
-      expect(screen.getByText(/15条评价/)).toBeInTheDocument();
+      expect(screen.getByText(/15条/)).toBeInTheDocument();
 
       // Verify student count
       expect(screen.getByText(/42 名学员/)).toBeInTheDocument();
