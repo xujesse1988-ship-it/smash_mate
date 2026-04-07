@@ -33,6 +33,7 @@ export async function updateGroupClass(
   _id: string,
   _data: {
     title?: string;
+    venueId?: string;
     startTime?: string;
     endTime?: string;
     maxParticipants?: number;
@@ -55,15 +56,20 @@ export async function cancelEnrollment(_id: string) {
 }
 
 export async function setAvailability(_data: {
-  startTime: string;
-  endTime: string;
-  venueIds?: string[];
-  feeDescription?: string;
+  slots: Array<{
+    startTime: string;
+    endTime: string;
+    venueIds?: string[];
+    feeDescription?: string;
+  }>;
 }) {
   throw new Error('Not implemented');
 }
 
-export async function getCoachAvailability(_coachId: string) {
+export async function getCoachAvailability(
+  _coachId: string,
+  _params?: { startDate?: string; endDate?: string },
+) {
   throw new Error('Not implemented');
 }
 
@@ -77,7 +83,7 @@ export async function cancelPrivateLesson(_id: string) {
 
 export async function getUserEnrollments(
   _userId: string,
-  _params: { page?: number; pageSize?: number },
+  _params: { page?: number; pageSize?: number; type?: string; status?: string },
 ) {
   throw new Error('Not implemented');
 }
