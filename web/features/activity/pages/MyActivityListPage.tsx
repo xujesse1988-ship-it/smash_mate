@@ -2,19 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
 import { useMyActivities } from '../hooks/useMyActivities';
-import type { ActivityListItem } from '../api/activity-api';
-
-// ---------------------------------------------------------------------------
-// Status label map
-// ---------------------------------------------------------------------------
-
-const STATUS_LABELS: Record<string, string> = {
-  open: '报名中',
-  full: '已满员',
-  in_progress: '进行中',
-  completed: '已结束',
-  cancelled: '已取消',
-};
+import { ActivityCard } from '../components/ActivityCard';
+import { STATUS_LABELS } from '../constants';
 
 // Map URL query param role values to API role values
 const ROLE_MAP: Record<string, string | null> = {
@@ -22,65 +11,6 @@ const ROLE_MAP: Record<string, string | null> = {
   initiated: 'creator',
   participated: 'participant',
 };
-
-// ---------------------------------------------------------------------------
-// ActivityCard (reused from list page)
-// ---------------------------------------------------------------------------
-
-function ActivityCard({
-  activity,
-  onClick,
-}: {
-  activity: ActivityListItem;
-  onClick: () => void;
-}) {
-  const displayTitle = activity.title
-    ? activity.title
-    : activity.venue
-      ? activity.venue.name
-      : '已删除的球馆';
-
-  const startDate = new Date(activity.startTime);
-  const endDate = new Date(activity.endTime);
-  const timeStr = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        padding: 16,
-        borderBottom: '1px solid #f0f0f0',
-        cursor: 'pointer',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>{displayTitle}</h3>
-        <span
-          style={{
-            fontSize: 12,
-            padding: '2px 8px',
-            borderRadius: 4,
-            background: activity.status === 'open' ? '#e6f7ff' : activity.status === 'completed' ? '#f6ffed' : '#f5f5f5',
-            color: activity.status === 'open' ? '#1890ff' : activity.status === 'completed' ? '#52c41a' : '#999',
-          }}
-        >
-          {STATUS_LABELS[activity.status] || activity.status}
-        </span>
-      </div>
-      {activity.venue && (
-        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-          {activity.venue.name}
-        </div>
-      )}
-      <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>{timeStr}</div>
-      <div style={{ marginTop: 4 }}>
-        <span style={{ fontSize: 13, color: '#666' }}>
-          {activity.currentParticipants}/{activity.maxParticipants} 人
-        </span>
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // MyActivityListPage
@@ -222,6 +152,7 @@ export function MyActivityListPage() {
         <ActivityCard
           key={activity.id}
           activity={activity}
+          variant="my"
           onClick={() => navigate(`/activities/${activity.id}`)}
         />
       ))}
