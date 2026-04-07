@@ -20,24 +20,35 @@ export function MyCourseManagementPage() {
   const { data: availability } = useCoachAvailability(userId || '');
   const { data: privateLessonsData } = useCoachPrivateLessons(userId || '');
 
-  const _createGroupClassMutation = useCreateGroupClass();
-  const _updateGroupClassMutation = useUpdateGroupClass();
+  const createGroupClassMutation = useCreateGroupClass();
+  const updateGroupClassMutation = useUpdateGroupClass();
   const cancelGroupClassMutation = useCancelGroupClass();
-  const _setAvailabilityMutation = useSetAvailability();
+  const setAvailabilityMutation = useSetAvailability();
   const cancelPrivateLessonMutation = useCancelPrivateLesson();
 
   const [activeTab, setActiveTab] = useState<'group-classes' | 'private-schedule' | 'private-lessons'>('group-classes');
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
   const [showEditClassModal, setShowEditClassModal] = useState(false);
-  const [_editingClassId, setEditingClassId] = useState<string | null>(null);
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
   const [showCancelClassConfirm, setShowCancelClassConfirm] = useState(false);
   const [cancellingClassId, setCancellingClassId] = useState<string | null>(null);
   const [showAddSlotModal, setShowAddSlotModal] = useState(false);
   const [showCancelLessonConfirm, setShowCancelLessonConfirm] = useState(false);
   const [cancellingLessonId, setCancellingLessonId] = useState<string | null>(null);
 
-  // Form states for create/edit
+  // Form states for create/edit group class
   const [formTitle, setFormTitle] = useState('');
+  const [formVenueId, setFormVenueId] = useState('');
+  const [formVenueName, setFormVenueName] = useState('');
+  const [formStartTime, setFormStartTime] = useState('');
+  const [formEndTime, setFormEndTime] = useState('');
+  const [formMaxParticipants, setFormMaxParticipants] = useState(10);
+  const [formFeeDescription, setFormFeeDescription] = useState('');
+
+  // Form states for add slot
+  const [slotStartTime, setSlotStartTime] = useState('');
+  const [slotEndTime, setSlotEndTime] = useState('');
+  const [slotFeeDescription, setSlotFeeDescription] = useState('');
 
   if (isUserLoading || isProfileLoading) return <div>加载中...</div>;
   if (currentUser && !currentUser.isCoach) return <div>请先开启教练角色</div>;
@@ -46,12 +57,89 @@ export function MyCourseManagementPage() {
   const slots = availability?.slots ?? [];
   const privateLessons = privateLessonsData?.items ?? [];
 
+  const resetCreateForm = () => {
+    setFormTitle('');
+    setFormVenueId('');
+    setFormVenueName('');
+    setFormStartTime('');
+    setFormEndTime('');
+    setFormMaxParticipants(10);
+    setFormFeeDescription('');
+  };
+
+  const handleCreateGroupClass = () => {
+    if (!formTitle.trim()) return;
+    createGroupClassMutation.mutate(
+      {
+        venueId: formVenueId,
+        title: formTitle,
+        startTime: formStartTime ? new Date(formStartTime).toISOString() : '',
+        endTime: formEndTime ? new Date(formEndTime).toISOString() : '',
+        maxParticipants: formMaxParticipants,
+        feeDescription: formFeeDescription || undefined,
+      },
+      {
+        onSuccess: () => {
+          setShowCreateClassModal(false);
+          resetCreateForm();
+        },
+      },
+    );
+  };
+
+  const handleUpdateGroupClass = () => {
+    if (!editingClassId || !formTitle.trim()) return;
+    updateGroupClassMutation.mutate(
+      {
+        id: editingClassId,
+        data: {
+          title: formTitle,
+          venueId: formVenueId || undefined,
+          startTime: formStartTime ? new Date(formStartTime).toISOString() : undefined,
+          endTime: formEndTime ? new Date(formEndTime).toISOString() : undefined,
+          maxParticipants: formMaxParticipants,
+          feeDescription: formFeeDescription || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          setShowEditClassModal(false);
+          setEditingClassId(null);
+          resetCreateForm();
+        },
+      },
+    );
+  };
+
   const handleCancelGroupClass = () => {
     if (cancellingClassId) {
       cancelGroupClassMutation.mutate(cancellingClassId);
       setShowCancelClassConfirm(false);
       setCancellingClassId(null);
     }
+  };
+
+  const handleAddSlot = () => {
+    if (!slotStartTime || !slotEndTime) return;
+    setAvailabilityMutation.mutate(
+      {
+        slots: [
+          {
+            startTime: new Date(slotStartTime).toISOString(),
+            endTime: new Date(slotEndTime).toISOString(),
+            feeDescription: slotFeeDescription || undefined,
+          },
+        ],
+      },
+      {
+        onSuccess: () => {
+          setShowAddSlotModal(false);
+          setSlotStartTime('');
+          setSlotEndTime('');
+          setSlotFeeDescription('');
+        },
+      },
+    );
   };
 
   const handleCancelPrivateLesson = () => {
@@ -103,7 +191,7 @@ export function MyCourseManagementPage() {
         <div>
           <button
             onClick={() => {
-              setFormTitle('');
+              resetCreateForm();
               setShowCreateClassModal(true);
             }}
             style={{ marginBottom: '16px', padding: '8px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
@@ -138,6 +226,12 @@ export function MyCourseManagementPage() {
                       e.stopPropagation();
                       setEditingClassId(gc.id);
                       setFormTitle(gc.title);
+                      setFormVenueId(gc.venue?.id || '');
+                      setFormVenueName(gc.venue?.name || '');
+                      setFormStartTime(gc.startTime ? new Date(gc.startTime).toISOString().slice(0, 16) : '');
+                      setFormEndTime(gc.endTime ? new Date(gc.endTime).toISOString().slice(0, 16) : '');
+                      setFormMaxParticipants(gc.maxParticipants);
+                      setFormFeeDescription(gc.feeDescription || '');
                       setShowEditClassModal(true);
                     }}
                     style={{ fontSize: 12, padding: '4px 12px', border: '1px solid #d9d9d9', borderRadius: '4px', background: 'white', cursor: 'pointer' }}
@@ -239,11 +333,31 @@ export function MyCourseManagementPage() {
             <h3>发布团课</h3>
             <div style={{ marginBottom: '12px' }}>
               <label>课程名称</label>
-              <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px' }} />
+              <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="请输入课程名称" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>球馆</label>
+              <input value={formVenueName} onChange={(e) => setFormVenueName(e.target.value)} placeholder="请选择球馆" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>开始时间</label>
+              <input type="datetime-local" value={formStartTime} onChange={(e) => setFormStartTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>结束时间</label>
+              <input type="datetime-local" value={formEndTime} onChange={(e) => setFormEndTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>限定人数</label>
+              <input type="number" value={formMaxParticipants} onChange={(e) => setFormMaxParticipants(Number(e.target.value))} min={2} max={30} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>费用说明（选填）</label>
+              <input value={formFeeDescription} onChange={(e) => setFormFeeDescription(e.target.value)} placeholder="如：200元/人" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowCreateClassModal(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
-              <button onClick={() => { /* Submit logic */ }} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
+              <button onClick={handleCreateGroupClass} disabled={createGroupClassMutation.isPending} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
             </div>
           </div>
         </div>
@@ -256,11 +370,31 @@ export function MyCourseManagementPage() {
             <h3>修改团课</h3>
             <div style={{ marginBottom: '12px' }}>
               <label>课程名称</label>
-              <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px' }} />
+              <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="请输入课程名称" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>球馆</label>
+              <input value={formVenueName} onChange={(e) => setFormVenueName(e.target.value)} placeholder="请选择球馆" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>开始时间</label>
+              <input type="datetime-local" value={formStartTime} onChange={(e) => setFormStartTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>结束时间</label>
+              <input type="datetime-local" value={formEndTime} onChange={(e) => setFormEndTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>限定人数</label>
+              <input type="number" value={formMaxParticipants} onChange={(e) => setFormMaxParticipants(Number(e.target.value))} min={2} max={30} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>费用说明（选填）</label>
+              <input value={formFeeDescription} onChange={(e) => setFormFeeDescription(e.target.value)} placeholder="如：200元/人" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowEditClassModal(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
-              <button onClick={() => { /* Update logic */ }} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
+              <button onClick={handleUpdateGroupClass} disabled={updateGroupClassMutation.isPending} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
             </div>
           </div>
         </div>
@@ -273,15 +407,19 @@ export function MyCourseManagementPage() {
             <h3>添加私教时间段</h3>
             <div style={{ marginBottom: '12px' }}>
               <label>开始时间</label>
-              <input type="datetime-local" style={{ width: '100%', padding: '8px', marginTop: '4px' }} />
+              <input type="datetime-local" value={slotStartTime} onChange={(e) => setSlotStartTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label>结束时间</label>
-              <input type="datetime-local" style={{ width: '100%', padding: '8px', marginTop: '4px' }} />
+              <input type="datetime-local" value={slotEndTime} onChange={(e) => setSlotEndTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label>费用说明（选填）</label>
+              <input value={slotFeeDescription} onChange={(e) => setSlotFeeDescription(e.target.value)} placeholder="如：300元/小时" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowAddSlotModal(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
-              <button onClick={() => { /* Submit logic */ }} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
+              <button onClick={handleAddSlot} disabled={setAvailabilityMutation.isPending} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
             </div>
           </div>
         </div>
