@@ -8,19 +8,8 @@ import { useLeaveActivity } from '../hooks/useLeaveActivity';
 import { useUpdateActivity } from '../hooks/useUpdateActivity';
 import { useCancelActivity } from '../hooks/useCancelActivity';
 import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
-import type { MatchRecord } from '../hooks/useActivityMatchRecords';
-
-// ---------------------------------------------------------------------------
-// Status label map
-// ---------------------------------------------------------------------------
-
-const STATUS_LABELS: Record<string, string> = {
-  open: '报名中',
-  full: '已满员',
-  in_progress: '进行中',
-  completed: '已结束',
-  cancelled: '已取消',
-};
+import type { MatchRecord } from '../api/activity-api';
+import { STATUS_LABELS } from '../constants';
 
 // ---------------------------------------------------------------------------
 // ActivityDetailPage

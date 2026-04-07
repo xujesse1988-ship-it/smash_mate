@@ -1,36 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-
-function resolveUrl(path: string): string {
-  if (typeof globalThis.location !== 'undefined') {
-    return path;
-  }
-  return `http://localhost${path}`;
-}
-
-async function deleteMatchRecord(recordId: string): Promise<void> {
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(resolveUrl(`/api/match-records/${recordId}`), {
-    method: 'DELETE',
-    headers,
-  });
-
-  if (!response.ok) {
-    const body = await response.json();
-    const error = body.error as { code: string; message: string };
-    const err = new Error(error.message) as Error & { code: string };
-    err.code = error.code;
-    throw err;
-  }
-}
+import { deleteMatchRecord } from '../api/activity-api';
 
 export function useDeleteMatchRecord(activityId: string) {
   const queryClient = useQueryClient();

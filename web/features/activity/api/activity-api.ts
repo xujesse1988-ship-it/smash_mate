@@ -267,6 +267,73 @@ export async function cancelActivity(id: string): Promise<CancelResult> {
 }
 
 // ---------------------------------------------------------------------------
+// GET /api/activities/:id/match-records
+// ---------------------------------------------------------------------------
+
+export interface MatchRecordPlayer {
+  userId: string | null;
+  nickname: string;
+  avatarUrl: string | null;
+}
+
+export interface MatchRecord {
+  id: string;
+  sourceType: string;
+  sourceId: string;
+  matchType: string;
+  recordedBy: string;
+  recorder: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  players: {
+    sideA: MatchRecordPlayer[];
+    sideB: MatchRecordPlayer[];
+  };
+  games: Array<{
+    gameNumber: number;
+    scoreA: number;
+    scoreB: number;
+  }>;
+  result: string;
+  createdAt: string;
+}
+
+export async function getActivityMatchRecords(
+  activityId: string,
+): Promise<MatchRecord[]> {
+  const response = await fetch(
+    resolveUrl(`/api/activities/${activityId}/match-records`),
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    },
+  );
+
+  return handleResponse<MatchRecord[]>(response);
+}
+
+// ---------------------------------------------------------------------------
+// DELETE /api/match-records/:id
+// ---------------------------------------------------------------------------
+
+export async function deleteMatchRecord(recordId: string): Promise<void> {
+  const response = await fetch(resolveUrl(`/api/match-records/${recordId}`), {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const body = await response.json();
+    const error = body.error as ApiError;
+    const err = new Error(error.message) as Error & { code: string };
+    err.code = error.code;
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // GET /api/users/:id/activities
 // ---------------------------------------------------------------------------
 
