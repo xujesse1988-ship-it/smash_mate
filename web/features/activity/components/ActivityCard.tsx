@@ -75,7 +75,7 @@ export function ActivityCard({
         </span>
         {variant === 'list' && activity.distance != null && (
           <span style={{ fontSize: 13, color: '#999' }}>
-            {activity.distance} km
+            距你 {activity.distance} km
           </span>
         )}
       </div>
