@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: web-app
@@ -21,7 +21,7 @@ feature: activity
 | match-record | 后端 | done | done | done | done | done | |
 | review | 后端 | done | done | done | done | done | done |
 | web-app/auth | 前端 | done | done | done | done | | |
-| web-app/activity | 前端 | done | review | | | | |
+| web-app/activity | 前端 | done | done | in_progress | | | |
 | web-app/coaching | 前端 | done | | | | | |
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
@@ -223,3 +223,4 @@ web-app/auth #41 review 问题已修复（2026-04-05）：hooks 改用 useMutati
 web-app/auth #41 review LGTM（2026-04-05）。Issue #41 关闭。web-app/auth feature 所有 Task 完成（#41），进入 Feature Review。
 web-app/auth Feature Review LGTM（2026-04-05）。auth feature 完成。进入下一个 feature: web-app/activity。
 web-app/activity 前端契约测试 #42 编写完成（2026-04-05）：API 层 60 用例 + 页面渲染 72 用例，共 132 用例。TDD 状态 126 红色 + 6 绿色（negative 断言）。等待 review。
+web-app/activity 契约测试 #42 review 通过（2026-04-07）。132 个用例，进入实现阶段。
