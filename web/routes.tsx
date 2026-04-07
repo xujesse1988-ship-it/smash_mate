@@ -4,6 +4,12 @@ import { ActivityListPage } from './features/activity/pages/ActivityListPage';
 import { CreateActivityPage } from './features/activity/pages/CreateActivityPage';
 import { ActivityDetailPage } from './features/activity/pages/ActivityDetailPage';
 import { MyActivityListPage } from './features/activity/pages/MyActivityListPage';
+import { CoachListPage } from './features/coaching/pages/CoachListPage';
+import { CoachProfilePage } from './features/coaching/pages/CoachProfilePage';
+import { GroupClassDetailPage } from './features/coaching/pages/GroupClassDetailPage';
+import { PrivateLessonBookingPage } from './features/coaching/pages/PrivateLessonBookingPage';
+import { MyCourseManagementPage } from './features/coaching/pages/MyCourseManagementPage';
+import { MyEnrollmentListPage } from './features/coaching/pages/MyEnrollmentListPage';
 
 // Placeholder pages - will be replaced with actual implementations
 function PlaceholderPage({ name }: { name: string }) {
@@ -18,15 +24,15 @@ export function AppRoutes() {
       <Route path="/activities/create" element={<CreateActivityPage />} />
       <Route path="/activities/:id" element={<ActivityDetailPage />} />
       <Route path="/my-activities" element={<MyActivityListPage />} />
-      <Route path="/coaches" element={<PlaceholderPage name="CoachListPage" />} />
-      <Route path="/coaches/:id" element={<PlaceholderPage name="CoachProfilePage" />} />
-      <Route path="/group-classes/:id" element={<PlaceholderPage name="GroupClassDetailPage" />} />
+      <Route path="/coaches" element={<CoachListPage />} />
+      <Route path="/coaches/:id" element={<CoachProfilePage />} />
+      <Route path="/group-classes/:id" element={<GroupClassDetailPage />} />
       <Route
         path="/coaches/:id/private-lessons"
-        element={<PlaceholderPage name="PrivateLessonBookingPage" />}
+        element={<PrivateLessonBookingPage />}
       />
-      <Route path="/my-courses" element={<PlaceholderPage name="MyCourseManagementPage" />} />
-      <Route path="/my-enrollments" element={<PlaceholderPage name="MyEnrollmentListPage" />} />
+      <Route path="/my-courses" element={<MyCourseManagementPage />} />
+      <Route path="/my-enrollments" element={<MyEnrollmentListPage />} />
       <Route
         path="/match-records/create"
         element={<PlaceholderPage name="CreateMatchRecordPage" />}

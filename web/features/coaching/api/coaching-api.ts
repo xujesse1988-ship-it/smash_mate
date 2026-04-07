@@ -1,37 +1,331 @@
-export async function getCoaches(_params: {
+// TODO: resolveUrl, handleResponse, getAuthHeaders 与 auth-api.ts / activity-api.ts 重复，
+// 待统一迁移到共享 API Client（shared/api/client.ts）
+interface ApiError {
+  code: string;
+  message: string;
+}
+
+function resolveUrl(path: string): string {
+  if (typeof globalThis.location !== 'undefined') {
+    return path;
+  }
+  return `http://localhost${path}`;
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  const body = await response.json();
+
+  if (!response.ok) {
+    const error = body.error as ApiError;
+    const err = new Error(error.message) as Error & { code: string };
+    err.code = error.code;
+    throw err;
+  }
+
+  return body.data as T;
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface CoachListItem {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  specialties: string[];
+  studentCount: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SlotVenue {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export interface CoachProfileGroupClass {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  venue: SlotVenue | null;
+  maxParticipants: number;
+  currentParticipants: number;
+  feeDescription: string | null;
+  status: string;
+}
+
+export interface CoachProfileSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  venues: SlotVenue[];
+  feeDescription: string | null;
+  isBooked: boolean;
+}
+
+export interface CoachProfile {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  specialties: string[];
+  studentCount: number;
+  groupClasses: CoachProfileGroupClass[];
+  privateLessonSlots: CoachProfileSlot[];
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface GroupClassEnrollment {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  enrolledAt: string;
+}
+
+export interface GroupClassDetail {
+  id: string;
+  coachId: string;
+  coach: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  title: string;
+  venue: Venue | null;
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  feeDescription: string | null;
+  status: string;
+  enrollments: GroupClassEnrollment[];
+  createdAt: string;
+}
+
+export interface EnrollResult {
+  groupClassId: string;
+  userId: string;
+  currentParticipants: number;
+  status: string;
+  enrolledAt: string;
+}
+
+export interface CancelEnrollResult {
+  groupClassId: string;
+  userId: string;
+  currentParticipants: number;
+  status: string;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  venues: SlotVenue[];
+  feeDescription: string | null;
+  isBooked: boolean;
+}
+
+export interface AvailabilityResult {
+  slots: AvailabilitySlot[];
+}
+
+export interface PrivateLessonBookResult {
+  id: string;
+  slotId: string;
+  coachId: string;
+  studentId: string;
+  venue: SlotVenue | null;
+  startTime: string;
+  endTime: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface CoachPrivateLesson {
+  id: string;
+  slot: {
+    startTime: string;
+    endTime: string;
+  };
+  venue: SlotVenue | null;
+  student: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  status: string;
+  createdAt: string;
+}
+
+export interface EnrollmentGroupClass {
+  id: string;
+  title: string;
+  coachId: string;
+  coachNickname: string;
+  venue: { id: string; name: string } | null;
+  startTime: string;
+  endTime: string;
+  status: string;
+  enrolledAt: string;
+}
+
+export interface EnrollmentPrivateLesson {
+  id: string;
+  coachId: string;
+  coachNickname: string;
+  venue: { id: string; name: string } | null;
+  startTime: string;
+  endTime: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface EnrollmentItem {
+  type: 'group-class' | 'private-lesson';
+  groupClass: EnrollmentGroupClass | null;
+  privateLesson: EnrollmentPrivateLesson | null;
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/coaches
+// ---------------------------------------------------------------------------
+
+export async function getCoaches(params: {
   page?: number;
   pageSize?: number;
   specialty?: string;
-}) {
-  throw new Error('Not implemented');
+}): Promise<PaginatedResult<CoachListItem>> {
+  const searchParams = new URLSearchParams();
+
+  if (params.page !== undefined) searchParams.set('page', String(params.page));
+  if (params.pageSize !== undefined)
+    searchParams.set('pageSize', String(params.pageSize));
+  if (params.specialty !== undefined)
+    searchParams.set('specialty', params.specialty);
+
+  const qs = searchParams.toString();
+  const url = resolveUrl(`/api/coaches${qs ? `?${qs}` : ''}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<PaginatedResult<CoachListItem>>(response);
 }
 
-export async function getCoachProfile(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id
+// ---------------------------------------------------------------------------
+
+export async function getCoachProfile(id: string): Promise<CoachProfile> {
+  const response = await fetch(resolveUrl(`/api/coaches/${id}`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<CoachProfile>(response);
 }
 
-export async function updateCoachProfile(_data: { bio?: string; specialties?: string[] }) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// PUT /api/coaches/me
+// ---------------------------------------------------------------------------
+
+export async function updateCoachProfile(data: {
+  bio?: string;
+  specialties?: string[];
+}): Promise<{ userId: string; bio: string; specialties: string[]; updatedAt: string }> {
+  const response = await fetch(resolveUrl('/api/coaches/me'), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
 }
 
-export async function createGroupClass(_data: {
+// ---------------------------------------------------------------------------
+// POST /api/group-classes
+// ---------------------------------------------------------------------------
+
+export async function createGroupClass(data: {
   venueId: string;
   title: string;
   startTime: string;
   endTime: string;
   maxParticipants: number;
   feeDescription?: string;
-}) {
-  throw new Error('Not implemented');
+}): Promise<{
+  id: string;
+  coachId: string;
+  title: string;
+  venue: Venue;
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  feeDescription: string | null;
+  status: string;
+  createdAt: string;
+}> {
+  const response = await fetch(resolveUrl('/api/group-classes'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
 }
 
-export async function getGroupClassDetail(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// GET /api/group-classes/:id
+// ---------------------------------------------------------------------------
+
+export async function getGroupClassDetail(id: string): Promise<GroupClassDetail> {
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<GroupClassDetail>(response);
 }
+
+// ---------------------------------------------------------------------------
+// PUT /api/group-classes/:id
+// ---------------------------------------------------------------------------
 
 export async function updateGroupClass(
-  _id: string,
-  _data: {
+  id: string,
+  data: {
     title?: string;
     venueId?: string;
     startTime?: string;
@@ -39,58 +333,226 @@ export async function updateGroupClass(
     maxParticipants?: number;
     feeDescription?: string;
   },
-) {
-  throw new Error('Not implemented');
+): Promise<{
+  id: string;
+  coachId: string;
+  title: string;
+  venue: Venue;
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  feeDescription: string | null;
+  status: string;
+  createdAt: string;
+}> {
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}`), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
 }
 
-export async function cancelGroupClass(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/group-classes/:id/cancel
+// ---------------------------------------------------------------------------
+
+export async function cancelGroupClass(
+  id: string,
+): Promise<{ id: string; status: string }> {
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}/cancel`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
 
-export async function enrollGroupClass(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/group-classes/:id/enroll
+// ---------------------------------------------------------------------------
+
+export async function enrollGroupClass(id: string): Promise<EnrollResult> {
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}/enroll`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<EnrollResult>(response);
 }
 
-export async function cancelEnrollment(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/group-classes/:id/cancel-enrollment
+// ---------------------------------------------------------------------------
+
+export async function cancelEnrollment(id: string): Promise<CancelEnrollResult> {
+  const response = await fetch(
+    resolveUrl(`/api/group-classes/${id}/cancel-enrollment`),
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    },
+  );
+
+  return handleResponse<CancelEnrollResult>(response);
 }
 
-export async function setAvailability(_data: {
+// ---------------------------------------------------------------------------
+// POST /api/private-lessons/availability
+// ---------------------------------------------------------------------------
+
+export async function setAvailability(data: {
   slots: Array<{
     startTime: string;
     endTime: string;
     venueIds?: string[];
     feeDescription?: string;
   }>;
-}) {
-  throw new Error('Not implemented');
+}): Promise<{
+  slots: Array<{
+    id: string;
+    coachId: string;
+    startTime: string;
+    endTime: string;
+    venueIds: string[];
+    feeDescription: string | null;
+    isBooked: boolean;
+    createdAt: string;
+  }>;
+}> {
+  const response = await fetch(
+    resolveUrl('/api/private-lessons/availability'),
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    },
+  );
+
+  return handleResponse(response);
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id/availability
+// ---------------------------------------------------------------------------
 
 export async function getCoachAvailability(
-  _coachId: string,
-  _params?: { startDate?: string; endDate?: string },
-) {
-  throw new Error('Not implemented');
+  coachId: string,
+  params?: { startDate?: string; endDate?: string },
+): Promise<AvailabilityResult> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.startDate) searchParams.set('startDate', params.startDate);
+  if (params?.endDate) searchParams.set('endDate', params.endDate);
+
+  const qs = searchParams.toString();
+  const url = resolveUrl(
+    `/api/coaches/${coachId}/availability${qs ? `?${qs}` : ''}`,
+  );
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<AvailabilityResult>(response);
 }
 
-export async function bookPrivateLesson(_data: { slotId: string; venueId?: string }) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/private-lessons/book
+// ---------------------------------------------------------------------------
+
+export async function bookPrivateLesson(data: {
+  slotId: string;
+  venueId?: string;
+}): Promise<PrivateLessonBookResult> {
+  const body: Record<string, string> = { slotId: data.slotId };
+  if (data.venueId !== undefined) {
+    body.venueId = data.venueId;
+  }
+
+  const response = await fetch(resolveUrl('/api/private-lessons/book'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+
+  return handleResponse<PrivateLessonBookResult>(response);
 }
 
-export async function cancelPrivateLesson(_id: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/private-lessons/:id/cancel
+// ---------------------------------------------------------------------------
+
+export async function cancelPrivateLesson(
+  id: string,
+): Promise<{ id: string; status: string }> {
+  const response = await fetch(
+    resolveUrl(`/api/private-lessons/${id}/cancel`),
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    },
+  );
+
+  return handleResponse(response);
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/users/:id/enrollments
+// ---------------------------------------------------------------------------
 
 export async function getUserEnrollments(
-  _userId: string,
-  _params: { page?: number; pageSize?: number; type?: string; status?: string },
-) {
-  throw new Error('Not implemented');
+  userId: string,
+  params: { page?: number; pageSize?: number; type?: string; status?: string },
+): Promise<PaginatedResult<EnrollmentItem>> {
+  const searchParams = new URLSearchParams();
+
+  if (params.page !== undefined) searchParams.set('page', String(params.page));
+  if (params.pageSize !== undefined)
+    searchParams.set('pageSize', String(params.pageSize));
+  if (params.type !== undefined) searchParams.set('type', params.type);
+  if (params.status !== undefined) searchParams.set('status', params.status);
+
+  const qs = searchParams.toString();
+  const url = resolveUrl(
+    `/api/users/${userId}/enrollments${qs ? `?${qs}` : ''}`,
+  );
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<PaginatedResult<EnrollmentItem>>(response);
 }
 
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id/private-lessons
+// ---------------------------------------------------------------------------
+
 export async function getCoachPrivateLessons(
-  _coachId: string,
-  _params: { page?: number; pageSize?: number; status?: string },
-) {
-  throw new Error('Not implemented');
+  coachId: string,
+  params: { page?: number; pageSize?: number; status?: string },
+): Promise<PaginatedResult<CoachPrivateLesson>> {
+  const searchParams = new URLSearchParams();
+
+  if (params.page !== undefined) searchParams.set('page', String(params.page));
+  if (params.pageSize !== undefined)
+    searchParams.set('pageSize', String(params.pageSize));
+  if (params.status !== undefined) searchParams.set('status', params.status);
+
+  const qs = searchParams.toString();
+  const url = resolveUrl(
+    `/api/coaches/${coachId}/private-lessons${qs ? `?${qs}` : ''}`,
+  );
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<PaginatedResult<CoachPrivateLesson>>(response);
 }

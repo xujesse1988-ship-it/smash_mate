@@ -1,24 +1,168 @@
+// TODO: resolveUrl, handleResponse, getAuthHeaders 与 coaching-api.ts 重复，
+// 待统一迁移到共享 API Client（shared/api/client.ts）
+interface ApiError {
+  code: string;
+  message: string;
+}
+
+function resolveUrl(path: string): string {
+  if (typeof globalThis.location !== 'undefined') {
+    return path;
+  }
+  return `http://localhost${path}`;
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  const body = await response.json();
+
+  if (!response.ok) {
+    const error = body.error as ApiError;
+    const err = new Error(error.message) as Error & { code: string };
+    err.code = error.code;
+    throw err;
+  }
+
+  return body.data as T;
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface CoachRating {
+  coachId: string;
+  averageRating: number | null;
+  totalCount: number;
+}
+
+export interface CoachRatingsResult {
+  ratings: CoachRating[];
+}
+
+export interface ReviewItem {
+  id: string;
+  reviewer: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  courseType: string;
+  courseId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id/reviews
+// ---------------------------------------------------------------------------
+
 export async function getCoachReviews(
-  _coachId: string,
-  _params: { page?: number; pageSize?: number },
-) {
-  throw new Error('Not implemented');
+  coachId: string,
+  params: { page?: number; pageSize?: number },
+): Promise<PaginatedResult<ReviewItem>> {
+  const searchParams = new URLSearchParams();
+
+  if (params.page !== undefined) searchParams.set('page', String(params.page));
+  if (params.pageSize !== undefined)
+    searchParams.set('pageSize', String(params.pageSize));
+
+  const qs = searchParams.toString();
+  const url = resolveUrl(
+    `/api/coaches/${coachId}/reviews${qs ? `?${qs}` : ''}`,
+  );
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<PaginatedResult<ReviewItem>>(response);
 }
 
-export async function getCoachRating(_coachId: string) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id/rating
+// ---------------------------------------------------------------------------
+
+export async function getCoachRating(coachId: string): Promise<CoachRating> {
+  const response = await fetch(resolveUrl(`/api/coaches/${coachId}/rating`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<CoachRating>(response);
 }
 
-export async function getCoachesRatings(_coachIds: string[]) {
-  throw new Error('Not implemented');
+// ---------------------------------------------------------------------------
+// POST /api/coaches/ratings
+// ---------------------------------------------------------------------------
+
+export async function getCoachesRatings(
+  coachIds: string[],
+): Promise<CoachRatingsResult> {
+  const response = await fetch(resolveUrl('/api/coaches/ratings'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ coachIds }),
+  });
+
+  return handleResponse<CoachRatingsResult>(response);
 }
 
-export async function createReview(_data: {
+// ---------------------------------------------------------------------------
+// POST /api/reviews
+// ---------------------------------------------------------------------------
+
+export async function createReview(data: {
   coachId: string;
   courseType: string;
   courseId: string;
   rating: number;
   comment?: string;
-}) {
-  throw new Error('Not implemented');
+}): Promise<{
+  id: string;
+  reviewerId: string;
+  coachId: string;
+  courseType: string;
+  courseId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}> {
+  const body: Record<string, unknown> = {
+    coachId: data.coachId,
+    courseType: data.courseType,
+    courseId: data.courseId,
+    rating: data.rating,
+  };
+  if (data.comment !== undefined) {
+    body.comment = data.comment;
+  }
+
+  const response = await fetch(resolveUrl('/api/reviews'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+
+  return handleResponse(response);
 }
