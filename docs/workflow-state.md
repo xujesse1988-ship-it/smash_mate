@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5e-review
+substep: 5c
 
 ## 当前模块
 module: web-app
@@ -233,3 +233,5 @@ web-app/coaching 前端契约测试 #44 编写完成（2026-04-07）：API 层 1
 web-app/coaching 契约测试 #44 review 通过（2026-04-07）。进入实现阶段。
 web-app/coaching #45（教练列表、教练主页、团课详情）实现完成（2026-04-07）：CoachListPage（擅长方向筛选、评分聚合排序）、CoachProfilePage（教练资料/团课列表/私教概览/评价 Tab/提交评价）、GroupClassDetailPage（报名/取消报名/战绩/状态展示）、19 个 hooks、API 层（coaching + review + match-record）、路由注册。契约测试 108 通过，L1 集成测试 32 通过。等待 review。
 web-app/coaching #45 review 修复（部分，2026-04-07）：修复 5 个契约测试失败（时间格式、确认弹窗文案、卡片导航）+ 4 个 lint 错误。剩余 7 个失败为契约测试选择器冲突（getByText regex 过于宽泛导致多元素匹配），已在 Issue #45 详细报告。MUST FIX #1（useDeleteMatchRecord 跨 feature 导入）因与契约测试 mock 路径冲突暂未修改。等待重新 review。
+web-app/coaching #45 第二轮修复（2026-04-07）：创建 coaching 内部 useDeleteMatchRecord hook、修复 7 个契约测试选择器（改用 getByRole/within/getAllByText）。199 契约测试 + 32 L1 集成测试全通过。
+web-app/coaching #45 review LGTM（2026-04-07）。Issue #45 关闭。继续实现 #46（私教预约与课程管理）。
