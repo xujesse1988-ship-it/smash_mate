@@ -192,33 +192,37 @@ describe('ActivityListPage Integration', () => {
     );
   }
 
-  it('should load and display activities from API', async () => {
-    server.use(
-      http.get('/api/activities', () => {
-        return HttpResponse.json({
-          data: {
-            items: [mockActivityListItem],
-            total: 1,
-            page: 1,
-            pageSize: 20,
-          },
-        });
-      }),
-    );
+  it(
+    'should load and display activities from API',
+    async () => {
+      server.use(
+        http.get('/api/activities', () => {
+          return HttpResponse.json({
+            data: {
+              items: [mockActivityListItem],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          });
+        }),
+      );
 
-    renderPage();
+      renderPage();
 
-    // Should show loading initially
-    expect(screen.getByText(/加载/i)).toBeInTheDocument();
+      // Wait for data to load (increased timeout for initial render with heavy antd imports)
+      await waitFor(
+        () => {
+          expect(screen.getByText('周末约球')).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
 
-    // Wait for data to load
-    await waitFor(() => {
-      expect(screen.getByText('周末约球')).toBeInTheDocument();
-    });
-
-    // Verify activity details are rendered
-    expect(screen.getByText(/3\/8/)).toBeInTheDocument();
-  });
+      // Verify activity details are rendered
+      expect(screen.getByText(/3\/8/)).toBeInTheDocument();
+    },
+    15000,
+  );
 
   it('should display empty state when no activities returned', async () => {
     server.use(

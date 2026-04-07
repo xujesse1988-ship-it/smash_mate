@@ -1,3 +1,5 @@
+// TODO: resolveUrl, handleResponse, getAuthHeaders 与 auth-api.ts 重复，
+// 待统一迁移到共享 API Client（shared/api/client.ts）
 interface ApiError {
   code: string;
   message: string;
