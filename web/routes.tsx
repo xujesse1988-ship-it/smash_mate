@@ -1,5 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './features/auth/pages/LoginPage';
+import { ActivityListPage } from './features/activity/pages/ActivityListPage';
+import { CreateActivityPage } from './features/activity/pages/CreateActivityPage';
+import { ActivityDetailPage } from './features/activity/pages/ActivityDetailPage';
+import { MyActivityListPage } from './features/activity/pages/MyActivityListPage';
 
 // Placeholder pages - will be replaced with actual implementations
 function PlaceholderPage({ name }: { name: string }) {
@@ -10,10 +14,10 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/activities" element={<PlaceholderPage name="ActivityListPage" />} />
-      <Route path="/activities/create" element={<PlaceholderPage name="CreateActivityPage" />} />
-      <Route path="/activities/:id" element={<PlaceholderPage name="ActivityDetailPage" />} />
-      <Route path="/my-activities" element={<PlaceholderPage name="MyActivityListPage" />} />
+      <Route path="/activities" element={<ActivityListPage />} />
+      <Route path="/activities/create" element={<CreateActivityPage />} />
+      <Route path="/activities/:id" element={<ActivityDetailPage />} />
+      <Route path="/my-activities" element={<MyActivityListPage />} />
       <Route path="/coaches" element={<PlaceholderPage name="CoachListPage" />} />
       <Route path="/coaches/:id" element={<PlaceholderPage name="CoachProfilePage" />} />
       <Route path="/group-classes/:id" element={<PlaceholderPage name="GroupClassDetailPage" />} />
