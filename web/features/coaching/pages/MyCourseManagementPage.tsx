@@ -45,10 +45,12 @@ export function MyCourseManagementPage() {
   const [formMaxParticipants, setFormMaxParticipants] = useState(10);
   const [formFeeDescription, setFormFeeDescription] = useState('');
 
-  // Form states for add slot
-  const [slotStartTime, setSlotStartTime] = useState('');
-  const [slotEndTime, setSlotEndTime] = useState('');
-  const [slotFeeDescription, setSlotFeeDescription] = useState('');
+  // Form states for add slot (batch support)
+  const [slotFormItems, setSlotFormItems] = useState<Array<{
+    startTime: string;
+    endTime: string;
+    feeDescription: string;
+  }>>([{ startTime: '', endTime: '', feeDescription: '' }]);
 
   if (isUserLoading || isProfileLoading) return <div>加载中...</div>;
   if (currentUser && !currentUser.isCoach) return <div>请先开启教练角色</div>;
@@ -120,26 +122,37 @@ export function MyCourseManagementPage() {
   };
 
   const handleAddSlot = () => {
-    if (!slotStartTime || !slotEndTime) return;
+    // Validate all slot items have required fields
+    const validSlots = slotFormItems.filter((item) => item.startTime && item.endTime);
+    if (validSlots.length === 0) return;
+
     setAvailabilityMutation.mutate(
       {
-        slots: [
-          {
-            startTime: new Date(slotStartTime).toISOString(),
-            endTime: new Date(slotEndTime).toISOString(),
-            feeDescription: slotFeeDescription || undefined,
-          },
-        ],
+        slots: validSlots.map((item) => ({
+          startTime: new Date(item.startTime).toISOString(),
+          endTime: new Date(item.endTime).toISOString(),
+          feeDescription: item.feeDescription || undefined,
+        })),
       },
       {
         onSuccess: () => {
           setShowAddSlotModal(false);
-          setSlotStartTime('');
-          setSlotEndTime('');
-          setSlotFeeDescription('');
+          setSlotFormItems([{ startTime: '', endTime: '', feeDescription: '' }]);
         },
       },
     );
+  };
+
+  const handleAddMoreSlot = () => {
+    setSlotFormItems((prev) => [...prev, { startTime: '', endTime: '', feeDescription: '' }]);
+  };
+
+  const handleRemoveSlotItem = (index: number) => {
+    setSlotFormItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateSlotItem = (index: number, field: 'startTime' | 'endTime' | 'feeDescription', value: string) => {
+    setSlotFormItems((prev) => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
   };
 
   const handleCancelPrivateLesson = () => {
@@ -337,7 +350,8 @@ export function MyCourseManagementPage() {
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label>球馆</label>
-              <input value={formVenueName} onChange={(e) => setFormVenueName(e.target.value)} placeholder="请选择球馆" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+              <input value={formVenueName} disabled placeholder="球馆搜索功能暂未上线" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box', background: '#f5f5f5', color: '#999', cursor: 'not-allowed' }} />
+              <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>球馆搜索组件开发中，暂不可选择</div>
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label>开始时间</label>
@@ -374,7 +388,8 @@ export function MyCourseManagementPage() {
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label>球馆</label>
-              <input value={formVenueName} onChange={(e) => setFormVenueName(e.target.value)} placeholder="请选择球馆" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+              <input value={formVenueName} disabled placeholder="球馆搜索功能暂未上线" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box', background: '#f5f5f5', color: '#999', cursor: 'not-allowed' }} />
+              <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>球馆搜索组件开发中，暂不可修改</div>
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label>开始时间</label>
@@ -400,25 +415,44 @@ export function MyCourseManagementPage() {
         </div>
       )}
 
-      {/* Add Slot Modal */}
+      {/* Add Slot Modal (batch support) */}
       {showAddSlotModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '400px' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
             <h3>添加私教时间段</h3>
-            <div style={{ marginBottom: '12px' }}>
-              <label>开始时间</label>
-              <input type="datetime-local" value={slotStartTime} onChange={(e) => setSlotStartTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
-            </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label>结束时间</label>
-              <input type="datetime-local" value={slotEndTime} onChange={(e) => setSlotEndTime(e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
-            </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label>费用说明（选填）</label>
-              <input value={slotFeeDescription} onChange={(e) => setSlotFeeDescription(e.target.value)} placeholder="如：300元/小时" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
-            </div>
+            {slotFormItems.map((item, index) => (
+              <div key={index} style={{ marginBottom: '16px', padding: '12px', border: '1px solid #f0f0f0', borderRadius: '8px', position: 'relative' }}>
+                {slotFormItems.length > 1 && (
+                  <button
+                    onClick={() => handleRemoveSlotItem(index)}
+                    style={{ position: 'absolute', top: 4, right: 4, border: 'none', background: 'none', cursor: 'pointer', color: '#999', fontSize: 16 }}
+                  >
+                    x
+                  </button>
+                )}
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>时间段 {index + 1}</div>
+                <div style={{ marginBottom: '8px' }}>
+                  <label>开始时间</label>
+                  <input type="datetime-local" value={item.startTime} onChange={(e) => handleUpdateSlotItem(index, 'startTime', e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <label>结束时间</label>
+                  <input type="datetime-local" value={item.endTime} onChange={(e) => handleUpdateSlotItem(index, 'endTime', e.target.value)} style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label>费用说明（选填）</label>
+                  <input value={item.feeDescription} onChange={(e) => handleUpdateSlotItem(index, 'feeDescription', e.target.value)} placeholder="如：300元/小时" style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={handleAddMoreSlot}
+              style={{ width: '100%', padding: '8px', border: '1px dashed #d9d9d9', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#00C853', marginBottom: '16px' }}
+            >
+              + 再添加一个时间段
+            </button>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowAddSlotModal(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
+              <button onClick={() => { setShowAddSlotModal(false); setSlotFormItems([{ startTime: '', endTime: '', feeDescription: '' }]); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>取消</button>
               <button onClick={handleAddSlot} disabled={setAvailabilityMutation.isPending} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>提交</button>
             </div>
           </div>

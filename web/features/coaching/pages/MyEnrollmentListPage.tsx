@@ -143,13 +143,23 @@ export function MyEnrollmentListPage() {
                 {isGroupClass && gc ? (
                   <>
                     <div style={{ fontWeight: 600 }}>{gc.title}</div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>教练：{gc.coachNickname}</div>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                      {new Date(gc.startTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {' - '}
+                      {new Date(gc.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>教练：{gc.coachNickname}</div>
                     {gc.venue && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{gc.venue.name}</div>}
                   </>
                 ) : pl ? (
                   <>
                     <div style={{ fontWeight: 600 }}>私教课</div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>教练：{pl.coachNickname}</div>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                      {new Date(pl.startTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {' - '}
+                      {new Date(pl.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>教练：{pl.coachNickname}</div>
                     {pl.venue && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{pl.venue.name}</div>}
                   </>
                 ) : null}
