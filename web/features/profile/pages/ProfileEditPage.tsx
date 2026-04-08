@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { TopBar } from '../components/top-bar';
+import { ProfileForm } from '../components/profile-form';
+import { PhoneDisplay } from '../components/phone-display';
+import { ConfirmDialog } from '../components/confirm-dialog';
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
@@ -110,77 +114,34 @@ export function ProfileEditPage() {
 
   return (
     <div>
-      {/* TopBar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-        <button aria-label="返回" onClick={handleBack}>
-          返回
-        </button>
-        <span>编辑资料</span>
-        <button
-          onClick={handleSave}
-          disabled={updateProfile.isPending}
-        >
-          保存
-        </button>
-      </div>
+      <TopBar
+        title="编辑资料"
+        onBack={handleBack}
+        onSave={handleSave}
+        saveDisabled={updateProfile.isPending}
+      />
 
-      {/* Avatar Editor */}
-      <div>
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="头像预览" style={{ width: 64, height: 64, borderRadius: '50%' }} />
-        ) : (
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#eee' }} />
-        )}
-        <div>
-          <label>头像链接</label>
-          <input
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-            placeholder="输入头像 URL"
-          />
-          {errors.avatarUrl && <div style={{ color: 'red' }}>{errors.avatarUrl}</div>}
-        </div>
-      </div>
+      <ProfileForm
+        nickname={nickname}
+        onNicknameChange={setNickname}
+        bio={bio}
+        onBioChange={setBio}
+        avatarUrl={avatarUrl}
+        onAvatarUrlChange={setAvatarUrl}
+        errors={errors}
+      />
 
-      {/* Profile Form */}
-      <div>
-        <div>
-          <label>昵称</label>
-          <input
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-          />
-          {errors.nickname && <div style={{ color: 'red' }}>{errors.nickname}</div>}
-        </div>
-        <div>
-          <label>简介</label>
-          <input
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-          />
-          {errors.bio && <div style={{ color: 'red' }}>{errors.bio}</div>}
-        </div>
-        <div>
-          <span>手机号</span>
-          <span>{currentUser.phone}</span>
-        </div>
-      </div>
+      <PhoneDisplay phone={currentUser.phone} />
 
-      {/* Unsaved changes confirm dialog */}
-      {showConfirm && (
-        <div role="dialog">
-          <p>有未保存的修改，确定离开？</p>
-          <button
-            onClick={() => {
-              setShowConfirm(false);
-              navigate(-1);
-            }}
-          >
-            确认
-          </button>
-          <button onClick={() => setShowConfirm(false)}>取消</button>
-        </div>
-      )}
+      <ConfirmDialog
+        visible={showConfirm}
+        message="有未保存的修改，确定离开？"
+        onConfirm={() => {
+          setShowConfirm(false);
+          navigate(-1);
+        }}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

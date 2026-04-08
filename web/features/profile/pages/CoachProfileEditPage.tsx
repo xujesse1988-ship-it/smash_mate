@@ -5,14 +5,12 @@ import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { useCoachProfile } from '../hooks/useCoachProfile';
 import { useUpdateCoachProfile } from '../hooks/useUpdateCoachProfile';
 import { useAuthStore } from '../../../stores/auth-store';
-
-const SPECIALTY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'singles', label: '单打' },
-  { value: 'doubles', label: '双打' },
-  { value: 'footwork', label: '步法' },
-  { value: 'fitness', label: '体能' },
-  { value: 'tactics', label: '战术' },
-];
+import type { CoachSpecialty } from '../api/profile-api';
+import { TopBar } from '../components/top-bar';
+import { CoachBioInput } from '../components/coach-bio-input';
+import { SpecialtySelector } from '../components/specialty-selector';
+import { CoachGuard } from '../components/coach-guard';
+import { ConfirmDialog } from '../components/confirm-dialog';
 
 export function CoachProfileEditPage() {
   const navigate = useNavigate();
@@ -26,11 +24,11 @@ export function CoachProfileEditPage() {
   const updateCoachProfile = useUpdateCoachProfile();
 
   const [bio, setBio] = useState('');
-  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialties, setSpecialties] = useState<CoachSpecialty[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const initialValues = useRef<{ bio: string; specialties: string[] } | null>(null);
+  const initialValues = useRef<{ bio: string; specialties: CoachSpecialty[] } | null>(null);
 
   // Fill form when coach profile data arrives
   useEffect(() => {
@@ -45,12 +43,7 @@ export function CoachProfileEditPage() {
 
   // CoachGuard: non-coach users
   if (!isUserLoading && currentUser && !currentUser.isCoach) {
-    return (
-      <div>
-        <p>请先在设置中开启教练模式</p>
-        <button onClick={() => navigate('/settings')}>设置</button>
-      </div>
-    );
+    return <CoachGuard onNavigateToSettings={() => navigate('/settings')} />;
   }
 
   // Loading state
@@ -64,7 +57,7 @@ export function CoachProfileEditPage() {
       JSON.stringify([...specialties].sort()) !==
         JSON.stringify([...initialValues.current.specialties].sort()));
 
-  function toggleSpecialty(value: string) {
+  function toggleSpecialty(value: CoachSpecialty) {
     setSpecialties((prev) =>
       prev.includes(value)
         ? prev.filter((s) => s !== value)
@@ -120,71 +113,34 @@ export function CoachProfileEditPage() {
 
   return (
     <div>
-      {/* TopBar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-        <button aria-label="返回" onClick={handleBack}>
-          返回
-        </button>
-        <span>教练资料</span>
-        <button
-          onClick={handleSave}
-          disabled={updateCoachProfile.isPending}
-        >
-          保存
-        </button>
-      </div>
+      <TopBar
+        title="教练资料"
+        onBack={handleBack}
+        onSave={handleSave}
+        saveDisabled={updateCoachProfile.isPending}
+      />
 
-      {/* CoachBioInput */}
-      <div>
-        <label>教练简介</label>
-        <input
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="输入教练简介"
-        />
-        {errors.bio && <div style={{ color: 'red' }}>{errors.bio}</div>}
-      </div>
+      <CoachBioInput
+        value={bio}
+        onChange={setBio}
+        error={errors.bio}
+      />
 
-      {/* SpecialtySelector */}
-      <div>
-        <label>擅长方向</label>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {SPECIALTY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => toggleSpecialty(option.value)}
-              style={{
-                background: specialties.includes(option.value) ? '#00C853' : '#f0f0f0',
-                color: specialties.includes(option.value) ? '#fff' : '#333',
-                border: 'none',
-                borderRadius: 16,
-                padding: '4px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {errors.specialties && <div style={{ color: 'red' }}>{errors.specialties}</div>}
-      </div>
+      <SpecialtySelector
+        specialties={specialties}
+        onToggle={toggleSpecialty}
+        error={errors.specialties}
+      />
 
-      {/* Unsaved changes confirm dialog */}
-      {showConfirm && (
-        <div role="dialog">
-          <p>有未保存的修改，确定离开？</p>
-          <button
-            onClick={() => {
-              setShowConfirm(false);
-              navigate(-1);
-            }}
-          >
-            确认
-          </button>
-          <button onClick={() => setShowConfirm(false)}>取消</button>
-        </div>
-      )}
+      <ConfirmDialog
+        visible={showConfirm}
+        message="有未保存的修改，确定离开？"
+        onConfirm={() => {
+          setShowConfirm(false);
+          navigate(-1);
+        }}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

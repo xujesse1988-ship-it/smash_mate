@@ -4,6 +4,9 @@ import { useAuthStore } from '../../../stores/auth-store';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useMatchStats } from '../hooks/useMatchStats';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
+import { UserInfoSection } from '../components/user-info-section';
+import { MatchStatsCard } from '../components/match-stats-card';
+import { QuickLinkList } from '../components/quick-link-list';
 
 export function UserProfilePage() {
   const { id: userId } = useParams<{ id: string }>();
@@ -58,95 +61,23 @@ export function UserProfilePage() {
       </div>
 
       {/* UserInfoSection */}
-      <div>
-        {userInfo.avatarUrl ? (
-          <img
-            src={userInfo.avatarUrl}
-            alt={userInfo.nickname}
-            style={{ width: 64, height: 64, borderRadius: '50%' }}
-          />
-        ) : (
-          <div
-            role="img"
-            aria-label={userInfo.nickname}
-            style={{ width: 64, height: 64, borderRadius: '50%', background: '#eee' }}
-          />
-        )}
-        <div>{userInfo.nickname}</div>
-        {!isOwnProfile && userInfo.bio && <div>{userInfo.bio}</div>}
-      </div>
+      <UserInfoSection
+        nickname={userInfo.nickname}
+        avatarUrl={userInfo.avatarUrl}
+        bio={userInfo.bio}
+        showBio={!isOwnProfile}
+      />
 
       {/* MatchStatsCard */}
-      {statsError ? (
-        <div>战绩加载失败</div>
-      ) : matchStats ? (
-        <div>
-          <div>{matchStats.totalMatches}</div>
-          <div>{matchStats.wins}</div>
-          <div>{matchStats.winRate}%</div>
-        </div>
-      ) : null}
+      <MatchStatsCard stats={matchStats} error={statsError} />
 
       {/* QuickLinkList - only when isOwnProfile */}
       {isOwnProfile && (
-        <div>
-          <div
-            role="button"
-            onClick={() => navigate('/my-activities?role=initiated')}
-          >
-            我发起的活动
-          </div>
-          <div
-            role="button"
-            onClick={() => navigate('/my-activities?role=participated')}
-          >
-            我参加的活动
-          </div>
-
-          {/* Course links depend on coach status */}
-          {isCoach ? (
-            <>
-              <div
-                role="button"
-                onClick={() => navigate('/my-enrollments')}
-              >
-                我的报名
-              </div>
-              <div
-                role="button"
-                onClick={() => navigate('/my-courses')}
-              >
-                课程管理
-              </div>
-            </>
-          ) : (
-            <div
-              role="button"
-              onClick={() => navigate('/my-enrollments')}
-            >
-              我的课程
-            </div>
-          )}
-
-          <div
-            role="button"
-            onClick={() => navigate(`/users/${userId}/match-records`)}
-          >
-            战绩记录
-          </div>
-          <div
-            role="button"
-            onClick={() => navigate('/profile/edit')}
-          >
-            个人资料
-          </div>
-          <div
-            role="button"
-            onClick={() => navigate('/settings')}
-          >
-            设置
-          </div>
-        </div>
+        <QuickLinkList
+          userId={userId || ''}
+          isCoach={isCoach}
+          navigate={navigate}
+        />
       )}
     </div>
   );

@@ -41,6 +41,8 @@ function getAuthHeaders(): Record<string, string> {
 // Types
 // ---------------------------------------------------------------------------
 
+export type CoachSpecialty = 'singles' | 'doubles' | 'footwork' | 'fitness' | 'tactics';
+
 export interface UserPublicInfo {
   id: string;
   nickname: string;
@@ -145,7 +147,7 @@ export async function enableCoachRole(): Promise<CurrentUser> {
 
 export interface CoachProfileForEdit {
   bio: string | null;
-  specialties: string[];
+  specialties: CoachSpecialty[];
 }
 
 export async function getCoachProfile(
@@ -159,7 +161,7 @@ export async function getCoachProfile(
   const data = await handleResponse<{
     userId: string;
     bio: string | null;
-    specialties: string[];
+    specialties: CoachSpecialty[];
   }>(response);
 
   return { bio: data.bio, specialties: data.specialties };
@@ -171,11 +173,11 @@ export async function getCoachProfile(
 
 export async function updateCoachProfile(data: {
   bio?: string;
-  specialties?: string[];
+  specialties?: CoachSpecialty[];
 }): Promise<{
   userId: string;
   bio: string;
-  specialties: string[];
+  specialties: CoachSpecialty[];
   updatedAt: string;
 }> {
   const response = await fetch(resolveUrl('/api/coaches/me'), {
