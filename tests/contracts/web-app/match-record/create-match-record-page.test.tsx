@@ -16,7 +16,7 @@
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
@@ -384,5 +384,250 @@ describe('CreateMatchRecordPage', () => {
     renderPage();
 
     expect(screen.getByText(/不是该活动.*课程的参与者|无法录入战绩/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_SOURCE_TYPE', () => {
+    const error = new Error('无效来源类型') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_SOURCE_TYPE';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/无效的来源类型/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_MATCH_TYPE', () => {
+    const error = new Error('无效比赛类型') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_MATCH_TYPE';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/请选择比赛类型/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_PLAYERS', () => {
+    const error = new Error('选手数量不符合') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_PLAYERS';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/选手数量不正确|单打各1人，双打各2人/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_PLAYER', () => {
+    const error = new Error('选手信息不合法') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_PLAYER';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/选手信息不完整/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_GUEST_NAME', () => {
+    const error = new Error('昵称不合法') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_GUEST_NAME';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/非平台用户昵称不能为空|不超过20个字符/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_GAMES', () => {
+    const error = new Error('games 不合法') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_GAMES';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/请至少录入1局比分/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_INVALID_SCORE', () => {
+    const error = new Error('比分不合法') as Error & { code: string };
+    error.code = 'MATCH_RECORD_INVALID_SCORE';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/单局比分需在0-30之间|不可同时为0/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_DUPLICATE_PLAYER', () => {
+    const error = new Error('重复选手') as Error & { code: string };
+    error.code = 'MATCH_RECORD_DUPLICATE_PLAYER';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/同一选手不能同时出现在两侧/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_PLAYER_NOT_PARTICIPANT', () => {
+    const error = new Error('选手不是参与者') as Error & { code: string };
+    error.code = 'MATCH_RECORD_PLAYER_NOT_PARTICIPANT';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/所选选手不是该活动.*课程的参与者/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 录入战绩错误处理
+  it('should display mapped error message for MATCH_RECORD_SOURCE_NOT_FOUND', () => {
+    const error = new Error('来源不存在') as Error & { code: string };
+    error.code = 'MATCH_RECORD_SOURCE_NOT_FOUND';
+    mockCreateMatchRecordState = {
+      ...mockCreateMatchRecordState,
+      isError: true,
+      error,
+    };
+    renderPage();
+
+    expect(screen.getByText(/关联的活动.*课程不存在/)).toBeInTheDocument();
+  });
+
+  // =========================================================================
+  // 提交成功后跳转
+  // =========================================================================
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 交互流程 — 提交 — 成功跳转 — activity
+  it('should navigate to /activities/{sourceId} after successful submission for activity source', async () => {
+    // Simulate successful mutation by calling onSuccess callback
+    const mockMutateWithSuccess = vi
+      .fn()
+      .mockImplementation((_data: unknown, options: { onSuccess?: () => void }) => {
+        if (options?.onSuccess) options.onSuccess();
+      });
+    mockCreateMatchRecordState = {
+      mutate: mockMutateWithSuccess,
+      isPending: false,
+      isError: false,
+      error: null,
+    };
+    mockSearchParams = new URLSearchParams('sourceType=activity&sourceId=activity-uuid-1');
+    renderPage();
+
+    const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
+    await userEvent.click(submitButton);
+
+    // After successful submission, should navigate to the activity detail page
+    // The exact navigation depends on implementation — either navigate() or window.history.back()
+    // For activity sourceType, expect navigation to /activities/activity-uuid-1
+    expect(mockNavigate).toHaveBeenCalledWith('/activities/activity-uuid-1');
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 交互流程 — 提交 — 成功跳转 — group-class
+  it('should navigate to /group-classes/{sourceId} after successful submission for group-class source', async () => {
+    const mockMutateWithSuccess = vi
+      .fn()
+      .mockImplementation((_data: unknown, options: { onSuccess?: () => void }) => {
+        if (options?.onSuccess) options.onSuccess();
+      });
+    mockCreateMatchRecordState = {
+      mutate: mockMutateWithSuccess,
+      isPending: false,
+      isError: false,
+      error: null,
+    };
+    mockSearchParams = new URLSearchParams('sourceType=group-class&sourceId=gc-uuid-1');
+    mockSourceParticipantsState = {
+      participants: mockParticipants,
+      isLoading: false,
+      error: null,
+    };
+    renderPage();
+
+    const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
+    await userEvent.click(submitButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/group-classes/gc-uuid-1');
+  });
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 交互流程 — 提交 — 成功跳转 — private-lesson（浏览器后退）
+  it('should navigate back (browser history) after successful submission for private-lesson source', async () => {
+    const mockMutateWithSuccess = vi
+      .fn()
+      .mockImplementation((_data: unknown, options: { onSuccess?: () => void }) => {
+        if (options?.onSuccess) options.onSuccess();
+      });
+    mockCreateMatchRecordState = {
+      mutate: mockMutateWithSuccess,
+      isPending: false,
+      isError: false,
+      error: null,
+    };
+    mockSearchParams = new URLSearchParams('sourceType=private-lesson&sourceId=pl-uuid-1');
+    mockSourceParticipantsState = {
+      participants: [],
+      isLoading: false,
+      error: null,
+    };
+    renderPage();
+
+    const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
+    await userEvent.click(submitButton);
+
+    // For private-lesson, should navigate back (browser history)
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  // =========================================================================
+  // group-class 来源的页面渲染
+  // =========================================================================
+
+  // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 获取参与者列表说明 — group-class
+  it('should render form correctly for group-class source type', () => {
+    mockSearchParams = new URLSearchParams('sourceType=group-class&sourceId=gc-uuid-1');
+    mockSourceParticipantsState = {
+      participants: mockParticipants,
+      isLoading: false,
+      error: null,
+    };
+    renderPage();
+
+    // Should render the form with match type selector, player sections, and submit button
+    expect(screen.getByText(/单打/)).toBeInTheDocument();
+    expect(screen.getByText(/双打/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /提交战绩|提交/ })).toBeInTheDocument();
   });
 });

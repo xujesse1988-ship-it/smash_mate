@@ -57,12 +57,8 @@ const mockMatchRecordResponse = {
     avatarUrl: 'https://example.com/avatar.jpg',
   },
   players: {
-    sideA: [
-      { userId: 'user-uuid-2', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' },
-    ],
-    sideB: [
-      { guestId: 'guest-uuid-1', nickname: '临时球友A' },
-    ],
+    sideA: [{ userId: 'user-uuid-2', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' }],
+    sideB: [{ guestId: 'guest-uuid-1', nickname: '临时球友A' }],
   },
   games: [
     { gameNumber: 1, scoreA: 21, scoreB: 18 },
@@ -101,10 +97,7 @@ describe('createMatchRecord API', () => {
       http.post('/api/match-records', ({ request }) => {
         capturedMethod = request.method;
         capturedUrl = request.url;
-        return HttpResponse.json(
-          { data: mockMatchRecordResponse },
-          { status: 201 },
-        );
+        return HttpResponse.json({ data: mockMatchRecordResponse }, { status: 201 });
       }),
     );
 
@@ -134,10 +127,7 @@ describe('createMatchRecord API', () => {
     server.use(
       http.post('/api/match-records', async ({ request }) => {
         capturedBody = await request.json();
-        return HttpResponse.json(
-          { data: mockMatchRecordResponse },
-          { status: 201 },
-        );
+        return HttpResponse.json({ data: mockMatchRecordResponse }, { status: 201 });
       }),
     );
 
@@ -189,18 +179,10 @@ describe('createMatchRecord API', () => {
       sourceId: 'gc-uuid-1',
       matchType: 'doubles',
       players: {
-        sideA: [
-          { userId: 'user-uuid-1' },
-          { userId: 'user-uuid-2' },
-        ],
-        sideB: [
-          { userId: 'user-uuid-3' },
-          { guestName: '临时球友B' },
-        ],
+        sideA: [{ userId: 'user-uuid-1' }, { userId: 'user-uuid-2' }],
+        sideB: [{ userId: 'user-uuid-3' }, { guestName: '临时球友B' }],
       },
-      games: [
-        { scoreA: 21, scoreB: 19 },
-      ],
+      games: [{ scoreA: 21, scoreB: 19 }],
     });
 
     const body = capturedBody as {
@@ -218,10 +200,7 @@ describe('createMatchRecord API', () => {
   it('should parse successful response and return match record data', async () => {
     server.use(
       http.post('/api/match-records', () => {
-        return HttpResponse.json(
-          { data: mockMatchRecordResponse },
-          { status: 201 },
-        );
+        return HttpResponse.json({ data: mockMatchRecordResponse }, { status: 201 });
       }),
     );
 
@@ -404,6 +383,186 @@ describe('createMatchRecord API', () => {
     ).rejects.toMatchObject({ code: 'MATCH_RECORD_DUPLICATE_PLAYER' });
   });
 
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_SOURCE_TYPE
+  it('should throw error with code when source type is invalid', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_INVALID_SOURCE_TYPE',
+              message: 'sourceType 不在枚举范围内',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'invalid-type',
+        sourceId: 'activity-uuid-1',
+        matchType: 'singles',
+        players: {
+          sideA: [{ userId: 'user-uuid-2' }],
+          sideB: [{ guestName: '临时球友A' }],
+        },
+        games: [{ scoreA: 21, scoreB: 18 }],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_INVALID_SOURCE_TYPE' });
+  });
+
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_MATCH_TYPE
+  it('should throw error with code when match type is invalid', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_INVALID_MATCH_TYPE',
+              message: 'matchType 不在枚举范围内',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'activity',
+        sourceId: 'activity-uuid-1',
+        matchType: 'invalid-type',
+        players: {
+          sideA: [{ userId: 'user-uuid-2' }],
+          sideB: [{ guestName: '临时球友A' }],
+        },
+        games: [{ scoreA: 21, scoreB: 18 }],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_INVALID_MATCH_TYPE' });
+  });
+
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_PLAYER
+  it('should throw error with code when player info is invalid', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_INVALID_PLAYER',
+              message: '选手信息不合法（userId 和 guestName 同时提供或同时为空）',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'activity',
+        sourceId: 'activity-uuid-1',
+        matchType: 'singles',
+        players: {
+          sideA: [{ userId: 'user-uuid-2', guestName: '重复信息' }],
+          sideB: [{ guestName: '临时球友A' }],
+        },
+        games: [{ scoreA: 21, scoreB: 18 }],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_INVALID_PLAYER' });
+  });
+
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_GUEST_NAME
+  it('should throw error with code when guest name is invalid', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_INVALID_GUEST_NAME',
+              message: 'guestName 为空或超过 20 字符',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'activity',
+        sourceId: 'activity-uuid-1',
+        matchType: 'singles',
+        players: {
+          sideA: [{ userId: 'user-uuid-2' }],
+          sideB: [{ guestName: '' }],
+        },
+        games: [{ scoreA: 21, scoreB: 18 }],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_INVALID_GUEST_NAME' });
+  });
+
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_GAMES
+  it('should throw error with code when games data is invalid', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_INVALID_GAMES',
+              message: 'games 为空或非数组',
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'activity',
+        sourceId: 'activity-uuid-1',
+        matchType: 'singles',
+        players: {
+          sideA: [{ userId: 'user-uuid-2' }],
+          sideB: [{ guestName: '临时球友A' }],
+        },
+        games: [],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_INVALID_GAMES' });
+  });
+
+  // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_PLAYER_NOT_PARTICIPANT
+  it('should throw error with code when selected player is not a participant', async () => {
+    server.use(
+      http.post('/api/match-records', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'MATCH_RECORD_PLAYER_NOT_PARTICIPANT',
+              message: '指定的平台用户选手不是该活动/课程的参与者',
+            },
+          },
+          { status: 403 },
+        );
+      }),
+    );
+
+    await expect(
+      createMatchRecord({
+        sourceType: 'activity',
+        sourceId: 'activity-uuid-1',
+        matchType: 'singles',
+        players: {
+          sideA: [{ userId: 'user-uuid-999' }],
+          sideB: [{ guestName: '临时球友A' }],
+        },
+        games: [{ scoreA: 21, scoreB: 18 }],
+      }),
+    ).rejects.toMatchObject({ code: 'MATCH_RECORD_PLAYER_NOT_PARTICIPANT' });
+  });
+
   // 来源: match-record.md §4 — 录入战绩 — 错误码 — MATCH_RECORD_INVALID_SCORE
   it('should throw error with code when score is invalid', async () => {
     server.use(
@@ -444,10 +603,7 @@ describe('createMatchRecord API', () => {
     server.use(
       http.post('/api/match-records', ({ request }) => {
         capturedAuthHeader = request.headers.get('Authorization') || '';
-        return HttpResponse.json(
-          { data: mockMatchRecordResponse },
-          { status: 201 },
-        );
+        return HttpResponse.json({ data: mockMatchRecordResponse }, { status: 201 });
       }),
     );
 
@@ -508,9 +664,9 @@ describe('deleteMatchRecord API', () => {
       }),
     );
 
-    await expect(
-      deleteMatchRecord('nonexistent-id'),
-    ).rejects.toMatchObject({ code: 'MATCH_RECORD_NOT_FOUND' });
+    await expect(deleteMatchRecord('nonexistent-id')).rejects.toMatchObject({
+      code: 'MATCH_RECORD_NOT_FOUND',
+    });
   });
 
   // 来源: match-record.md §4 — 删除战绩 — 错误码 — MATCH_RECORD_NOT_RECORDER
@@ -529,9 +685,9 @@ describe('deleteMatchRecord API', () => {
       }),
     );
 
-    await expect(
-      deleteMatchRecord('match-uuid-1'),
-    ).rejects.toMatchObject({ code: 'MATCH_RECORD_NOT_RECORDER' });
+    await expect(deleteMatchRecord('match-uuid-1')).rejects.toMatchObject({
+      code: 'MATCH_RECORD_NOT_RECORDER',
+    });
   });
 });
 

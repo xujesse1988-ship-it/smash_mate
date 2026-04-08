@@ -106,12 +106,8 @@ const mockWinRecord = {
     avatarUrl: 'https://example.com/avatar.jpg',
   },
   players: {
-    sideA: [
-      { userId: 'user-uuid-1', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' },
-    ],
-    sideB: [
-      { userId: 'user-uuid-2', nickname: '李四', avatarUrl: null },
-    ],
+    sideA: [{ userId: 'user-uuid-1', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' }],
+    sideB: [{ userId: 'user-uuid-2', nickname: '李四', avatarUrl: null }],
   },
   games: [
     { gameNumber: 1, scoreA: 21, scoreB: 18 },
@@ -164,12 +160,8 @@ const mockDrawRecord = {
     avatarUrl: 'https://example.com/a1.jpg',
   },
   players: {
-    sideA: [
-      { userId: 'user-uuid-1', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' },
-    ],
-    sideB: [
-      { userId: 'user-uuid-5', nickname: '教练A', avatarUrl: null },
-    ],
+    sideA: [{ userId: 'user-uuid-1', nickname: '张三', avatarUrl: 'https://example.com/a1.jpg' }],
+    sideB: [{ userId: 'user-uuid-5', nickname: '教练A', avatarUrl: null }],
   },
   games: [
     { gameNumber: 1, scoreA: 21, scoreB: 18 },
@@ -459,14 +451,38 @@ describe('MatchRecordHistoryPage', () => {
   // 多条战绩显示所有三种结果
   // =========================================================================
 
+  // =========================================================================
+  // 日期格式化展示
+  // =========================================================================
+
+  // 来源: web-app-match-record.md §2 — MatchRecordHistoryPage — 战绩卡片展示 — 比赛日期（createdAt 格式化）
+  it('should render formatted date from createdAt field', () => {
+    mockMatchRecordHistoryState = {
+      data: { pages: [{ items: [mockWinRecord], total: 1 }] },
+      isLoading: false,
+      error: null,
+      hasNextPage: false,
+      fetchNextPage: mockFetchNextPage,
+      isFetchingNextPage: false,
+    };
+    renderPage();
+
+    // mockWinRecord.createdAt = '2026-04-05T18:30:00.000Z'
+    // Should display as formatted date (e.g. "2026-04-05", "2026/04/05", "4月5日" etc.)
+    // At minimum, the year/month/day components should appear
+    expect(screen.getByText(/2026.*04.*05|2026.*4.*5|4月5日/)).toBeInTheDocument();
+  });
+
   // 来源: web-app-match-record.md §6.5 — 战绩历史列表中的结果颜色标识
   it('should render all three result types (WIN, LOSE, DRAW) for multiple records', () => {
     mockMatchRecordHistoryState = {
       data: {
-        pages: [{
-          items: [mockWinRecord, mockLoseRecord, mockDrawRecord],
-          total: 3,
-        }],
+        pages: [
+          {
+            items: [mockWinRecord, mockLoseRecord, mockDrawRecord],
+            total: 3,
+          },
+        ],
       },
       isLoading: false,
       error: null,
