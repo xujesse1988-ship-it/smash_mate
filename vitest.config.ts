@@ -36,6 +36,19 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'admin-app',
+          globals: true,
+          environment: 'jsdom',
+          include: [
+            'tests/contracts/admin/**/*.test.{ts,tsx}',
+            'tests/integration/admin/**/*.test.{ts,tsx}',
+          ],
+          setupFiles: ['tests/setup-jsdom.ts'],
+        },
+        resolve: sharedResolve,
+      },
+      {
+        test: {
           name: 'server',
           globals: true,
           environment: 'node',
@@ -43,7 +56,9 @@ export default defineConfig({
           exclude: [
             'tests/e2e/**',
             'tests/contracts/web-app/**',
+            'tests/contracts/admin/**',
             'tests/integration/web-app/**',
+            'tests/integration/admin/**',
           ],
         },
         resolve: sharedResolve,
