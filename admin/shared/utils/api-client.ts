@@ -9,7 +9,7 @@
  * Design reference: docs/module-design/admin.md §6 "API Client 配置"
  */
 
-import { useAdminAuthStore } from '@admin/stores/auth-store';
+import { useAdminAuthStore } from '@/stores/auth-store';
 
 export interface ApiError {
   code: string;
