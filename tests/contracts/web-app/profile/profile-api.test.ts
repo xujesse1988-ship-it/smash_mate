@@ -18,7 +18,9 @@
  *   - 验证成功响应和错误响应的解析
  *
  * 注: 教练资料相关的 GET /api/coaches/:id 和 PUT /api/coaches/me 已在
- *     coaching-api.test.ts 中覆盖，此处不重复测试。
+ *     tests/contracts/web-app/coaching/coaching-api.test.ts 中覆盖
+ *     （分别在 getCoachProfile API 和 updateCoachProfile API describe 块中），
+ *     此处不重复测试。
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -137,6 +139,24 @@ describe('getUserPublicInfo API', () => {
 
     await expect(getUserPublicInfo('nonexistent-id')).rejects.toMatchObject({
       code: 'USER_NOT_FOUND',
+    });
+  });
+
+  // 来源: user.md §4 — 获取用户公开信息 — 错误码 AUTH_UNAUTHORIZED
+  it('should throw error with code AUTH_UNAUTHORIZED when token is missing or invalid', async () => {
+    server.use(
+      http.get('/api/users/:id', () => {
+        return HttpResponse.json(
+          {
+            error: { code: 'AUTH_UNAUTHORIZED', message: 'Token 缺失或无效' },
+          },
+          { status: 401 },
+        );
+      }),
+    );
+
+    await expect(getUserPublicInfo('user-uuid-1')).rejects.toMatchObject({
+      code: 'AUTH_UNAUTHORIZED',
     });
   });
 });

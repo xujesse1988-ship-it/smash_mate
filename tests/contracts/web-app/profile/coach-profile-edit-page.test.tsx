@@ -17,7 +17,7 @@
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
@@ -266,6 +266,74 @@ describe('CoachProfileEditPage', () => {
     renderPage();
 
     expect(screen.getByRole('button', { name: /保存/i })).toBeDisabled();
+  });
+
+  // =========================================================================
+  // 未保存变更检测
+  // =========================================================================
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 编辑后返回弹出确认弹窗
+  it('should show confirm dialog when navigating back with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改教练简介，产生未保存的变更
+    const bioInput = screen.getByDisplayValue('10年教学经验');
+    await user.clear(bioInput);
+    await user.type(bioInput, '新简介');
+
+    // 点击返回按钮
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 应弹出确认弹窗
+    expect(screen.getByText(/未保存/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 确认离开
+  it('should navigate away when user confirms leaving with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改教练简介
+    const bioInput = screen.getByDisplayValue('10年教学经验');
+    await user.clear(bioInput);
+    await user.type(bioInput, '新简介');
+
+    // 点击返回
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 确认离开
+    const confirmButton = screen.getByRole('button', { name: /确认|确定/i });
+    await user.click(confirmButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 取消留下
+  it('should stay on page when user cancels leaving with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改教练简介
+    const bioInput = screen.getByDisplayValue('10年教学经验');
+    await user.clear(bioInput);
+    await user.type(bioInput, '新简介');
+
+    // 点击返回
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 取消
+    const cancelButton = screen.getByRole('button', { name: /取消/i });
+    await user.click(cancelButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/未保存/)).not.toBeInTheDocument();
+    });
+    // 页面不应导航
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   // =========================================================================

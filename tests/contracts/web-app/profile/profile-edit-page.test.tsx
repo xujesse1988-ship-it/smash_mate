@@ -250,6 +250,78 @@ describe('ProfileEditPage', () => {
   // 加载状态
   // =========================================================================
 
+  // =========================================================================
+  // 未保存变更检测
+  // =========================================================================
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 编辑后返回弹出确认弹窗
+  it('should show confirm dialog when navigating back with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改昵称，产生未保存的变更
+    const nicknameInput = screen.getByDisplayValue('球友A');
+    await user.clear(nicknameInput);
+    await user.type(nicknameInput, '新昵称');
+
+    // 点击返回按钮
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 应弹出确认弹窗
+    expect(screen.getByText(/未保存/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 确认离开
+  it('should navigate away when user confirms leaving with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改昵称
+    const nicknameInput = screen.getByDisplayValue('球友A');
+    await user.clear(nicknameInput);
+    await user.type(nicknameInput, '新昵称');
+
+    // 点击返回
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 确认离开
+    const confirmButton = screen.getByRole('button', { name: /确认|确定/i });
+    await user.click(confirmButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  // 来源: web-app-profile.md §6.5 — 资料编辑的未保存变更检测 — 取消留下
+  it('should stay on page when user cancels leaving with unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // 修改昵称
+    const nicknameInput = screen.getByDisplayValue('球友A');
+    await user.clear(nicknameInput);
+    await user.type(nicknameInput, '新昵称');
+
+    // 点击返回
+    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    await user.click(backButton);
+
+    // 取消
+    const cancelButton = screen.getByRole('button', { name: /取消/i });
+    await user.click(cancelButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/未保存/)).not.toBeInTheDocument();
+    });
+    // 页面不应导航
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  // =========================================================================
+  // 加载状态
+  // =========================================================================
+
   // 来源: web-app-profile.md §2 — ProfileEditPage — 调用的后端接口 — GET /api/users/me 错误
   it('should show error when current user fails to load', () => {
     mockCurrentUserData = {

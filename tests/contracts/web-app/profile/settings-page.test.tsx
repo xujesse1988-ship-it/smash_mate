@@ -155,6 +155,22 @@ describe('SettingsPage', () => {
   });
 
   // =========================================================================
+  // 关于我们
+  // =========================================================================
+
+  // 来源: web-app-profile.md §6.6 — 关于我们 — 点击后显示应用信息
+  it('should show app info when clicking "关于我们"', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const aboutEntry = screen.getByText(/关于我们/);
+    await user.click(aboutEntry.closest('[role="button"]') || aboutEntry.closest('button') || aboutEntry);
+
+    // 应显示应用名称"羽约"和版本信息
+    expect(screen.getByText(/羽约/)).toBeInTheDocument();
+  });
+
+  // =========================================================================
   // 教练模式开关 — 非教练用户
   // =========================================================================
 

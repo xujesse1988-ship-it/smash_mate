@@ -19,6 +19,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 
@@ -212,6 +213,66 @@ describe('UserProfilePage', () => {
     expect(screen.getByText(/设置/)).toBeInTheDocument();
   });
 
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我发起的活动" 导航目标
+  it('should navigate to /my-activities?role=initiated when clicking "我发起的活动"', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    renderPage();
+
+    const link = screen.getByText(/我发起的活动/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/my-activities?role=initiated');
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我参加的活动" 导航目标
+  it('should navigate to /my-activities?role=participated when clicking "我参加的活动"', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    renderPage();
+
+    const link = screen.getByText(/我参加的活动/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/my-activities?role=participated');
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "战绩记录" 导航目标
+  it('should navigate to /users/:id/match-records when clicking "战绩记录"', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    renderPage();
+
+    const link = screen.getByText(/战绩记录/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith(`/users/${CURRENT_USER_ID}/match-records`);
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "个人资料" 导航目标
+  it('should navigate to /profile/edit when clicking "个人资料"', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    renderPage();
+
+    const link = screen.getByText(/个人资料/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/profile/edit');
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "设置" 导航目标
+  it('should navigate to /settings when clicking "设置"', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    renderPage();
+
+    const link = screen.getByText(/设置/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/settings');
+  });
+
   // 来源: web-app-profile.md §2 — 交互流程 — isOwnProfile=true — 普通用户
   it('should show "我的课程" link for non-coach user viewing own profile', () => {
     mockParamsId = CURRENT_USER_ID;
@@ -225,6 +286,22 @@ describe('UserProfilePage', () => {
     expect(screen.queryByText(/课程管理/)).not.toBeInTheDocument();
   });
 
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我的课程" 导航目标（普通用户）
+  it('should navigate to /my-enrollments when clicking "我的课程" for non-coach user', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    mockCurrentUserData = {
+      data: { id: CURRENT_USER_ID, isCoach: false },
+      isLoading: false,
+    };
+    renderPage();
+
+    const link = screen.getByText(/我的课程/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/my-enrollments');
+  });
+
   // 来源: web-app-profile.md §2 — 交互流程 — isOwnProfile=true — 教练用户
   it('should show "我的报名" and "课程管理" links for coach user viewing own profile', () => {
     mockParamsId = CURRENT_USER_ID;
@@ -236,6 +313,38 @@ describe('UserProfilePage', () => {
 
     expect(screen.getByText(/我的报名/)).toBeInTheDocument();
     expect(screen.getByText(/课程管理/)).toBeInTheDocument();
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我的报名" 导航目标（教练用户）
+  it('should navigate to /my-enrollments when clicking "我的报名" for coach user', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    mockCurrentUserData = {
+      data: { id: CURRENT_USER_ID, isCoach: true },
+      isLoading: false,
+    };
+    renderPage();
+
+    const link = screen.getByText(/我的报名/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/my-enrollments');
+  });
+
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "课程管理" 导航目标（教练用户）
+  it('should navigate to /my-courses when clicking "课程管理" for coach user', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    mockCurrentUserData = {
+      data: { id: CURRENT_USER_ID, isCoach: true },
+      isLoading: false,
+    };
+    renderPage();
+
+    const link = screen.getByText(/课程管理/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/my-courses');
   });
 
   // =========================================================================

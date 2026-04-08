@@ -3,6 +3,7 @@
  * 覆盖接口:
  *   - GET    /api/coaches                          (教练列表)
  *   - GET    /api/coaches/:id                      (教练主页)
+ *   - PUT    /api/coaches/me                       (更新教练资料)
  *   - POST   /api/group-classes                    (发布团课)
  *   - GET    /api/group-classes/:id                (团课详情)
  *   - PUT    /api/group-classes/:id                (修改团课)
@@ -39,6 +40,7 @@ import { setupServer } from 'msw/node';
 import {
   getCoaches,
   getCoachProfile,
+  updateCoachProfile,
   createGroupClass,
   getGroupClassDetail,
   updateGroupClass,
@@ -388,6 +390,114 @@ describe('getCoachProfile API', () => {
 
     await expect(getCoachProfile('non-existent')).rejects.toMatchObject({
       code: 'COACHING_NOT_A_COACH',
+    });
+  });
+});
+
+// ===========================================================================
+// PUT /api/coaches/me — 更新教练资料
+// ===========================================================================
+
+describe('updateCoachProfile API', () => {
+  // 来源: coaching.md §4 — 更新教练资料 — Request Body
+  it('should send PUT request to /api/coaches/me with coach profile data', async () => {
+    let capturedUrl = '';
+    let capturedMethod = '';
+    let capturedBody: unknown = null;
+
+    server.use(
+      http.put('/api/coaches/me', async ({ request }) => {
+        capturedUrl = new URL(request.url).pathname;
+        capturedMethod = request.method;
+        capturedBody = await request.json();
+        return HttpResponse.json({
+          data: {
+            userId: 'user-uuid-1',
+            bio: '10年教学经验',
+            specialties: ['singles', 'footwork'],
+            updatedAt: '2026-04-02T10:00:00.000Z',
+          },
+        });
+      }),
+    );
+
+    await updateCoachProfile({ bio: '10年教学经验', specialties: ['singles', 'footwork'] });
+
+    expect(capturedUrl).toBe('/api/coaches/me');
+    expect(capturedMethod).toBe('PUT');
+    expect(capturedBody).toEqual({ bio: '10年教学经验', specialties: ['singles', 'footwork'] });
+  });
+
+  // 来源: coaching.md §4 — 更新教练资料 — Response 200
+  it('should return updated coach profile from successful response', async () => {
+    server.use(
+      http.put('/api/coaches/me', () => {
+        return HttpResponse.json({
+          data: {
+            userId: 'user-uuid-1',
+            bio: '10年教学经验',
+            specialties: ['singles', 'footwork'],
+            updatedAt: '2026-04-02T10:00:00.000Z',
+          },
+        });
+      }),
+    );
+
+    const result = await updateCoachProfile({ bio: '10年教学经验', specialties: ['singles', 'footwork'] });
+
+    expect(result).toEqual({
+      userId: 'user-uuid-1',
+      bio: '10年教学经验',
+      specialties: ['singles', 'footwork'],
+      updatedAt: '2026-04-02T10:00:00.000Z',
+    });
+  });
+
+  // 来源: coaching.md §4 — 更新教练资料 — 错误码 COACHING_INVALID_BIO
+  it('should throw error with code COACHING_INVALID_BIO for bio exceeding limit', async () => {
+    server.use(
+      http.put('/api/coaches/me', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_BIO', message: '简介超过 500 字符' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(updateCoachProfile({ bio: 'x'.repeat(501) })).rejects.toMatchObject({
+      code: 'COACHING_INVALID_BIO',
+    });
+  });
+
+  // 来源: coaching.md §4 — 更新教练资料 — 错误码 COACHING_INVALID_SPECIALTY
+  it('should throw error with code COACHING_INVALID_SPECIALTY for invalid specialty', async () => {
+    server.use(
+      http.put('/api/coaches/me', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_INVALID_SPECIALTY', message: 'specialties 中有值不在枚举范围内' } },
+          { status: 400 },
+        );
+      }),
+    );
+
+    await expect(updateCoachProfile({ specialties: ['invalid-specialty'] })).rejects.toMatchObject({
+      code: 'COACHING_INVALID_SPECIALTY',
+    });
+  });
+
+  // 来源: coaching.md §4 — 更新教练资料 — 错误码 COACHING_COACH_ROLE_REQUIRED
+  it('should throw error with code COACHING_COACH_ROLE_REQUIRED for non-coach user', async () => {
+    server.use(
+      http.put('/api/coaches/me', () => {
+        return HttpResponse.json(
+          { error: { code: 'COACHING_COACH_ROLE_REQUIRED', message: '当前用户不是教练角色' } },
+          { status: 403 },
+        );
+      }),
+    );
+
+    await expect(updateCoachProfile({ bio: '简介' })).rejects.toMatchObject({
+      code: 'COACHING_COACH_ROLE_REQUIRED',
     });
   });
 });
