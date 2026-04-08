@@ -1,41 +1,8 @@
-// TODO: resolveUrl, handleResponse, getAuthHeaders 与 auth-api.ts / activity-api.ts 重复，
-// 待统一迁移到共享 API Client（shared/api/client.ts）
-interface ApiError {
-  code: string;
-  message: string;
-}
-
-function resolveUrl(path: string): string {
-  if (typeof globalThis.location !== 'undefined') {
-    return path;
-  }
-  return `http://localhost${path}`;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  const body = await response.json();
-
-  if (!response.ok) {
-    const error = body.error as ApiError;
-    const err = new Error(error.message) as Error & { code: string };
-    err.code = error.code;
-    throw err;
-  }
-
-  return body.data as T;
-}
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
-}
+import {
+  resolveUrl,
+  handleResponse,
+  getAuthHeaders,
+} from '../../../shared/utils/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -557,21 +524,3 @@ export async function getCoachPrivateLessons(
   return handleResponse<PaginatedResult<CoachPrivateLesson>>(response);
 }
 
-// ---------------------------------------------------------------------------
-// DELETE /api/match-records/:id
-// ---------------------------------------------------------------------------
-
-export async function deleteMatchRecord(recordId: string): Promise<void> {
-  const response = await fetch(resolveUrl(`/api/match-records/${recordId}`), {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    const body = await response.json();
-    const error = body.error as ApiError;
-    const err = new Error(error.message) as Error & { code: string };
-    err.code = error.code;
-    throw err;
-  }
-}

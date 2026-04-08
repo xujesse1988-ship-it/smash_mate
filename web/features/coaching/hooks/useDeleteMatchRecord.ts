@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { deleteMatchRecord } from '../api/coaching-api';
+import { deleteMatchRecord } from '../../match-record/api/match-record-api';
 
 export function useDeleteMatchRecord(groupClassId: string) {
   const queryClient = useQueryClient();

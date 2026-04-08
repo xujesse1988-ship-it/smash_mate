@@ -1,41 +1,9 @@
-// TODO: resolveUrl, handleResponse, getAuthHeaders 与其他 api 文件重复，
-// 待统一迁移到共享 API Client（shared/api/client.ts）
-interface ApiError {
-  code: string;
-  message: string;
-}
-
-function resolveUrl(path: string): string {
-  if (typeof globalThis.location !== 'undefined') {
-    return path;
-  }
-  return `http://localhost${path}`;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  const body = await response.json();
-
-  if (!response.ok) {
-    const error = body.error as ApiError;
-    const err = new Error(error.message) as Error & { code: string };
-    err.code = error.code;
-    throw err;
-  }
-
-  return body.data as T;
-}
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
-}
+import {
+  resolveUrl,
+  handleResponse,
+  getAuthHeaders,
+  type ApiError,
+} from '../../../shared/utils/api-client';
 
 // ---------------------------------------------------------------------------
 // Types

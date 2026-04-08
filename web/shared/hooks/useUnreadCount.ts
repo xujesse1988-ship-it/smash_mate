@@ -1,38 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/auth-store';
-
-function resolveUrl(path: string): string {
-  if (typeof globalThis.location !== 'undefined') {
-    return path;
-  }
-  return `http://localhost${path}`;
-}
+import { resolveUrl, handleResponse, getAuthHeaders } from '../utils/api-client';
 
 async function fetchUnreadCount(): Promise<{ count: number }> {
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(resolveUrl('/api/notifications/unread-count'), {
     method: 'GET',
-    headers,
+    headers: getAuthHeaders(),
   });
 
-  const body = await response.json();
-
-  if (!response.ok) {
-    const error = body.error as { code: string; message: string };
-    const err = new Error(error.message) as Error & { code: string };
-    err.code = error.code;
-    throw err;
-  }
-
-  return body.data as { count: number };
+  return handleResponse<{ count: number }>(response);
 }
 
 /**
