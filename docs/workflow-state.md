@@ -25,7 +25,7 @@ feature: notification
 | web-app/coaching | 前端 | done | done | done | done | done | |
 | web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | done | done | done | done | |
-| web-app/notification | 前端 | done | | | | | |
+| web-app/notification | 前端 | done | review | | | | |
 | admin | 前端 | done | | | | | |
 
 > **填写规则**：
