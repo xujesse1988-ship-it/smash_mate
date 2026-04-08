@@ -1,10 +1,18 @@
-export async function sendCode(_phone: string): Promise<{ message: string }> {
-  throw new Error('Not implemented');
+import { resolveUrl, handleResponse } from '../../../shared/utils/api-client';
+
+export async function sendCode(phone: string): Promise<{ message: string }> {
+  const response = await fetch(resolveUrl('/api/auth/send-code'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+
+  return handleResponse<{ message: string }>(response);
 }
 
 export async function login(
-  _phone: string,
-  _code: string,
+  phone: string,
+  code: string,
 ): Promise<{
   token: string;
   user: {
@@ -14,5 +22,11 @@ export async function login(
     isCoach: boolean;
   };
 }> {
-  throw new Error('Not implemented');
+  const response = await fetch(resolveUrl('/api/auth/login'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code }),
+  });
+
+  return handleResponse(response);
 }

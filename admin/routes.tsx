@@ -1,16 +1,25 @@
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-
-// Placeholder pages
-function PlaceholderPage({ name }: { name: string }) {
-  return <div>{name}</div>;
-}
+import { AdminLoginPage } from './features/auth/pages/AdminLoginPage';
+import { CityManagementPage } from './features/venue-management/pages/CityManagementPage';
+import { VenueManagementPage } from './features/venue-management/pages/VenueManagementPage';
+import { AdminAuthGuard } from './shared/components/AdminAuthGuard';
+import { AdminLayout } from './shared/components/AdminLayout';
 
 export function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<PlaceholderPage name="AdminLoginPage" />} />
-      <Route path="/cities" element={<PlaceholderPage name="CityManagementPage" />} />
-      <Route path="/venues" element={<PlaceholderPage name="VenueManagementPage" />} />
+      <Route path="/login" element={<AdminLoginPage />} />
+      <Route
+        element={
+          <AdminAuthGuard>
+            <AdminLayout />
+          </AdminAuthGuard>
+        }
+      >
+        <Route path="/cities" element={<CityManagementPage />} />
+        <Route path="/venues" element={<VenueManagementPage />} />
+      </Route>
       <Route path="/" element={<Navigate to="/cities" replace />} />
     </Routes>
   );
