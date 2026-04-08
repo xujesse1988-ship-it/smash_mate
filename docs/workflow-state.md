@@ -26,7 +26,7 @@ feature:
 | web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | done | done | done | done | |
 | web-app/notification | 前端 | done | done | done | done | done | |
-| admin | 前端 | done | | | | | |
+| admin | 前端 | done | review | | | | |
 
 > **填写规则**：
 > - **infra**：只跟踪"实现"列，其余标 `N/A`（infra 设计在 architecture.md 中，无契约测试、无独立模块 Review、无 L2 集成测试）
