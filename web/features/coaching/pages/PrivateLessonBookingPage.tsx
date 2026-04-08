@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { DatePicker } from 'antd';
+import dayjs from 'dayjs';
 import { useCoachAvailability } from '../hooks/useCoachAvailability';
 import { useCoachProfile } from '../hooks/useCoachProfile';
 import { useBookPrivateLesson } from '../hooks/useBookPrivateLesson';
 import type { AvailabilitySlot } from '../api/coaching-api';
+
+const { RangePicker } = DatePicker;
 
 /**
  * CoachBriefHeader: separate component to isolate coach profile loading
@@ -65,7 +69,10 @@ class CoachBriefHeaderErrorBoundary extends React.Component<
 export function PrivateLessonBookingPage() {
   const { id: coachId } = useParams<{ id: string }>();
 
-  const { data, isLoading, error } = useCoachAvailability(coachId || '');
+  const [startDate, setStartDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState<string>(dayjs().add(14, 'day').format('YYYY-MM-DD'));
+
+  const { data, isLoading, error } = useCoachAvailability(coachId || '', { startDate, endDate });
   const bookMutation = useBookPrivateLesson();
 
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
@@ -131,7 +138,22 @@ export function PrivateLessonBookingPage() {
         <CoachBriefHeader coachId={coachId || ''} />
       </CoachBriefHeaderErrorBoundary>
 
-      <div style={{ marginBottom: '16px', color: '#666' }}>日期范围</div>
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '8px', fontSize: 14, color: '#666' }}>日期范围</div>
+        <RangePicker
+          value={[dayjs(startDate), dayjs(endDate)]}
+          onChange={(dates) => {
+            if (dates && dates[0] && dates[1]) {
+              setStartDate(dates[0].format('YYYY-MM-DD'));
+              setEndDate(dates[1].format('YYYY-MM-DD'));
+              setSelectedSlot(null);
+              setSelectedVenueId(null);
+            }
+          }}
+          style={{ width: '100%' }}
+          placeholder={['开始日期', '结束日期']}
+        />
+      </div>
 
       {slots.length === 0 && !isLoading && (
         <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无可预约时间段</div>

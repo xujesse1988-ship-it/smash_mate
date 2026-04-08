@@ -185,6 +185,13 @@ export function CoachProfilePage() {
             >
               <div style={{ fontWeight: 600 }}>{gc.title}</div>
               <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                {new Date(gc.startTime).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })}
+                {' '}
+                {new Date(gc.startTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                {' - '}
+                {new Date(gc.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </div>
+              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
                 {gc.venue?.name || '地点待定'}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 12 }}>
