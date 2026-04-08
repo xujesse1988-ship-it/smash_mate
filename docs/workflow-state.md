@@ -1,8 +1,8 @@
 # Workflow State
 
 ## 当前阶段
-step: 5
-substep: 5f
+step: 6
+substep:
 
 ## 当前模块
 module: admin
@@ -26,7 +26,7 @@ feature:
 | web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | done | done | done | done | |
 | web-app/notification | 前端 | done | done | done | done | done | |
-| admin | 前端 | done | done | done | done | | |
+| admin | 前端 | done | done | done | done | done | N/A |
 
 > **填写规则**：
 > - **infra**：只跟踪"实现"列，其余标 `N/A`（infra 设计在 architecture.md 中，无契约测试、无独立模块 Review、无 L2 集成测试）
@@ -246,3 +246,4 @@ web-app/profile #50 review LGTM（2026-04-08）。Issue #50 关闭。SHOULD FIX 
 web-app/profile Feature Review LGTM（2026-04-08）。SHOULD FIX 3 项已修复（bio textarea、提取 14 个组件、CoachSpecialty 类型安全）。profile feature 完成。进入下一个 feature: web-app/notification。
 web-app/notification 前端契约测试 #51 review 通过（2026-04-08）。API 层 25 用例 + 页面渲染 23 用例，MUST FIX 1 项（时间格式化测试）+ SHOULD FIX 2 项已修复。Issue #51 关闭。进入实现阶段。
 admin #54（管理后台实现）review 通过（2026-04-08）。SHOULD FIX 2 项已修复（401/403 响应拦截器、VENUE_INVALID_CITY_NAME 错误处理）。Issue #54 关闭。admin 模块所有 Task 完成（#54），进入模块 Review。
+admin 模块 Review LGTM（2026-04-08）。admin 模块完成（无 L2 集成测试）。Milestone 3 全部完成。全部模块实现完成，进入 Step 6 E2E 测试。
