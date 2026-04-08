@@ -17,7 +17,7 @@
  *   - Mock react-router-dom 导航
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
@@ -298,6 +298,8 @@ describe('NotificationListPage', () => {
 
     // 应显示错误提示
     expect(screen.queryByText('新成员加入')).not.toBeInTheDocument();
+    // 正向断言：应渲染错误状态组件
+    expect(screen.getByText(/加载失败|出错/)).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -484,5 +486,103 @@ describe('NotificationListPage', () => {
     await user.click(notificationItem.closest('[role="button"]') || notificationItem.closest('button') || notificationItem);
 
     expect(mockNotificationNavigate).toHaveBeenCalledWith('coach-profile', 'coach-user-uuid-1');
+  });
+
+  // =========================================================================
+  // 时间格式化
+  // =========================================================================
+
+  // 来源: web-app-notification.md §6.3 — 时间格式化 — 1 分钟以内显示"刚刚"
+  describe('时间格式化', () => {
+    const FIXED_NOW = new Date('2026-04-08T12:00:00.000Z');
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(FIXED_NOW);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function setupWithCreatedAt(createdAt: string) {
+      mockNotificationsData = {
+        data: {
+          pages: [
+            {
+              items: [
+                {
+                  id: 'notif-time-test',
+                  type: 'ACTIVITY_JOINED',
+                  title: '时间测试通知',
+                  content: '测试内容',
+                  targetType: 'activity',
+                  targetId: 'activity-uuid-1',
+                  isRead: true,
+                  createdAt,
+                },
+              ],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            },
+          ],
+        },
+        isLoading: false,
+        error: null,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+        fetchNextPage: vi.fn(),
+      };
+      mockUnreadCountData = { data: { count: 0 } };
+    }
+
+    it('should display "刚刚" for a notification created just now', () => {
+      // 30 秒前
+      setupWithCreatedAt('2026-04-08T11:59:30.000Z');
+      renderPage();
+
+      expect(screen.getByText('刚刚')).toBeInTheDocument();
+    });
+
+    it('should display "30 分钟前" for a notification created ~30 minutes ago', () => {
+      // 30 分钟前
+      setupWithCreatedAt('2026-04-08T11:30:00.000Z');
+      renderPage();
+
+      expect(screen.getByText('30 分钟前')).toBeInTheDocument();
+    });
+
+    it('should display "5 小时前" for a notification created ~5 hours ago', () => {
+      // 5 小时前
+      setupWithCreatedAt('2026-04-08T07:00:00.000Z');
+      renderPage();
+
+      expect(screen.getByText('5 小时前')).toBeInTheDocument();
+    });
+
+    it('should display "3 天前" for a notification created ~3 days ago', () => {
+      // 3 天前
+      setupWithCreatedAt('2026-04-05T12:00:00.000Z');
+      renderPage();
+
+      expect(screen.getByText('3 天前')).toBeInTheDocument();
+    });
+
+    it('should display "MM-DD HH:mm" format for a notification created 10+ days ago (same year)', () => {
+      // 2026-03-25 14:30 (14 天前，同年)
+      setupWithCreatedAt('2026-03-25T14:30:00.000Z');
+      renderPage();
+
+      expect(screen.getByText('03-25 14:30')).toBeInTheDocument();
+    });
+
+    it('should display "YYYY-MM-DD HH:mm" format for a notification created in a previous year', () => {
+      // 2025-12-20 09:15 (跨年)
+      setupWithCreatedAt('2025-12-20T09:15:00.000Z');
+      renderPage();
+
+      expect(screen.getByText('2025-12-20 09:15')).toBeInTheDocument();
+    });
   });
 });

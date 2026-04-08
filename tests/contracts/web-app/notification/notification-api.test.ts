@@ -113,6 +113,29 @@ describe('getNotifications API', () => {
     expect(capturedSearchParams!.get('isRead')).toBe('false');
   });
 
+  // 来源: notification.md §4 — 通知列表 — Query Params（isRead=true 筛选已读）
+  it('should pass isRead=true as query parameter when filtering read notifications', async () => {
+    let capturedSearchParams: URLSearchParams | null = null;
+
+    server.use(
+      http.get('/api/notifications', ({ request }) => {
+        capturedSearchParams = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            pageSize: 20,
+          },
+        });
+      }),
+    );
+
+    await getNotifications({ isRead: true });
+
+    expect(capturedSearchParams!.get('isRead')).toBe('true');
+  });
+
   // 来源: notification.md §4 — 通知列表 — Query Params（isRead 不传时返回全部）
   it('should not include isRead parameter when not specified', async () => {
     let capturedSearchParams: URLSearchParams | null = null;
