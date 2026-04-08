@@ -10,6 +10,8 @@ import { GroupClassDetailPage } from './features/coaching/pages/GroupClassDetail
 import { PrivateLessonBookingPage } from './features/coaching/pages/PrivateLessonBookingPage';
 import { MyCourseManagementPage } from './features/coaching/pages/MyCourseManagementPage';
 import { MyEnrollmentListPage } from './features/coaching/pages/MyEnrollmentListPage';
+import { CreateMatchRecordPage } from './features/match-record/pages/CreateMatchRecordPage';
+import { MatchRecordHistoryPage } from './features/match-record/pages/MatchRecordHistoryPage';
 
 // Placeholder pages - will be replaced with actual implementations
 function PlaceholderPage({ name }: { name: string }) {
@@ -35,11 +37,11 @@ export function AppRoutes() {
       <Route path="/my-enrollments" element={<MyEnrollmentListPage />} />
       <Route
         path="/match-records/create"
-        element={<PlaceholderPage name="CreateMatchRecordPage" />}
+        element={<CreateMatchRecordPage />}
       />
       <Route
         path="/users/:id/match-records"
-        element={<PlaceholderPage name="MatchRecordHistoryPage" />}
+        element={<MatchRecordHistoryPage />}
       />
       <Route path="/users/:id" element={<PlaceholderPage name="UserProfilePage" />} />
       <Route path="/profile/edit" element={<PlaceholderPage name="ProfileEditPage" />} />
