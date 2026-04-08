@@ -12,6 +12,10 @@ import { MyCourseManagementPage } from './features/coaching/pages/MyCourseManage
 import { MyEnrollmentListPage } from './features/coaching/pages/MyEnrollmentListPage';
 import { CreateMatchRecordPage } from './features/match-record/pages/CreateMatchRecordPage';
 import { MatchRecordHistoryPage } from './features/match-record/pages/MatchRecordHistoryPage';
+import { UserProfilePage } from './features/profile/pages/UserProfilePage';
+import { ProfileEditPage } from './features/profile/pages/ProfileEditPage';
+import { CoachProfileEditPage } from './features/profile/pages/CoachProfileEditPage';
+import { SettingsPage } from './features/profile/pages/SettingsPage';
 
 // Placeholder pages - will be replaced with actual implementations
 function PlaceholderPage({ name }: { name: string }) {
@@ -43,10 +47,10 @@ export function AppRoutes() {
         path="/users/:id/match-records"
         element={<MatchRecordHistoryPage />}
       />
-      <Route path="/users/:id" element={<PlaceholderPage name="UserProfilePage" />} />
-      <Route path="/profile/edit" element={<PlaceholderPage name="ProfileEditPage" />} />
-      <Route path="/profile/coach-edit" element={<PlaceholderPage name="CoachProfileEditPage" />} />
-      <Route path="/settings" element={<PlaceholderPage name="SettingsPage" />} />
+      <Route path="/users/:id" element={<UserProfilePage />} />
+      <Route path="/profile/edit" element={<ProfileEditPage />} />
+      <Route path="/profile/coach-edit" element={<CoachProfileEditPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
       <Route path="/notifications" element={<PlaceholderPage name="NotificationListPage" />} />
       <Route path="/" element={<Navigate to="/activities" replace />} />
     </Routes>

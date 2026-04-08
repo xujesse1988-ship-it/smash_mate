@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCoachProfile } from '../../coaching/api/coaching-api';
+import { getCoachProfile } from '../api/profile-api';
 
 export function useCoachProfile(coachId: string) {
   return useQuery({

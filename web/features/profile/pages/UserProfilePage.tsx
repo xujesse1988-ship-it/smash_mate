@@ -48,6 +48,15 @@ export function UserProfilePage() {
 
   return (
     <div>
+      {/* TopBar */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
+        {!isOwnProfile && (
+          <button aria-label="返回" onClick={() => navigate(-1)}>
+            返回
+          </button>
+        )}
+      </div>
+
       {/* UserInfoSection */}
       <div>
         {userInfo.avatarUrl ? (
@@ -57,10 +66,10 @@ export function UserProfilePage() {
             style={{ width: 64, height: 64, borderRadius: '50%' }}
           />
         ) : (
-          <img
-            src=""
-            alt={userInfo.nickname}
-            style={{ width: 64, height: 64, borderRadius: '50%' }}
+          <div
+            role="img"
+            aria-label={userInfo.nickname}
+            style={{ width: 64, height: 64, borderRadius: '50%', background: '#eee' }}
           />
         )}
         <div>{userInfo.nickname}</div>

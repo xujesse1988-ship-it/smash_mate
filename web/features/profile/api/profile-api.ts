@@ -138,3 +138,51 @@ export async function enableCoachRole(): Promise<CurrentUser> {
 
   return handleResponse<CurrentUser>(response);
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/coaches/:id (教练资料，profile feature 封装)
+// ---------------------------------------------------------------------------
+
+export interface CoachProfileForEdit {
+  bio: string | null;
+  specialties: string[];
+}
+
+export async function getCoachProfile(
+  coachId: string,
+): Promise<CoachProfileForEdit> {
+  const response = await fetch(resolveUrl(`/api/coaches/${coachId}`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  const data = await handleResponse<{
+    userId: string;
+    bio: string | null;
+    specialties: string[];
+  }>(response);
+
+  return { bio: data.bio, specialties: data.specialties };
+}
+
+// ---------------------------------------------------------------------------
+// PUT /api/coaches/me (教练资料更新，profile feature 封装)
+// ---------------------------------------------------------------------------
+
+export async function updateCoachProfile(data: {
+  bio?: string;
+  specialties?: string[];
+}): Promise<{
+  userId: string;
+  bio: string;
+  specialties: string[];
+  updatedAt: string;
+}> {
+  const response = await fetch(resolveUrl('/api/coaches/me'), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
+}

@@ -52,8 +52,11 @@ export function SettingsPage() {
   return (
     <div>
       {/* TopBar */}
-      <div style={{ padding: '12px 16px' }}>
-        <span>设置</span>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
+        <button aria-label="返回" onClick={() => navigate(-1)}>
+          返回
+        </button>
+        <span style={{ marginLeft: 8 }}>设置</span>
       </div>
 
       {/* Settings List */}
@@ -67,7 +70,6 @@ export function SettingsPage() {
             checked={isCoach}
             disabled={isCoach || enableCoachRole.isPending}
             onChange={handleCoachSwitchClick}
-            onClick={handleCoachSwitchClick}
           />
         </div>
 
