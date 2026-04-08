@@ -35,6 +35,8 @@ export function CityManagementPage() {
         const error = err as { code?: string };
         if (error.code === 'VENUE_CITY_DUPLICATE') {
           setCityNameError('该城市已存在');
+        } else if (error.code === 'VENUE_INVALID_CITY_NAME') {
+          setCityNameError('请输入城市名称');
         }
       },
     });

@@ -9,6 +9,8 @@
  * Design reference: docs/module-design/admin.md §6 "API Client 配置"
  */
 
+import { useAdminAuthStore } from '@admin/stores/auth-store';
+
 export interface ApiError {
   code: string;
   message: string;
@@ -59,6 +61,23 @@ export async function handleResponse<T>(response: Response): Promise<T> {
     const error = body.error as ApiError;
     const err = new Error(error.message) as Error & { code: string };
     err.code = error.code;
+
+    // 401: token 过期或无效 → 清除认证状态，重定向到登录页
+    if (response.status === 401) {
+      useAdminAuthStore.getState().clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
+    // 403 AUTH_ADMIN_REQUIRED: 非管理员 → 清除认证状态，重定向到登录页
+    if (response.status === 403 && error.code === 'AUTH_ADMIN_REQUIRED') {
+      useAdminAuthStore.getState().clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
     throw err;
   }
 
