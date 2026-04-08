@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5e-review
+substep: 5f
 
 ## 当前模块
 module: web-app
@@ -25,7 +25,7 @@ feature: notification
 | web-app/coaching | 前端 | done | done | done | done | done | |
 | web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | done | done | done | done | |
-| web-app/notification | 前端 | done | done | in_progress | | | |
+| web-app/notification | 前端 | done | done | done | done | | |
 | admin | 前端 | done | | | | | |
 
 > **填写规则**：
