@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, InputNumber, Switch, Select, Radio, message } from 'antd';
+import { InputNumber, Switch, Select, Radio, message } from 'antd';
 import { useSourceParticipants } from '../hooks/useSourceParticipants';
 import { useCreateMatchRecord } from '../hooks/useCreateMatchRecord';
 
@@ -157,7 +157,6 @@ function CreateMatchRecordForm({
   // --- Handlers ---
 
   const handleMatchTypeChange = (newType: MatchType) => {
-    const count = getPlayersPerSide(newType);
     setMatchType(newType);
 
     // Adjust sideA
