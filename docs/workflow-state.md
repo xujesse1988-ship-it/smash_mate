@@ -2,11 +2,11 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
 module: web-app
-feature: match-record
+feature: profile
 
 ## 模块进度
 
@@ -23,7 +23,7 @@ feature: match-record
 | web-app/auth | 前端 | done | done | done | done | | |
 | web-app/activity | 前端 | done | done | done | done | done | |
 | web-app/coaching | 前端 | done | done | done | done | done | |
-| web-app/match-record | 前端 | done | done | done | done | | |
+| web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | | | | | |
 | web-app/notification | 前端 | done | | | | | |
 | admin | 前端 | done | | | | | |
@@ -240,3 +240,4 @@ web-app/coaching #46 review LGTM（2026-04-08）。Issue #46 关闭。web-app/co
 web-app/coaching Feature Review LGTM（2026-04-08）。SHOULD FIX #2（团课卡片时间显示）和 #3（DateRangePicker）已修复，其余项作为技术债跟踪。coaching feature 完成。进入下一个 feature: web-app/match-record。
 web-app/match-record 前端契约测试 #47 review 通过（2026-04-08）。86 个用例（API 34 + 页面 52），MUST FIX 2 项 + SHOULD FIX 3 项已修复。Issue #47 关闭。进入实现阶段。
 web-app/match-record #48 review LGTM（2026-04-08）。Issue #48 关闭。MUST FIX（validate 返回值）+ SHOULD FIX 2 项已修复。match-record feature 所有 Task 完成（#48），进入 Feature Review。
+web-app/match-record Feature Review LGTM（2026-04-08）。MF-1（group-class 缓存 queryKey 不匹配）已修复。match-record feature 完成。进入下一个 feature: web-app/profile。
