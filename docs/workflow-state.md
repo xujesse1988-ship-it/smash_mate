@@ -23,7 +23,7 @@ feature: match-record
 | web-app/auth | 前端 | done | done | done | done | | |
 | web-app/activity | 前端 | done | done | done | done | done | |
 | web-app/coaching | 前端 | done | done | done | done | done | |
-| web-app/match-record | 前端 | done | | | | | |
+| web-app/match-record | 前端 | done | review | | | | |
 | web-app/profile | 前端 | done | | | | | |
 | web-app/notification | 前端 | done | | | | | |
 | admin | 前端 | done | | | | | |
