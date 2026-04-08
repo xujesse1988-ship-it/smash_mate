@@ -13,7 +13,7 @@
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
@@ -215,14 +215,16 @@ describe('MatchRecordHistoryPage', () => {
     };
     renderPage();
 
+    const statsCard = screen.getByTestId('match-stats-card');
+
     // 总场次
-    expect(screen.getByText(/42/)).toBeInTheDocument();
+    expect(within(statsCard).getByText('42')).toBeInTheDocument();
     // 胜场
-    expect(screen.getByText(/25/)).toBeInTheDocument();
+    expect(within(statsCard).getByText('25')).toBeInTheDocument();
     // 负场
-    expect(screen.getByText(/15/)).toBeInTheDocument();
+    expect(within(statsCard).getByText('15')).toBeInTheDocument();
     // 平局
-    expect(screen.getByText(/2/)).toBeInTheDocument();
+    expect(within(statsCard).getByText('2')).toBeInTheDocument();
   });
 
   // 来源: web-app-match-record.md §2 — MatchRecordHistoryPage — 组件结构 — WinRateDisplay
@@ -234,7 +236,9 @@ describe('MatchRecordHistoryPage', () => {
     };
     renderPage();
 
-    expect(screen.getByText(/62\.5/)).toBeInTheDocument();
+    const statsCard = screen.getByTestId('match-stats-card');
+
+    expect(within(statsCard).getByText(/62\.5/)).toBeInTheDocument();
   });
 
   // 来源: web-app-match-record.md §2 — MatchRecordHistoryPage — 组件结构 — MatchStatsCard — 加载失败降级
@@ -246,8 +250,10 @@ describe('MatchRecordHistoryPage', () => {
     };
     renderPage();
 
+    const statsCard = screen.getByTestId('match-stats-card');
+
     // 加载失败时应显示全 0 的汇总数据
-    expect(screen.getByText(/0/)).toBeInTheDocument();
+    expect(within(statsCard).getAllByText('0').length).toBeGreaterThanOrEqual(4);
   });
 
   // 来源: web-app-match-record.md §2 — MatchRecordHistoryPage — 页面状态 — isStatsLoading
@@ -260,6 +266,12 @@ describe('MatchRecordHistoryPage', () => {
     renderPage();
 
     expect(screen.getByText(/加载/i)).toBeInTheDocument();
+  });
+
+  it('should render back button in page header', () => {
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -293,6 +305,14 @@ describe('MatchRecordHistoryPage', () => {
 
     // Tab 应响应点击（具体行为验证依赖实现，这里验证 Tab 可点击）
     expect(groupClassTab).toBeInTheDocument();
+  });
+
+  it('should navigate back when clicking page header back button', async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole('button', { name: /返回/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
   // =========================================================================

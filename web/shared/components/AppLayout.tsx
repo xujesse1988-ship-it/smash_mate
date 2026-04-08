@@ -34,6 +34,29 @@ function isMainPage(pathname: string, userId: string | null): boolean {
   return false;
 }
 
+function hasLocalTopBar(pathname: string, userId: string | null): boolean {
+  if (
+    pathname === '/activities/create' ||
+    pathname === '/my-activities' ||
+    pathname === '/my-enrollments' ||
+    pathname === '/profile/edit' ||
+    pathname === '/profile/coach-edit' ||
+    pathname === '/settings' ||
+    pathname === '/match-records/create'
+  ) {
+    return true;
+  }
+
+  if (/^\/activities\/[^/]+$/.test(pathname)) return true;
+  if (/^\/users\/[^/]+\/match-records$/.test(pathname)) return true;
+
+  if (userId && /^\/users\/[^/]+$/.test(pathname) && pathname !== `/users/${userId}`) {
+    return true;
+  }
+
+  return false;
+}
+
 function resolveTitle(pathname: string, userId: string | null): string {
   const exact = pageTitles[pathname];
   if (exact) return exact;
@@ -56,6 +79,7 @@ export function AppLayout() {
 
   const title = resolveTitle(location.pathname, userId);
   const showTabBar = isMainPage(location.pathname, userId);
+  const showTopBar = !hasLocalTopBar(location.pathname, userId);
 
   return (
     <div
@@ -65,7 +89,7 @@ export function AppLayout() {
         minHeight: '100vh',
       }}
     >
-      <TopBar title={title} />
+      {showTopBar && <TopBar title={title} />}
       <div style={{ flex: 1, overflow: 'auto' }}>
         <Outlet />
       </div>

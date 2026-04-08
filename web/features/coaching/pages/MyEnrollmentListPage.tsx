@@ -32,17 +32,11 @@ export function MyEnrollmentListPage() {
 
   // For "upcoming" (待开课), don't pass status to API, filter client-side
   const apiStatus = statusFilter && statusFilter !== 'upcoming' ? statusFilter : undefined;
-  const {
-    data,
-    isLoading,
-    error,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useMyEnrollments({
-    type: typeFilter,
-    status: apiStatus || undefined,
-  });
+  const { data, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useMyEnrollments({
+      type: typeFilter,
+      status: apiStatus || undefined,
+    });
 
   const allItems = useMemo(() => {
     if (!data?.pages) return [];
@@ -50,9 +44,8 @@ export function MyEnrollmentListPage() {
     // Client-side filter for "upcoming"
     if (statusFilter === 'upcoming') {
       items = items.filter((item) => {
-        const status = item.type === 'group-class'
-          ? item.groupClass?.status
-          : item.privateLesson?.status;
+        const status =
+          item.type === 'group-class' ? item.groupClass?.status : item.privateLesson?.status;
         return status === 'open' || status === 'full' || status === 'scheduled';
       });
     }
@@ -60,142 +53,244 @@ export function MyEnrollmentListPage() {
   }, [data, statusFilter]);
 
   return (
-    <div style={{ padding: '16px' }}>
-      {/* Type Filter */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-        {TYPE_FILTERS.map((f) => (
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            paddingBottom: 12,
+            marginBottom: 16,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
           <button
-            key={f.label}
-            onClick={() => setTypeFilter(f.value)}
+            aria-label="返回"
+            onClick={() => navigate(-1)}
             style={{
-              padding: '4px 12px',
-              border: '1px solid #d9d9d9',
-              borderRadius: '16px',
-              background: typeFilter === f.value ? '#00C853' : 'white',
-              color: typeFilter === f.value ? 'white' : '#333',
+              background: 'none',
+              border: 'none',
               cursor: 'pointer',
+              fontSize: 16,
+              marginRight: 8,
+              padding: 0,
             }}
           >
-            {f.label}
+            &lt; 返回
           </button>
-        ))}
-      </div>
-
-      {/* Status Filter */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.label}
-            onClick={() => setStatusFilter(f.value)}
-            style={{
-              padding: '4px 12px',
-              border: '1px solid #d9d9d9',
-              borderRadius: '16px',
-              background: statusFilter === f.value ? '#00C853' : 'white',
-              color: statusFilter === f.value ? 'white' : '#333',
-              cursor: 'pointer',
-              fontSize: 12,
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Loading */}
-      {isLoading && <div>加载中...</div>}
-
-      {/* Error */}
-      {error && <div>加载失败，请重试</div>}
-
-      {/* Empty State */}
-      {!isLoading && !error && allItems.length === 0 && data && (
-        <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无报名记录</div>
-      )}
-
-      {/* Enrollment Cards */}
-      {allItems.map((item) => {
-        const isGroupClass = item.type === 'group-class';
-        const gc = item.groupClass;
-        const pl = item.privateLesson;
-
-        return (
-          <div
-            key={isGroupClass ? gc?.id : pl?.id}
-            data-testid={`enrollment-card-${isGroupClass ? gc?.id : pl?.id}`}
-            onClick={() => {
-              if (isGroupClass && gc) {
-                navigate(`/group-classes/${gc.id}`);
-              } else if (pl) {
-                navigate(`/coaches/${pl.coachId}`);
-              }
-            }}
-            style={{
-              padding: '12px',
-              border: '1px solid #f0f0f0',
-              borderRadius: '8px',
-              marginBottom: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                {isGroupClass && gc ? (
-                  <>
-                    <div style={{ fontWeight: 600 }}>{gc.title}</div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                      {new Date(gc.startTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      {' - '}
-                      {new Date(gc.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>教练：{gc.coachNickname}</div>
-                    {gc.venue && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{gc.venue.name}</div>}
-                  </>
-                ) : pl ? (
-                  <>
-                    <div style={{ fontWeight: 600 }}>私教课</div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                      {new Date(pl.startTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      {' - '}
-                      {new Date(pl.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>教练：{pl.coachNickname}</div>
-                    {pl.venue && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{pl.venue.name}</div>}
-                  </>
-                ) : null}
-              </div>
-              <span style={{
-                fontSize: 12,
-                padding: '2px 8px',
-                borderRadius: '4px',
-                background: (() => {
-                  const status = isGroupClass ? gc?.status : pl?.status;
-                  if (status === 'completed') return '#e3f2fd';
-                  if (status === 'cancelled') return '#ffebee';
-                  return '#e8f5e9';
-                })(),
-                color: (() => {
-                  const status = isGroupClass ? gc?.status : pl?.status;
-                  if (status === 'completed') return '#1565c0';
-                  if (status === 'cancelled') return '#c62828';
-                  return '#2e7d32';
-                })(),
-              }}>
-                {STATUS_MAP[(isGroupClass ? gc?.status : pl?.status) || ''] || (isGroupClass ? gc?.status : pl?.status)}
-              </span>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Load More */}
-      {hasNextPage && (
-        <div style={{ textAlign: 'center', padding: '12px' }}>
-          <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-            {isFetchingNextPage ? '加载中...' : '加载更多'}
-          </button>
+          <h2 style={{ margin: 0, fontSize: 18 }}>我的课程</h2>
         </div>
-      )}
+
+        <section
+          style={{
+            padding: 18,
+            background: '#fff',
+            border: '1px solid #e8e8e8',
+            borderRadius: 18,
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 12 }}>
+            筛选课程
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            {TYPE_FILTERS.map((f) => (
+              <button
+                key={f.label}
+                onClick={() => setTypeFilter(f.value)}
+                style={{
+                  padding: '6px 14px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 999,
+                  background: typeFilter === f.value ? '#111' : '#fff',
+                  color: typeFilter === f.value ? '#fff' : '#333',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.label}
+                onClick={() => setStatusFilter(f.value)}
+                style={{
+                  padding: '6px 14px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 999,
+                  background: statusFilter === f.value ? '#111' : '#fff',
+                  color: statusFilter === f.value ? '#fff' : '#333',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section
+          style={{
+            marginTop: 16,
+            padding: 18,
+            background: '#fff',
+            border: '1px solid #e8e8e8',
+            borderRadius: 18,
+          }}
+        >
+          {isLoading && (
+            <div style={{ color: '#666', textAlign: 'center', padding: 24 }}>加载中...</div>
+          )}
+
+          {error && (
+            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
+          )}
+
+          {!isLoading && !error && allItems.length === 0 && data && (
+            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>暂无报名记录</div>
+          )}
+
+          {allItems.map((item) => {
+            const isGroupClass = item.type === 'group-class';
+            const gc = item.groupClass;
+            const pl = item.privateLesson;
+
+            return (
+              <div
+                key={isGroupClass ? gc?.id : pl?.id}
+                data-testid={`enrollment-card-${isGroupClass ? gc?.id : pl?.id}`}
+                onClick={() => {
+                  if (isGroupClass && gc) {
+                    navigate(`/group-classes/${gc.id}`);
+                  } else if (pl) {
+                    navigate(`/coaches/${pl.coachId}`);
+                  }
+                }}
+                style={{
+                  padding: '16px 14px',
+                  border: '1px solid #ececec',
+                  borderRadius: 14,
+                  marginBottom: 10,
+                  cursor: 'pointer',
+                  background: '#fcfcfc',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    {isGroupClass && gc ? (
+                      <>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>
+                          {gc.title}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
+                          {new Date(gc.startTime).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {' - '}
+                          {new Date(gc.endTime).toLocaleTimeString('zh-CN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                          教练：{gc.coachNickname}
+                        </div>
+                        {gc.venue && (
+                          <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                            {gc.venue.name}
+                          </div>
+                        )}
+                      </>
+                    ) : pl ? (
+                      <>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>私教课</div>
+                        <div style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
+                          {new Date(pl.startTime).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {' - '}
+                          {new Date(pl.endTime).toLocaleTimeString('zh-CN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                          教练：{pl.coachNickname}
+                        </div>
+                        {pl.venue && (
+                          <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                            {pl.venue.name}
+                          </div>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: 12,
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      whiteSpace: 'nowrap',
+                      background: (() => {
+                        const status = isGroupClass ? gc?.status : pl?.status;
+                        if (status === 'completed') return '#e8f1ff';
+                        if (status === 'cancelled') return '#fff1f0';
+                        return '#edf7ee';
+                      })(),
+                      color: (() => {
+                        const status = isGroupClass ? gc?.status : pl?.status;
+                        if (status === 'completed') return '#1565c0';
+                        if (status === 'cancelled') return '#c62828';
+                        return '#2e7d32';
+                      })(),
+                    }}
+                  >
+                    {STATUS_MAP[(isGroupClass ? gc?.status : pl?.status) || ''] ||
+                      (isGroupClass ? gc?.status : pl?.status)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          {hasNextPage && (
+            <div style={{ textAlign: 'center', paddingTop: 8 }}>
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 999,
+                  background: '#fff',
+                  cursor: isFetchingNextPage ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isFetchingNextPage ? '加载中...' : '加载更多'}
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

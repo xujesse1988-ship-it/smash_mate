@@ -113,35 +113,37 @@ export function ProfileEditPage() {
   }
 
   return (
-    <div>
-      <TopBar
-        title="编辑资料"
-        onBack={handleBack}
-        onSave={handleSave}
-        saveDisabled={updateProfile.isPending}
-      />
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        <TopBar
+          title="编辑资料"
+          onBack={handleBack}
+          onSave={handleSave}
+          saveDisabled={updateProfile.isPending}
+        />
 
-      <ProfileForm
-        nickname={nickname}
-        onNicknameChange={setNickname}
-        bio={bio}
-        onBioChange={setBio}
-        avatarUrl={avatarUrl}
-        onAvatarUrlChange={setAvatarUrl}
-        errors={errors}
-      />
+        <ProfileForm
+          nickname={nickname}
+          onNicknameChange={setNickname}
+          bio={bio}
+          onBioChange={setBio}
+          avatarUrl={avatarUrl}
+          onAvatarUrlChange={setAvatarUrl}
+          errors={errors}
+        />
 
-      <PhoneDisplay phone={currentUser.phone} />
+        <PhoneDisplay phone={currentUser.phone} />
 
-      <ConfirmDialog
-        visible={showConfirm}
-        message="有未保存的修改，确定离开？"
-        onConfirm={() => {
-          setShowConfirm(false);
-          navigate(-1);
-        }}
-        onCancel={() => setShowConfirm(false)}
-      />
+        <ConfirmDialog
+          visible={showConfirm}
+          message="有未保存的修改，确定离开？"
+          onConfirm={() => {
+            setShowConfirm(false);
+            navigate(-1);
+          }}
+          onCancel={() => setShowConfirm(false)}
+        />
+      </div>
     </div>
   );
 }

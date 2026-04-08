@@ -211,6 +211,12 @@ describe('MyEnrollmentListPage', () => {
     expect(screen.getByText(/已取消/i)).toBeInTheDocument();
   });
 
+  it('should render back button in page header', () => {
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
+  });
+
   // =========================================================================
   // 团课报名卡片渲染
   // =========================================================================
@@ -278,9 +284,7 @@ describe('MyEnrollmentListPage', () => {
     mockEnrollmentsState = {
       ...mockEnrollmentsState,
       data: {
-        pages: [
-          { items: [mockGroupClassEnrollment, mockPrivateLessonEnrollment], total: 2 },
-        ],
+        pages: [{ items: [mockGroupClassEnrollment, mockPrivateLessonEnrollment], total: 2 }],
       },
     };
     renderPage();
@@ -303,13 +307,22 @@ describe('MyEnrollmentListPage', () => {
     };
     renderPage();
 
-    const card = screen.getByText('初级单打提升班').closest('[data-testid]') ||
+    const card =
+      screen.getByText('初级单打提升班').closest('[data-testid]') ||
       screen.getByText('初级单打提升班').closest('div');
     if (card) {
       await userEvent.click(card);
     }
 
     expect(mockNavigate).toHaveBeenCalledWith('/group-classes/gc-uuid-1');
+  });
+
+  it('should navigate back when clicking page header back button', async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole('button', { name: /返回/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
   // 来源: web-app-coaching.md §2 — MyEnrollmentListPage — 交互流程 — 查看课程详情 (私教)

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Tag } from 'antd';
 import { useMatchStats } from '../hooks/useMatchStats';
 import { useMatchRecordHistory } from '../hooks/useMatchRecordHistory';
@@ -47,16 +47,37 @@ function StatsCard({ stats }: { stats: MatchStatsData }) {
     <div
       data-testid="match-stats-card"
       style={{
-        padding: 12,
-        background: '#fafafa',
-        borderRadius: 8,
-        textAlign: 'center',
-        lineHeight: 2,
+        padding: 16,
+        background: '#fff',
+        border: '1px solid #e8e8e8',
+        borderRadius: 16,
       }}
     >
-      <span>
-        {stats.totalMatches}场 {stats.wins}胜 {stats.losses}负 {stats.draws}平 胜率{stats.winRate}%
-      </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        {[
+          { label: '总场次', value: stats.totalMatches },
+          { label: '胜场', value: stats.wins },
+          { label: '负场', value: stats.losses },
+          { label: '平局', value: stats.draws },
+        ].map((item) => (
+          <div key={item.label} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>{item.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: '1px solid #f0f0f0',
+          textAlign: 'center',
+          fontSize: 14,
+          color: '#666',
+        }}
+      >
+        胜率 <span style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>{stats.winRate}%</span>
+      </div>
     </div>
   );
 }
@@ -66,6 +87,7 @@ function StatsCard({ stats }: { stats: MatchStatsData }) {
 // ---------------------------------------------------------------------------
 
 export function MatchRecordHistoryPage() {
+  const navigate = useNavigate();
   const { id: userId } = useParams<{ id: string }>();
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceTypeFilter>(null);
 
@@ -81,9 +103,7 @@ export function MatchRecordHistoryPage() {
   // Flatten pages into a single array of records
   const records: MatchRecord[] = useMemo(() => {
     if (!recordsQuery.data?.pages) return [];
-    return recordsQuery.data.pages.flatMap(
-      (page: { items: MatchRecord[] }) => page.items,
-    );
+    return recordsQuery.data.pages.flatMap((page: { items: MatchRecord[] }) => page.items);
   }, [recordsQuery.data]);
 
   // Stats with fallback to zeros
@@ -96,102 +116,144 @@ export function MatchRecordHistoryPage() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      {/* Stats Card */}
-      <div style={{ marginBottom: 16 }}>
-        {statsQuery.isLoading ? (
-          <div>加载中...</div>
-        ) : (
-          <StatsCard stats={stats} />
-        )}
-      </div>
-
-      {/* Source Type Filter */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {FILTER_TABS.map((tab) => (
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            paddingBottom: 12,
+            marginBottom: 16,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
           <button
-            key={tab.label}
-            onClick={() => setSourceTypeFilter(tab.value)}
+            aria-label="返回"
+            onClick={() => navigate(-1)}
             style={{
-              padding: '4px 12px',
-              border: '1px solid #d9d9d9',
-              borderRadius: 4,
-              background: sourceTypeFilter === tab.value ? '#1890ff' : '#fff',
-              color: sourceTypeFilter === tab.value ? '#fff' : '#333',
+              background: 'none',
+              border: 'none',
               cursor: 'pointer',
+              fontSize: 16,
+              marginRight: 8,
+              padding: 0,
             }}
           >
-            {tab.label}
+            &lt; 返回
           </button>
-        ))}
-      </div>
-
-      {/* Records List */}
-      {recordsQuery.isLoading ? (
-        <div>加载中...</div>
-      ) : recordsQuery.error ? (
-        <div>加载失败，请重试</div>
-      ) : records.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 32, color: '#999' }}>
-          暂无战绩记录
+          <h2 style={{ margin: 0, fontSize: 18 }}>战绩记录</h2>
         </div>
-      ) : (
-        <div>
-          {records.map((record: MatchRecord) => {
-            const r = record;
 
-            const resultConfig = USER_RESULT_CONFIG[r.userResult ?? ''] ?? {
-              label: '?',
-              color: 'default',
-            };
+        <div style={{ marginBottom: 16 }}>
+          {statsQuery.isLoading ? <div>加载中...</div> : <StatsCard stats={stats} />}
+        </div>
 
-            const dateStr = formatDate(r.createdAt);
-
-            return (
-              <div
-                key={r.id}
+        <section
+          style={{
+            padding: 18,
+            background: '#fff',
+            border: '1px solid #e8e8e8',
+            borderRadius: 18,
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 12 }}>
+            筛选战绩
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+            {FILTER_TABS.map((tab) => (
+              <button
+                key={tab.label}
+                onClick={() => setSourceTypeFilter(tab.value)}
                 style={{
-                  border: '1px solid #e8e8e8',
-                  borderRadius: 8,
-                  padding: 12,
-                  marginBottom: 12,
+                  padding: '6px 14px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 999,
+                  background: sourceTypeFilter === tab.value ? '#111' : '#fff',
+                  color: sourceTypeFilter === tab.value ? '#fff' : '#333',
+                  cursor: 'pointer',
+                  fontSize: 13,
                 }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <span style={{ color: '#888', fontSize: 12 }}>{dateStr}</span>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <Tag>{MATCH_TYPE_LABELS[r.matchType] ?? r.matchType}</Tag>
-                    <Tag color={resultConfig.color}>{resultConfig.label}</Tag>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section
+          style={{
+            marginTop: 16,
+            padding: 18,
+            background: '#fff',
+            border: '1px solid #e8e8e8',
+            borderRadius: 18,
+          }}
+        >
+          {recordsQuery.isLoading ? (
+            <div style={{ color: '#666', textAlign: 'center', padding: 24 }}>加载中...</div>
+          ) : recordsQuery.error ? (
+            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
+          ) : records.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 32, color: '#999' }}>暂无战绩记录</div>
+          ) : (
+            <div>
+              {records.map((record: MatchRecord) => {
+                const r = record;
+
+                const resultConfig = USER_RESULT_CONFIG[r.userResult ?? ''] ?? {
+                  label: '?',
+                  color: 'default',
+                };
+
+                const dateStr = formatDate(r.createdAt);
+
+                return (
+                  <div
+                    key={r.id}
+                    style={{
+                      border: '1px solid #ececec',
+                      borderRadius: 14,
+                      padding: 14,
+                      marginBottom: 10,
+                      background: '#fcfcfc',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 10,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span style={{ color: '#888', fontSize: 12 }}>{dateStr}</span>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <Tag>{MATCH_TYPE_LABELS[r.matchType] ?? r.matchType}</Tag>
+                        <Tag color={resultConfig.color}>{resultConfig.label}</Tag>
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: 6, fontSize: 15, fontWeight: 600, color: '#111' }}>
+                      <span>{r.players.sideA.map((p) => p.nickname).join(' & ')}</span>
+                      <span style={{ margin: '0 8px', color: '#999', fontWeight: 400 }}>vs</span>
+                      <span>{r.players.sideB.map((p) => p.nickname).join(' & ')}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#666' }}>
+                      {r.games.map((g) => `${g.scoreA}:${g.scoreB}`).join('  ')}
+                    </div>
                   </div>
-                </div>
-                <div style={{ marginBottom: 4 }}>
-                  <span>
-                    {r.players.sideA.map((p) => p.nickname).join(' & ')}
-                  </span>
-                  <span style={{ margin: '0 8px', color: '#999' }}>vs</span>
-                  <span>
-                    {r.players.sideB.map((p) => p.nickname).join(' & ')}
-                  </span>
-                </div>
-                <div style={{ fontSize: 12, color: '#666' }}>
-                  {r.games.map((g) => `${g.scoreA}:${g.scoreB}`).join('  ')}
-                </div>
-              </div>
-            );
-          })}
-          {/* Sentinel for infinite scroll */}
-          <div ref={sentinelRef} style={{ height: 1 }} />
-          {recordsQuery.isFetchingNextPage && (
-            <div style={{ textAlign: 'center', padding: 8 }}>加载中...</div>
+                );
+              })}
+              <div ref={sentinelRef} style={{ height: 1 }} />
+              {recordsQuery.isFetchingNextPage && (
+                <div style={{ textAlign: 'center', padding: 8 }}>加载中...</div>
+              )}
+            </div>
           )}
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 }
@@ -202,8 +264,8 @@ export function MatchRecordHistoryPage() {
 
 function formatDate(isoStr: string): string {
   const d = new Date(isoStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
