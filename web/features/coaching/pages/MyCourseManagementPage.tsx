@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
+import { CoachGuard } from '../../../shared/components/CoachGuard';
 import { useCoachProfile } from '../hooks/useCoachProfile';
 import { useCoachAvailability } from '../hooks/useCoachAvailability';
 import { useCoachPrivateLessons } from '../hooks/useCoachPrivateLessons';
@@ -53,7 +54,9 @@ export function MyCourseManagementPage() {
   }>>([{ startTime: '', endTime: '', feeDescription: '' }]);
 
   if (isUserLoading || isProfileLoading) return <div>加载中...</div>;
-  if (currentUser && !currentUser.isCoach) return <div>请先开启教练角色</div>;
+  if (currentUser && !currentUser.isCoach) {
+    return <CoachGuard onNavigateToSettings={() => navigate('/settings')} message="请先开启教练角色" />;
+  }
 
   const groupClasses = coachProfile?.groupClasses ?? [];
   const slots = availability?.slots ?? [];

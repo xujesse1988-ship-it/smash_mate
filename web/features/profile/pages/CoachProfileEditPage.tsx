@@ -9,7 +9,7 @@ import type { CoachSpecialty } from '../api/profile-api';
 import { TopBar } from '../components/top-bar';
 import { CoachBioInput } from '../components/coach-bio-input';
 import { SpecialtySelector } from '../components/specialty-selector';
-import { CoachGuard } from '../components/coach-guard';
+import { CoachGuard } from '../../../shared/components/CoachGuard';
 import { ConfirmDialog } from '../components/confirm-dialog';
 
 export function CoachProfileEditPage() {

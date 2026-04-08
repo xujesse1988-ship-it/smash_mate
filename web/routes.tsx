@@ -17,37 +17,50 @@ import { ProfileEditPage } from './features/profile/pages/ProfileEditPage';
 import { CoachProfileEditPage } from './features/profile/pages/CoachProfileEditPage';
 import { SettingsPage } from './features/profile/pages/SettingsPage';
 import { NotificationListPage } from './features/notification/pages/NotificationListPage';
+import { AuthGuard } from './shared/components/AuthGuard';
+import { AppLayout } from './shared/components/AppLayout';
 
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/activities" element={<ActivityListPage />} />
-      <Route path="/activities/create" element={<CreateActivityPage />} />
-      <Route path="/activities/:id" element={<ActivityDetailPage />} />
-      <Route path="/my-activities" element={<MyActivityListPage />} />
-      <Route path="/coaches" element={<CoachListPage />} />
-      <Route path="/coaches/:id" element={<CoachProfilePage />} />
-      <Route path="/group-classes/:id" element={<GroupClassDetailPage />} />
-      <Route
-        path="/coaches/:id/private-lessons"
-        element={<PrivateLessonBookingPage />}
-      />
-      <Route path="/my-courses" element={<MyCourseManagementPage />} />
-      <Route path="/my-enrollments" element={<MyEnrollmentListPage />} />
-      <Route
-        path="/match-records/create"
-        element={<CreateMatchRecordPage />}
-      />
-      <Route
-        path="/users/:id/match-records"
-        element={<MatchRecordHistoryPage />}
-      />
-      <Route path="/users/:id" element={<UserProfilePage />} />
-      <Route path="/profile/edit" element={<ProfileEditPage />} />
-      <Route path="/profile/coach-edit" element={<CoachProfileEditPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/notifications" element={<NotificationListPage />} />
+
+      {/* Authenticated routes wrapped in AuthGuard + AppLayout */}
+      <Route element={<AuthGuard />}>
+        <Route element={<AppLayout />}>
+          <Route path="/activities" element={<ActivityListPage />} />
+          <Route path="/activities/create" element={<CreateActivityPage />} />
+          <Route path="/activities/:id" element={<ActivityDetailPage />} />
+          <Route path="/my-activities" element={<MyActivityListPage />} />
+          <Route path="/coaches" element={<CoachListPage />} />
+          <Route path="/coaches/:id" element={<CoachProfilePage />} />
+          <Route path="/group-classes/:id" element={<GroupClassDetailPage />} />
+          <Route
+            path="/coaches/:id/private-lessons"
+            element={<PrivateLessonBookingPage />}
+          />
+          <Route path="/my-courses" element={<MyCourseManagementPage />} />
+          <Route path="/my-enrollments" element={<MyEnrollmentListPage />} />
+          <Route
+            path="/match-records/create"
+            element={<CreateMatchRecordPage />}
+          />
+          <Route
+            path="/users/:id/match-records"
+            element={<MatchRecordHistoryPage />}
+          />
+          <Route path="/users/:id" element={<UserProfilePage />} />
+          <Route path="/profile/edit" element={<ProfileEditPage />} />
+          <Route
+            path="/profile/coach-edit"
+            element={<CoachProfileEditPage />}
+          />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/notifications" element={<NotificationListPage />} />
+        </Route>
+      </Route>
+
       <Route path="/" element={<Navigate to="/activities" replace />} />
     </Routes>
   );
