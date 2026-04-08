@@ -163,11 +163,22 @@ describe('UserProfilePage', () => {
     expect(screen.getByText('球友A')).toBeInTheDocument();
   });
 
+  it('should render masked phone when viewing own profile', () => {
+    mockCurrentUserData = {
+      data: { id: CURRENT_USER_ID, isCoach: false, phone: '138****1234' },
+      isLoading: false,
+    };
+
+    renderPage();
+
+    expect(screen.getByText('138****1234')).toBeInTheDocument();
+  });
+
   // 来源: web-app-profile.md §2 — UserProfilePage — 页面状态 — userInfo
   it('should render user avatar', () => {
     renderPage();
 
-    const avatar = screen.getByRole('img');
+    const avatar = screen.getByRole('img', { name: '球友A' });
     expect(avatar).toBeInTheDocument();
   });
 

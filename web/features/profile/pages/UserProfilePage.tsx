@@ -50,35 +50,63 @@ export function UserProfilePage() {
   }
 
   return (
-    <div>
-      {/* TopBar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {!isOwnProfile && (
-          <button aria-label="返回" onClick={() => navigate(-1)}>
+          <button
+            aria-label="返回"
+            onClick={() => navigate(-1)}
+            style={{
+              marginBottom: 12,
+              padding: '6px 0',
+              border: 'none',
+              background: 'transparent',
+              color: '#333',
+              cursor: 'pointer',
+            }}
+          >
             返回
           </button>
         )}
+
+        <section
+          style={{
+            padding: 20,
+            background: '#fff',
+            border: '1px solid #e8e8e8',
+            borderRadius: 18,
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <UserInfoSection
+            nickname={userInfo.nickname}
+            avatarUrl={userInfo.avatarUrl}
+            bio={userInfo.bio}
+            showBio={false}
+            phone={isOwnProfile ? (currentUser?.phone ?? null) : null}
+          />
+          <MatchStatsCard stats={matchStats} error={statsError} />
+        </section>
+
+        {isOwnProfile ? (
+          <QuickLinkList userId={userId || ''} isCoach={isCoach} navigate={navigate} />
+        ) : userInfo.bio ? (
+          <section
+            style={{
+              marginTop: 16,
+              padding: '16px 18px',
+              background: '#fff',
+              border: '1px solid #e8e8e8',
+              borderRadius: 16,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 8 }}>
+              个人简介
+            </div>
+            <div style={{ fontSize: 15, lineHeight: 1.7, color: '#222' }}>{userInfo.bio}</div>
+          </section>
+        ) : null}
       </div>
-
-      {/* UserInfoSection */}
-      <UserInfoSection
-        nickname={userInfo.nickname}
-        avatarUrl={userInfo.avatarUrl}
-        bio={userInfo.bio}
-        showBio={!isOwnProfile}
-      />
-
-      {/* MatchStatsCard */}
-      <MatchStatsCard stats={matchStats} error={statsError} />
-
-      {/* QuickLinkList - only when isOwnProfile */}
-      {isOwnProfile && (
-        <QuickLinkList
-          userId={userId || ''}
-          isCoach={isCoach}
-          navigate={navigate}
-        />
-      )}
     </div>
   );
 }

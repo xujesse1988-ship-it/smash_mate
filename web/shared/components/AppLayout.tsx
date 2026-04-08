@@ -34,7 +34,7 @@ function isMainPage(pathname: string, userId: string | null): boolean {
   return false;
 }
 
-function resolveTitle(pathname: string): string {
+function resolveTitle(pathname: string, userId: string | null): string {
   const exact = pageTitles[pathname];
   if (exact) return exact;
 
@@ -44,6 +44,7 @@ function resolveTitle(pathname: string): string {
   if (/^\/coaches\/[^/]+$/.test(pathname)) return '教练主页';
   if (/^\/group-classes\/[^/]+$/.test(pathname)) return '团课详情';
   if (/^\/users\/[^/]+\/match-records$/.test(pathname)) return '战绩历史';
+  if (userId && pathname === `/users/${userId}`) return '我的';
   if (/^\/users\/[^/]+$/.test(pathname)) return '个人主页';
 
   return '羽约';
@@ -53,7 +54,7 @@ export function AppLayout() {
   const location = useLocation();
   const userId = useAuthStore((state) => state.userId);
 
-  const title = resolveTitle(location.pathname);
+  const title = resolveTitle(location.pathname, userId);
   const showTabBar = isMainPage(location.pathname, userId);
 
   return (

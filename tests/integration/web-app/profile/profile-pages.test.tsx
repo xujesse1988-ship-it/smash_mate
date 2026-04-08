@@ -8,16 +8,7 @@
  *   - 契约测试: mock hooks，验证页面渲染和交互
  *   - L1 集成测试: 不 mock hooks，验证完整数据流
  */
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-  beforeEach,
-  vi,
-} from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
@@ -32,8 +23,20 @@ import { setupServer } from 'msw/node';
 // ---------------------------------------------------------------------------
 
 const server = setupServer();
+const mockLocalStorage = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: mockLocalStorage,
+    configurable: true,
+  });
+  server.listen({ onUnhandledRequest: 'error' });
+});
 afterEach(() => {
   server.resetHandlers();
   localStorage.clear();
