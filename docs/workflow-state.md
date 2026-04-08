@@ -2,11 +2,11 @@
 
 ## 当前阶段
 step: 5
-substep: 5f
+substep: 5b
 
 ## 当前模块
 module: web-app
-feature: coaching
+feature: match-record
 
 ## 模块进度
 
@@ -22,7 +22,7 @@ feature: coaching
 | review | 后端 | done | done | done | done | done | done |
 | web-app/auth | 前端 | done | done | done | done | | |
 | web-app/activity | 前端 | done | done | done | done | done | |
-| web-app/coaching | 前端 | done | done | done | done | | |
+| web-app/coaching | 前端 | done | done | done | done | done | |
 | web-app/match-record | 前端 | done | | | | | |
 | web-app/profile | 前端 | done | | | | | |
 | web-app/notification | 前端 | done | | | | | |
@@ -237,3 +237,4 @@ web-app/coaching #45 第二轮修复（2026-04-07）：创建 coaching 内部 us
 web-app/coaching #45 review LGTM（2026-04-07）。Issue #45 关闭。继续实现 #46（私教预约与课程管理）。
 web-app/coaching #46 第二轮 review 修复（2026-04-07）：S1（球馆选择 disabled + 提示）、S2（报名卡片补充课程时间）、S3（AddSlotModal 批量添加支持）。199 契约测试 + 62 L1 集成测试全通过。等待重新 review。
 web-app/coaching #46 review LGTM（2026-04-08）。Issue #46 关闭。web-app/coaching feature 所有 Task 完成（#45 + #46），进入 Feature Review。
+web-app/coaching Feature Review LGTM（2026-04-08）。SHOULD FIX #2（团课卡片时间显示）和 #3（DateRangePicker）已修复，其余项作为技术债跟踪。coaching feature 完成。进入下一个 feature: web-app/match-record。
