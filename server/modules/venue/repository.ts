@@ -96,6 +96,10 @@ export class VenueRepository {
     });
   }
 
+  async findCityById(id: string) {
+    return prisma.city.findUnique({ where: { id } });
+  }
+
   async findCityByName(name: string) {
     return prisma.city.findFirst({
       where: {

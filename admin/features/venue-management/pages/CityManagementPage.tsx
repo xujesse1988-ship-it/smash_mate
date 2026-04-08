@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Button, Table, Modal, Input } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { useCityList } from '../hooks/useCityList';
 import { useAddCity } from '../hooks/useAddCity';
+import { useSyncCity } from '../hooks/useSyncCity';
 
 function formatDate(iso: string): string {
   return iso.slice(0, 16).replace('T', ' ');
@@ -17,6 +18,7 @@ export function CityManagementPage() {
 
   const cityList = useCityList({ page, pageSize });
   const addCity = useAddCity();
+  const syncCity = useSyncCity();
 
   const handleAddCity = () => {
     const trimmed = cityName.trim();
@@ -64,6 +66,20 @@ export function CityManagementPage() {
       dataIndex: 'updatedAt',
       key: 'updatedAt',
       render: (text: string) => <span>{formatDate(text)}</span>,
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      render: (_: unknown, record: { id: string }) => (
+        <Button
+          type="link"
+          icon={<SyncOutlined />}
+          loading={syncCity.isPending && syncCity.variables === record.id}
+          onClick={() => syncCity.mutate(record.id)}
+        >
+          重新获取球馆
+        </Button>
+      ),
     },
   ];
 

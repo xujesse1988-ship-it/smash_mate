@@ -137,6 +137,20 @@ export async function deleteVenue(
   return handleResponse<{ message: string }>(response);
 }
 
+export async function syncCity(
+  cityId: string,
+): Promise<{ message: string }> {
+  const response = await fetch(
+    resolveUrl(`/api/admin/cities/${cityId}/sync`),
+    {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+    },
+  );
+
+  return handleResponse<{ message: string }>(response);
+}
+
 export async function syncVenues(): Promise<SyncResponse> {
   const response = await fetch(resolveUrl('/api/admin/venues/sync'), {
     method: 'POST',

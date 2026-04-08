@@ -121,6 +121,21 @@ export function createVenueController(): Router {
     },
   );
 
+  // POST /api/admin/cities/:id/sync
+  router.post(
+    '/admin/cities/:id/sync',
+    authMiddleware,
+    adminAuthMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.syncCityVenues(req.params.id);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   // POST /api/admin/venues/sync
   router.post(
     '/admin/venues/sync',

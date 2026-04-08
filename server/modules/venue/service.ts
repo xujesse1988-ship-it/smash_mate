@@ -22,22 +22,30 @@ interface MapVenueData {
   mapPoiId: string;
 }
 
+interface MapPageResult {
+  venues: MapVenueData[];
+  total: number;
+}
+
 /**
- * Fetch venues from the map service API (e.g. Amap POI search) for a given city.
- * Returns an array of venue data with name, address, lat/lng, and mapPoiId.
- * If the API call fails or no API key is configured, returns an empty array.
+ * Fetch a single page of venues from the Amap POI search API.
+ * Returns venues for the page and the total count reported by the API.
  */
-async function fetchVenuesFromMapService(cityName: string): Promise<MapVenueData[]> {
+async function fetchVenuePageFromMapService(
+  cityName: string,
+  page: number,
+): Promise<MapPageResult> {
   const apiKey = config.mapApiKey;
   const baseUrl = config.mapApiBaseUrl;
+  const PAGE_SIZE = 50;
 
   if (!apiKey || apiKey.startsWith('your-')) {
     logger.warn('MAP_API_KEY not configured, skipping map service call');
-    return [];
+    return { venues: [], total: 0 };
   }
 
   try {
-    const url = `${baseUrl}/place/text?key=${apiKey}&keywords=羽毛球&city=${encodeURIComponent(cityName)}&offset=50&extensions=base&output=JSON`;
+    const url = `${baseUrl}/place/text?key=${apiKey}&keywords=羽毛球&city=${encodeURIComponent(cityName)}&offset=${PAGE_SIZE}&page=${page}&extensions=base&output=JSON`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -45,12 +53,13 @@ async function fetchVenuesFromMapService(cityName: string): Promise<MapVenueData
     clearTimeout(timeout);
 
     if (!response.ok) {
-      logger.error({ status: response.status, cityName }, 'Map service returned non-200 status');
-      return [];
+      logger.error({ status: response.status, cityName, page }, 'Map service returned non-200 status');
+      return { venues: [], total: 0 };
     }
 
     const data = (await response.json()) as {
       status: string;
+      count?: string;
       pois?: Array<{
         id: string;
         name: string;
@@ -60,11 +69,13 @@ async function fetchVenuesFromMapService(cityName: string): Promise<MapVenueData
     };
 
     if (data.status !== '1' || !data.pois) {
-      logger.error({ cityName, apiStatus: data.status }, 'Map service returned error status');
-      return [];
+      logger.error({ cityName, page, apiStatus: data.status }, 'Map service returned error status');
+      return { venues: [], total: 0 };
     }
 
-    return data.pois.map((poi) => {
+    const total = parseInt(data.count || '0', 10);
+
+    const venues = data.pois.map((poi) => {
       const [lng, lat] = poi.location.split(',').map(Number);
       return {
         name: poi.name,
@@ -74,18 +85,54 @@ async function fetchVenuesFromMapService(cityName: string): Promise<MapVenueData
         mapPoiId: poi.id,
       };
     });
+
+    return { venues, total };
   } catch (err) {
-    logger.error({ error: (err as Error).message, cityName }, 'Map service call failed');
-    return [];
+    logger.error({ error: (err as Error).message, cityName, page }, 'Map service call failed');
+    return { venues: [], total: 0 };
   }
 }
 
 export class VenueService {
   private repo: VenueRepository;
   private isSyncing = false;
+  private syncingCities = new Set<string>();
 
   constructor(repo: VenueRepository) {
     this.repo = repo;
+  }
+
+  /**
+   * Paginated fetch from map service: fetch all pages, save each page to DB immediately.
+   */
+  private async fetchAndSaveVenuesForCity(
+    cityId: string,
+    cityName: string,
+  ): Promise<{ newCount: number; updatedCount: number }> {
+    const PAGE_SIZE = 50;
+    let page = 1;
+    let totalNew = 0;
+    let totalUpdated = 0;
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { venues, total } = await fetchVenuePageFromMapService(cityName, page);
+      if (venues.length === 0) break;
+
+      const { newCount, updatedCount } = await this.repo.upsertVenues(cityId, venues);
+      totalNew += newCount;
+      totalUpdated += updatedCount;
+
+      logger.info(
+        { cityId, cityName, page, fetched: venues.length, total },
+        '球馆数据页同步完成',
+      );
+
+      if (page * PAGE_SIZE >= total) break;
+      page++;
+    }
+
+    return { newCount: totalNew, updatedCount: totalUpdated };
   }
 
   async searchVenues(query: VenueSearchQuery) {
@@ -165,26 +212,26 @@ export class VenueService {
     // 3. Create city record
     const city = await this.repo.createCity(name);
 
-    // 4. Fetch venues from map service and upsert
-    let venueCount = 0;
-    try {
-      const venueData = await fetchVenuesFromMapService(name);
-      const { newCount } = await this.repo.upsertVenues(city.id, venueData);
-      venueCount = newCount;
-    } catch (err) {
-      logger.error(
-        { error: (err as Error).message, cityId: city.id, cityName: name },
-        '城市添加后获取球馆数据失败',
-      );
-      venueCount = 0;
-    }
-
-    logger.info({ cityId: city.id, cityName: name, venueCount }, '城市添加完成');
+    // 4. Fire-and-forget: fetch venues in background (paginated, per-page save)
+    this.syncingCities.add(city.id);
+    this.fetchAndSaveVenuesForCity(city.id, name)
+      .then(({ newCount }) => {
+        logger.info({ cityId: city.id, cityName: name, venueCount: newCount }, '城市球馆异步获取完成');
+      })
+      .catch((err) => {
+        logger.error(
+          { error: (err as Error).message, cityId: city.id, cityName: name },
+          '城市球馆异步获取失败',
+        );
+      })
+      .finally(() => {
+        this.syncingCities.delete(city.id);
+      });
 
     return {
       id: city.id,
       name: city.name,
-      venueCount,
+      venueCount: 0,
       createdAt: city.createdAt,
     };
   }
@@ -224,6 +271,37 @@ export class VenueService {
     };
   }
 
+  async syncCityVenues(cityId: string): Promise<{ message: string }> {
+    const city = await this.repo.findCityById(cityId);
+    if (!city) {
+      throw new AppError(404, 'VENUE_CITY_NOT_FOUND', '城市不存在');
+    }
+
+    if (this.syncingCities.has(cityId)) {
+      throw new AppError(409, 'VENUE_SYNC_IN_PROGRESS', '该城市正在同步中');
+    }
+
+    this.syncingCities.add(cityId);
+    this.fetchAndSaveVenuesForCity(cityId, city.name)
+      .then(({ newCount, updatedCount }) => {
+        logger.info(
+          { cityId, cityName: city.name, newCount, updatedCount },
+          '单城市球馆同步完成',
+        );
+      })
+      .catch((err) => {
+        logger.error(
+          { error: (err as Error).message, cityId, cityName: city.name },
+          '单城市球馆同步失败',
+        );
+      })
+      .finally(() => {
+        this.syncingCities.delete(cityId);
+      });
+
+    return { message: '球馆数据同步已开始' };
+  }
+
   async deleteVenue(id: string) {
     const venue = await this.repo.findVenueById(id);
     if (!venue) {
@@ -251,9 +329,10 @@ export class VenueService {
 
       for (const city of cities) {
         try {
-          const venueData = await fetchVenuesFromMapService(city.name);
-          const { newCount, updatedCount } = await this.repo.upsertVenues(city.id, venueData);
-
+          const { newCount, updatedCount } = await this.fetchAndSaveVenuesForCity(
+            city.id,
+            city.name,
+          );
           const totalVenues = await this.repo.countVenuesByCity(city.id);
 
           syncResults.push({

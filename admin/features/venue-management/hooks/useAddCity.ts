@@ -8,7 +8,7 @@ export function useAddCity() {
   return useMutation({
     mutationFn: (name: string) => createCity(name),
     onSuccess: (result) => {
-      message.success(`城市添加成功，已获取 ${result.venueCount} 个球馆`);
+      message.success(`城市「${result.name}」添加成功，球馆数据正在后台获取中`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'cities'] });
     },
     onError: (err: unknown) => {
