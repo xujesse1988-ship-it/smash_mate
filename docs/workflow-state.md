@@ -2,7 +2,7 @@
 
 ## 当前阶段
 step: 5
-substep: 5b
+substep: 5c
 
 ## 当前模块
 module: web-app
@@ -25,7 +25,7 @@ feature: notification
 | web-app/coaching | 前端 | done | done | done | done | done | |
 | web-app/match-record | 前端 | done | done | done | done | done | |
 | web-app/profile | 前端 | done | done | done | done | done | |
-| web-app/notification | 前端 | done | review | | | | |
+| web-app/notification | 前端 | done | done | in_progress | | | |
 | admin | 前端 | done | | | | | |
 
 > **填写规则**：
@@ -244,3 +244,4 @@ web-app/match-record Feature Review LGTM（2026-04-08）。MF-1（group-class �
 web-app/profile 前端契约测试 #49 review 通过（2026-04-08）。API 层 135 用例 + 页面渲染测试（stub 状态），MUST FIX 2 项 + SHOULD FIX 3 项已修复。Issue #49 关闭。进入实现阶段。
 web-app/profile #50 review LGTM（2026-04-08）。Issue #50 关闭。SHOULD FIX 4 项已修复（路由替换、跨 feature import 封装、TopBar 返回按钮）。profile feature 所有 Task 完成（#50），进入 Feature Review。
 web-app/profile Feature Review LGTM（2026-04-08）。SHOULD FIX 3 项已修复（bio textarea、提取 14 个组件、CoachSpecialty 类型安全）。profile feature 完成。进入下一个 feature: web-app/notification。
+web-app/notification 前端契约测试 #51 review 通过（2026-04-08）。API 层 25 用例 + 页面渲染 23 用例，MUST FIX 1 项（时间格式化测试）+ SHOULD FIX 2 项已修复。Issue #51 关闭。进入实现阶段。
