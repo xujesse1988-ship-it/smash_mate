@@ -84,13 +84,11 @@ export async function createMatchRecord(data: {
   sourceType: string;
   sourceId: string;
   matchType: string;
-  players: Array<{
-    side: string;
-    userId?: string;
-    guestName?: string;
-  }>;
+  players: {
+    sideA: Array<{ userId?: string; guestName?: string }>;
+    sideB: Array<{ userId?: string; guestName?: string }>;
+  };
   games: Array<{
-    gameNumber: number;
     scoreA: number;
     scoreB: number;
   }>;
@@ -155,13 +153,15 @@ export async function getSourceMatchRecords(
 
 export async function getUserMatchRecords(
   userId: string,
-  params: { page?: number; pageSize?: number },
+  params: { page?: number; pageSize?: number; sourceType?: string },
 ): Promise<{ items: MatchRecord[]; total: number; page: number; pageSize: number }> {
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
   if (params.pageSize !== undefined)
     searchParams.set('pageSize', String(params.pageSize));
+  if (params.sourceType !== undefined)
+    searchParams.set('sourceType', params.sourceType);
 
   const qs = searchParams.toString();
   const url = resolveUrl(
