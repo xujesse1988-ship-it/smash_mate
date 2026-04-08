@@ -10,6 +10,8 @@ import { useCancelActivity } from '../hooks/useCancelActivity';
 import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
 import type { MatchRecord } from '../api/activity-api';
 import { STATUS_LABELS } from '../constants';
+import { VenueSearchInput } from '../components/venue-search-input';
+import type { VenueSearchItem } from '../api/venue-api';
 
 // ---------------------------------------------------------------------------
 // ActivityDetailPage
@@ -30,8 +32,9 @@ export function ActivityDetailPage() {
   const deleteRecordMutation = useDeleteMatchRecord(activityId || '');
 
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editVenue, setEditVenue] = useState<VenueSearchItem | null>(null);
+  const [editVenueError, setEditVenueError] = useState('');
   const [editForm, setEditForm] = useState({
-    venueId: '',
     title: '',
     startTime: '',
     endTime: '',
@@ -47,9 +50,7 @@ export function ActivityDetailPage() {
 
   // Determine user role
   const isCreator = activity?.creatorId === currentUserId;
-  const isParticipant = activity?.participants.some(
-    (p) => p.userId === currentUserId,
-  );
+  const isParticipant = activity?.participants.some((p) => p.userId === currentUserId);
 
   // Loading state
   if (activityQuery.isLoading) {
@@ -60,23 +61,18 @@ export function ActivityDetailPage() {
   if (activityQuery.error) {
     const err = activityQuery.error as { code?: string };
     if (err.code === 'ACTIVITY_NOT_FOUND') {
-      return (
-        <div style={{ textAlign: 'center', padding: 48 }}>活动不存在</div>
-      );
+      return <div style={{ textAlign: 'center', padding: 48 }}>活动不存在</div>;
     }
-    return (
-      <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>
-        加载失败，请重试
-      </div>
-    );
+    return <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>加载失败，请重试</div>;
   }
 
   if (!activity) return null;
 
   // Enter edit mode
   const handleEditClick = () => {
+    setEditVenue(activity.venue);
+    setEditVenueError('');
     setEditForm({
-      venueId: activity.venue?.id || '',
       title: activity.title || '',
       startTime: activity.startTime,
       endTime: activity.endTime,
@@ -87,12 +83,17 @@ export function ActivityDetailPage() {
 
   // Save edit
   const handleSave = () => {
+    if (!editVenue) {
+      setEditVenueError('请选择球馆');
+      return;
+    }
+
     updateMutation.mutate(
       {
         activityId: activityId!,
         data: {
-          ...(editForm.venueId !== activity.venue?.id && {
-            venueId: editForm.venueId,
+          ...(editVenue.id !== activity.venue?.id && {
+            venueId: editVenue.id,
           }),
           ...(editForm.title !== (activity.title || '') && {
             title: editForm.title,
@@ -119,6 +120,7 @@ export function ActivityDetailPage() {
   // Cancel edit
   const handleCancelEdit = () => {
     setIsEditMode(false);
+    setEditVenueError('');
   };
 
   // Confirm leave
@@ -169,9 +171,7 @@ export function ActivityDetailPage() {
         >
           &lt;
         </button>
-        <h2 style={{ margin: 0, fontSize: 18, flex: 1 }}>
-          {activity.title || venueName}
-        </h2>
+        <h2 style={{ margin: 0, fontSize: 18, flex: 1 }}>{activity.title || venueName}</h2>
       </div>
 
       {/* Status tag */}
@@ -204,19 +204,16 @@ export function ActivityDetailPage() {
         <div style={{ padding: '0 16px' }}>
           <div style={{ marginBottom: 12 }}>
             <label style={{ fontSize: 13, color: '#666' }}>球馆</label>
-            <input
-              type="text"
-              placeholder="搜索球馆"
-              value={editForm.venueId}
-              onChange={(e) =>
-                setEditForm({ ...editForm, venueId: e.target.value })
-              }
-              style={{
-                width: '100%',
-                padding: '4px 8px',
-                border: '1px solid #d9d9d9',
-                borderRadius: 4,
+            <VenueSearchInput
+              selectedVenue={editVenue}
+              onChangeSelection={(venue) => {
+                setEditVenue(venue);
+                if (venue) {
+                  setEditVenueError('');
+                }
               }}
+              placeholder="搜索球馆"
+              error={editVenueError}
             />
           </div>
           <div style={{ marginBottom: 12 }}>
@@ -225,9 +222,7 @@ export function ActivityDetailPage() {
               type="text"
               placeholder="活动标题"
               value={editForm.title}
-              onChange={(e) =>
-                setEditForm({ ...editForm, title: e.target.value })
-              }
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               style={{
                 width: '100%',
                 padding: '4px 8px',
@@ -241,16 +236,12 @@ export function ActivityDetailPage() {
             <input
               type="datetime-local"
               value={
-                editForm.startTime
-                  ? new Date(editForm.startTime).toISOString().slice(0, 16)
-                  : ''
+                editForm.startTime ? new Date(editForm.startTime).toISOString().slice(0, 16) : ''
               }
               onChange={(e) =>
                 setEditForm({
                   ...editForm,
-                  startTime: e.target.value
-                    ? new Date(e.target.value).toISOString()
-                    : '',
+                  startTime: e.target.value ? new Date(e.target.value).toISOString() : '',
                 })
               }
               style={{
@@ -265,17 +256,11 @@ export function ActivityDetailPage() {
             <label style={{ fontSize: 13, color: '#666' }}>结束时间</label>
             <input
               type="datetime-local"
-              value={
-                editForm.endTime
-                  ? new Date(editForm.endTime).toISOString().slice(0, 16)
-                  : ''
-              }
+              value={editForm.endTime ? new Date(editForm.endTime).toISOString().slice(0, 16) : ''}
               onChange={(e) =>
                 setEditForm({
                   ...editForm,
-                  endTime: e.target.value
-                    ? new Date(e.target.value).toISOString()
-                    : '',
+                  endTime: e.target.value ? new Date(e.target.value).toISOString() : '',
                 })
               }
               style={{
@@ -313,9 +298,7 @@ export function ActivityDetailPage() {
           {/* Venue info */}
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 15, fontWeight: 500 }}>{venueName}</div>
-            {venueAddress && (
-              <div style={{ fontSize: 13, color: '#666' }}>{venueAddress}</div>
-            )}
+            {venueAddress && <div style={{ fontSize: 13, color: '#666' }}>{venueAddress}</div>}
           </div>
           {/* Time info */}
           <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
@@ -377,13 +360,9 @@ export function ActivityDetailPage() {
       {(activity.status === 'completed' || matchRecords?.length) && (
         <div style={{ padding: '0 16px', marginBottom: 16 }}>
           <h3 style={{ fontSize: 15, marginBottom: 8 }}>战绩记录</h3>
-          {matchRecordsQuery.isLoading && (
-            <div style={{ color: '#999' }}>加载战绩中...</div>
-          )}
+          {matchRecordsQuery.isLoading && <div style={{ color: '#999' }}>加载战绩中...</div>}
           {matchRecords && matchRecords.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>
-              暂无战绩记录
-            </div>
+            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>暂无战绩记录</div>
           )}
           {matchRecords &&
             matchRecords.map((record: MatchRecord) => (
@@ -463,39 +442,38 @@ export function ActivityDetailPage() {
         ) : (
           <>
             {/* Creator actions: open/full */}
-            {isCreator &&
-              (activity.status === 'open' || activity.status === 'full') && (
-                <>
-                  <button
-                    onClick={handleEditClick}
-                    style={{
-                      flex: 1,
-                      padding: '10px 0',
-                      background: '#1890ff',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    编辑活动
-                  </button>
-                  <button
-                    onClick={() => setShowCancelConfirm(true)}
-                    style={{
-                      flex: 1,
-                      padding: '10px 0',
-                      background: '#ff4d4f',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    取消活动
-                  </button>
-                </>
-              )}
+            {isCreator && (activity.status === 'open' || activity.status === 'full') && (
+              <>
+                <button
+                  onClick={handleEditClick}
+                  style={{
+                    flex: 1,
+                    padding: '10px 0',
+                    background: '#1890ff',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
+                >
+                  编辑活动
+                </button>
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 0',
+                    background: '#ff4d4f',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
+                >
+                  取消活动
+                </button>
+              </>
+            )}
 
             {/* Participant (non-creator) actions: open/full */}
             {!isCreator &&
@@ -557,9 +535,7 @@ export function ActivityDetailPage() {
             {isParticipant && activity.status === 'completed' && (
               <button
                 onClick={() =>
-                  navigate(
-                    `/match-records/create?sourceType=activity&sourceId=${activityId}`,
-                  )
+                  navigate(`/match-records/create?sourceType=activity&sourceId=${activityId}`)
                 }
                 style={{
                   flex: 1,
@@ -739,7 +715,14 @@ function MatchRecordCard({
       </div>
 
       {/* Players */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 8,
+        }}
+      >
         <div>
           {sideA.map((p, i) => (
             <span key={i} style={{ fontSize: 14 }}>

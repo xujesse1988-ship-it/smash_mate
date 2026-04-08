@@ -8,16 +8,7 @@
  *   - 契约测试: mock hooks，验证页面渲染和交互
  *   - L1 集成测试: 不 mock hooks，验证完整数据流
  */
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-  beforeEach,
-  vi,
-} from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
@@ -32,8 +23,20 @@ import { setupServer } from 'msw/node';
 // ---------------------------------------------------------------------------
 
 const server = setupServer();
+const mockLocalStorage = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: mockLocalStorage,
+    configurable: true,
+  });
+  server.listen({ onUnhandledRequest: 'error' });
+});
 afterEach(() => {
   server.resetHandlers();
   localStorage.clear();
@@ -192,37 +195,33 @@ describe('ActivityListPage Integration', () => {
     );
   }
 
-  it(
-    'should load and display activities from API',
-    async () => {
-      server.use(
-        http.get('/api/activities', () => {
-          return HttpResponse.json({
-            data: {
-              items: [mockActivityListItem],
-              total: 1,
-              page: 1,
-              pageSize: 20,
-            },
-          });
-        }),
-      );
+  it('should load and display activities from API', async () => {
+    server.use(
+      http.get('/api/activities', () => {
+        return HttpResponse.json({
+          data: {
+            items: [mockActivityListItem],
+            total: 1,
+            page: 1,
+            pageSize: 20,
+          },
+        });
+      }),
+    );
 
-      renderPage();
+    renderPage();
 
-      // Wait for data to load (increased timeout for initial render with heavy antd imports)
-      await waitFor(
-        () => {
-          expect(screen.getByText('周末约球')).toBeInTheDocument();
-        },
-        { timeout: 10000 },
-      );
+    // Wait for data to load (increased timeout for initial render with heavy antd imports)
+    await waitFor(
+      () => {
+        expect(screen.getByText('周末约球')).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
 
-      // Verify activity details are rendered
-      expect(screen.getByText(/3\/8/)).toBeInTheDocument();
-    },
-    15000,
-  );
+    // Verify activity details are rendered
+    expect(screen.getByText(/3\/8/)).toBeInTheDocument();
+  }, 15000);
 
   it('should display empty state when no activities returned', async () => {
     server.use(
@@ -356,9 +355,7 @@ describe('ActivityListPage Integration', () => {
       http.get('/api/activities', () => {
         return HttpResponse.json({
           data: {
-            items: [
-              { ...mockActivityListItem, title: null },
-            ],
+            items: [{ ...mockActivityListItem, title: null }],
             total: 1,
             page: 1,
             pageSize: 20,
@@ -541,9 +538,7 @@ describe('ActivityDetailPage Integration', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /录入战绩/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /录入战绩/i })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /录入战绩/i }));
@@ -580,17 +575,74 @@ describe('ActivityDetailPage Integration', () => {
     await user.click(screen.getByRole('button', { name: /编辑/i }));
 
     expect(screen.getByRole('button', { name: /保存/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /取消编辑/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /取消编辑/i })).toBeInTheDocument();
 
     // Exit edit mode
     await user.click(screen.getByRole('button', { name: /取消编辑/i }));
 
     expect(screen.getByRole('button', { name: /编辑/i })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /保存/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /保存/i })).not.toBeInTheDocument();
+  });
+
+  it('should search and submit a new venue when creator edits activity', async () => {
+    const updatedVenue = {
+      id: 'venue-uuid-2',
+      name: '海淀全民健身中心',
+      address: '北京市海淀区学院路 66 号',
+      latitude: 39.98,
+      longitude: 116.31,
+    };
+    let updateBody: Record<string, unknown> | null = null;
+
+    server.use(
+      http.get('/api/activities/:id', () => {
+        return HttpResponse.json({
+          data: {
+            ...mockActivityDetail,
+            creatorId: 'current-user-id',
+          },
+        });
+      }),
+      http.get('/api/activities/:id/match-records', () => {
+        return HttpResponse.json({ data: [] });
+      }),
+      http.get('/api/venues/search', () => {
+        return HttpResponse.json({
+          data: { items: [updatedVenue] },
+        });
+      }),
+      http.put('/api/activities/:id', async ({ request }) => {
+        updateBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          data: {
+            ...mockActivityListItem,
+            venue: updatedVenue,
+          },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /编辑/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /编辑/i }));
+    await user.clear(screen.getByPlaceholderText('搜索球馆'));
+    await user.type(screen.getByPlaceholderText('搜索球馆'), '海淀');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /海淀全民健身中心/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /海淀全民健身中心/i }));
+    await user.click(screen.getByRole('button', { name: /保存/i }));
+
+    await waitFor(() => {
+      expect(updateBody).toMatchObject({ venueId: 'venue-uuid-2' });
+    });
   });
 
   it('should show cancel activity confirm dialog for creator', async () => {
@@ -617,9 +669,7 @@ describe('ActivityDetailPage Integration', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /取消活动/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /取消活动/i })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /取消活动/i }));
@@ -736,9 +786,7 @@ describe('ActivityDetailPage Integration', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/活动进行中.*结束后可录入战绩/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/活动进行中.*结束后可录入战绩/)).toBeInTheDocument();
     });
   });
 });

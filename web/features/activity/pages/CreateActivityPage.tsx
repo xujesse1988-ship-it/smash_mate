@@ -2,24 +2,24 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, DatePicker } from 'antd';
 import { useCreateActivity } from '../hooks/useCreateActivity';
+import { VenueSearchInput } from '../components/venue-search-input';
+import type { VenueSearchItem } from '../api/venue-api';
 
 export function CreateActivityPage() {
   const navigate = useNavigate();
   const createActivityMutation = useCreateActivity();
 
-  const [venueId, setVenueId] = useState<string | null>(null);
-  const [venueName, setVenueName] = useState('');
+  const [selectedVenue, setSelectedVenue] = useState<VenueSearchItem | null>(null);
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState<string | null>(null);
   const [endTime, setEndTime] = useState<string | null>(null);
   const [maxParticipants, setMaxParticipants] = useState(6);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [venueSearch, setVenueSearch] = useState('');
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!venueId) {
+    if (!selectedVenue) {
       errors.venueId = '请选择球馆';
     }
 
@@ -57,7 +57,7 @@ export function CreateActivityPage() {
       endTime: string;
       maxParticipants: number;
     } = {
-      venueId: venueId!,
+      venueId: selectedVenue!.id,
       startTime: startTime!,
       endTime: endTime!,
       maxParticipants,
@@ -69,18 +69,6 @@ export function CreateActivityPage() {
     createActivityMutation.mutate(data);
   };
 
-  // TODO: 待 VenueSearchInput 共享组件实现后接入，届时移除下划线前缀并绑定到 VenueSearchInput 的 onSelect
-  const _handleVenueSelect = (id: string, name: string) => {
-    setVenueId(id);
-    setVenueName(name);
-    setVenueSearch(name);
-    setFormErrors((prev) => {
-      const next = { ...prev };
-      delete next.venueId;
-      return next;
-    });
-  };
-
   return (
     <div style={{ padding: 16 }}>
       {/* Header with back button */}
@@ -88,7 +76,14 @@ export function CreateActivityPage() {
         <button
           aria-label="返回"
           onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: '4px 8px', marginRight: 8 }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            padding: '4px 8px',
+            marginRight: 8,
+          }}
         >
           &lt; 返回
         </button>
@@ -98,29 +93,23 @@ export function CreateActivityPage() {
       {/* Venue search input */}
       <div style={{ marginBottom: 16 }}>
         <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>球馆</label>
-        <Input
+        <VenueSearchInput
+          selectedVenue={selectedVenue}
+          onChangeSelection={(venue) => {
+            setSelectedVenue(venue);
+            if (venue) {
+              setFormErrors((prev) => {
+                const next = { ...prev };
+                delete next.venueId;
+                return next;
+              });
+            }
+          }}
           placeholder="搜索球馆"
-          value={venueSearch}
-          onChange={(e) => {
-            setVenueSearch(e.target.value);
-            // In real implementation, this triggers venue search API
-          }}
-          onSelect={() => {
-            // Simulated: user picks from dropdown
-          }}
+          error={formErrors.venueId}
         />
         {/* Hidden input to store venue selection for testing */}
-        <input type="hidden" data-testid="venue-id" value={venueId || ''} />
-        {venueName && (
-          <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-            已选: {venueName}
-          </div>
-        )}
-        {formErrors.venueId && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-            {formErrors.venueId}
-          </div>
-        )}
+        <input type="hidden" data-testid="venue-id" value={selectedVenue?.id || ''} />
       </div>
 
       {/* Title input */}
@@ -132,9 +121,7 @@ export function CreateActivityPage() {
           onChange={(e) => setTitle(e.target.value)}
         />
         {formErrors.title && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-            {formErrors.title}
-          </div>
+          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.title}</div>
         )}
       </div>
 
@@ -151,9 +138,7 @@ export function CreateActivityPage() {
           placeholder="选择开始时间"
         />
         {formErrors.startTime && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-            {formErrors.startTime}
-          </div>
+          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.startTime}</div>
         )}
       </div>
 
@@ -170,9 +155,7 @@ export function CreateActivityPage() {
           placeholder="选择结束时间"
         />
         {formErrors.endTime && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-            {formErrors.endTime}
-          </div>
+          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.endTime}</div>
         )}
       </div>
 
@@ -188,7 +171,13 @@ export function CreateActivityPage() {
             const val = parseInt(e.target.value, 10);
             setMaxParticipants(isNaN(val) ? 0 : val);
           }}
-          style={{ width: '100%', padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4, fontSize: 14 }}
+          style={{
+            width: '100%',
+            padding: '4px 8px',
+            border: '1px solid #d9d9d9',
+            borderRadius: 4,
+            fontSize: 14,
+          }}
         />
         {formErrors.maxParticipants && (
           <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>

@@ -23,6 +23,10 @@ import React from 'react';
 // ---------------------------------------------------------------------------
 
 const mockNavigate = vi.fn();
+const { mockSearchVenues } = vi.hoisted(() => ({
+  mockSearchVenues: vi.fn(),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -57,6 +61,11 @@ vi.mock('@web/features/activity/hooks/useCreateActivity', () => ({
   useCreateActivity: () => mockCreateActivityState,
 }));
 
+vi.mock('@web/features/activity/api/venue-api', () => ({
+  searchVenues: mockSearchVenues,
+  getVenueDetail: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Import component under test (after mocks)
 // ---------------------------------------------------------------------------
@@ -82,6 +91,7 @@ describe('CreateActivityPage', () => {
       mutate: mockCreateActivity,
       isPending: false,
     };
+    mockSearchVenues.mockResolvedValue({ items: [] });
   });
 
   // =========================================================================
@@ -145,6 +155,33 @@ describe('CreateActivityPage', () => {
     await user.click(screen.getByRole('button', { name: /发布/i }));
 
     expect(screen.getByText(/请选择球馆/i)).toBeInTheDocument();
+  });
+
+  it('should allow selecting a venue from search results', async () => {
+    mockSearchVenues.mockResolvedValue({
+      items: [
+        {
+          id: 'venue-uuid-1',
+          name: '朝阳体育中心羽毛球馆',
+          address: '北京市朝阳区幸福路 88 号',
+        },
+      ],
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByPlaceholderText(/球馆|搜索/i), '朝阳');
+
+    await waitFor(() => {
+      expect(mockSearchVenues).toHaveBeenCalledWith({ keyword: '朝阳', limit: 8 });
+    });
+
+    await user.click(screen.getByRole('button', { name: /朝阳体育中心羽毛球馆/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('venue-id')).toHaveValue('venue-uuid-1');
+    });
   });
 
   // 来源: web-app-activity.md §6.1 — 前端表单校验规则 — startTime 必填
@@ -236,7 +273,6 @@ describe('CreateActivityPage', () => {
 
   // 来源: web-app-activity.md §2 — CreateActivityPage — 交互流程 — 提交成功后跳转
   it('should call createActivity mutation when form is submitted with valid data', async () => {
-    const user = userEvent.setup();
     renderPage();
 
     // 注意: VenueSearchInput 是共享组件，此测试中不验证其内部交互
