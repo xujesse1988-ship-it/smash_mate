@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { getActivityDetail } from '../../activity/api/activity-api';
-import { getGroupClassDetail } from '../../coaching/api/coaching-api';
+import {
+  getActivityDetailForParticipants,
+  getGroupClassDetailForParticipants,
+} from '../api/match-record-api';
 
 interface Participant {
   userId: string;
@@ -14,14 +16,14 @@ export function useSourceParticipants(
 ) {
   const activityQuery = useQuery({
     queryKey: ['activity', sourceId],
-    queryFn: () => getActivityDetail(sourceId!),
+    queryFn: () => getActivityDetailForParticipants(sourceId!),
     enabled: sourceType === 'activity' && !!sourceId,
     staleTime: 30 * 1000,
   });
 
   const groupClassQuery = useQuery({
     queryKey: ['group-class', sourceId],
-    queryFn: () => getGroupClassDetail(sourceId!),
+    queryFn: () => getGroupClassDetailForParticipants(sourceId!),
     enabled: sourceType === 'group-class' && !!sourceId,
     staleTime: 30 * 1000,
   });

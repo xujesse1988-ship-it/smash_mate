@@ -69,6 +69,8 @@ export interface MatchRecord {
     scoreB: number;
   }>;
   result: string;
+  /** 仅在个人战绩历史接口（GET /api/users/:id/match-records）返回时有值 */
+  userResult?: 'WIN' | 'LOSE' | 'DRAW';
   createdAt: string;
 }
 
@@ -188,6 +190,46 @@ export async function getUserMatchStats(userId: string) {
       headers: getAuthHeaders(),
     },
   );
+
+  return handleResponse(response);
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/activities/:id — 获取活动详情（用于提取参与者）
+// ---------------------------------------------------------------------------
+
+export async function getActivityDetailForParticipants(id: string): Promise<{
+  participants: Array<{
+    userId: string;
+    nickname: string;
+    avatarUrl: string | null;
+    joinedAt: string;
+  }>;
+}> {
+  const response = await fetch(resolveUrl(`/api/activities/${id}`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/group-classes/:id — 获取团课详情（用于提取参与者）
+// ---------------------------------------------------------------------------
+
+export async function getGroupClassDetailForParticipants(id: string): Promise<{
+  enrollments: Array<{
+    userId: string;
+    nickname: string;
+    avatarUrl: string | null;
+    enrolledAt: string;
+  }>;
+}> {
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
 
   return handleResponse(response);
 }

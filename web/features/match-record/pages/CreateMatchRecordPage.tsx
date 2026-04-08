@@ -271,7 +271,7 @@ function CreateMatchRecordForm({
   };
 
   const handleSubmit = () => {
-    validate();
+    if (!validate()) return;
 
     const body = {
       sourceType,

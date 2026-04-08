@@ -4,6 +4,7 @@ import { Tag } from 'antd';
 import { useMatchStats } from '../hooks/useMatchStats';
 import { useMatchRecordHistory } from '../hooks/useMatchRecordHistory';
 import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
+import type { MatchRecord } from '../api/match-record-api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,10 +79,10 @@ export function MatchRecordHistoryPage() {
   });
 
   // Flatten pages into a single array of records
-  const records = useMemo(() => {
+  const records: MatchRecord[] = useMemo(() => {
     if (!recordsQuery.data?.pages) return [];
     return recordsQuery.data.pages.flatMap(
-      (page: { items: unknown[] }) => page.items,
+      (page: { items: MatchRecord[] }) => page.items,
     );
   }, [recordsQuery.data]);
 
@@ -136,25 +137,10 @@ export function MatchRecordHistoryPage() {
         </div>
       ) : (
         <div>
-          {records.map((record: Record<string, unknown>) => {
-            const r = record as {
-              id: string;
-              sourceType: string;
-              matchType: string;
-              players: {
-                sideA: Array<{ nickname: string }>;
-                sideB: Array<{ nickname: string }>;
-              };
-              games: Array<{
-                gameNumber: number;
-                scoreA: number;
-                scoreB: number;
-              }>;
-              userResult: string;
-              createdAt: string;
-            };
+          {records.map((record: MatchRecord) => {
+            const r = record;
 
-            const resultConfig = USER_RESULT_CONFIG[r.userResult] ?? {
+            const resultConfig = USER_RESULT_CONFIG[r.userResult ?? ''] ?? {
               label: '?',
               color: 'default',
             };
