@@ -16,11 +16,7 @@ import { UserProfilePage } from './features/profile/pages/UserProfilePage';
 import { ProfileEditPage } from './features/profile/pages/ProfileEditPage';
 import { CoachProfileEditPage } from './features/profile/pages/CoachProfileEditPage';
 import { SettingsPage } from './features/profile/pages/SettingsPage';
-
-// Placeholder pages - will be replaced with actual implementations
-function PlaceholderPage({ name }: { name: string }) {
-  return <div>{name}</div>;
-}
+import { NotificationListPage } from './features/notification/pages/NotificationListPage';
 
 export function AppRoutes() {
   return (
@@ -51,7 +47,7 @@ export function AppRoutes() {
       <Route path="/profile/edit" element={<ProfileEditPage />} />
       <Route path="/profile/coach-edit" element={<CoachProfileEditPage />} />
       <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/notifications" element={<PlaceholderPage name="NotificationListPage" />} />
+      <Route path="/notifications" element={<NotificationListPage />} />
       <Route path="/" element={<Navigate to="/activities" replace />} />
     </Routes>
   );
