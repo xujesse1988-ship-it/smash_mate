@@ -15,7 +15,7 @@ export function useCreateMatchRecord() {
       }
       if (variables.sourceType === 'group-class') {
         queryClient.invalidateQueries({
-          queryKey: ['groupClass', variables.sourceId, 'matchRecords'],
+          queryKey: ['group-class-match-records', variables.sourceId],
         });
       }
       queryClient.invalidateQueries({ queryKey: ['user-match-records'] });
