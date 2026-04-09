@@ -55,27 +55,42 @@ export function SettingsPage() {
   }
 
   return (
-    <div>
-      {/* TopBar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
-        <BackButton onClick={() => navigate(-1)} />
-        <span style={{ marginLeft: 8 }}>设置</span>
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
+          <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
+          <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>设置</span>
+        </div>
+
+        {/* Settings List Card */}
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 18,
+            border: '1px solid #ececec',
+            overflow: 'hidden',
+          }}
+        >
+          <CoachModeSwitch
+            isCoach={isCoach}
+            isPending={enableCoachRole.isPending}
+            onToggle={handleCoachSwitchClick}
+          />
+
+          <div style={{ height: 1, background: '#f0f0f0', margin: '0 20px' }} />
+
+          <SettingsLinkItem label="修改手机号" onClick={handlePhoneClick} disabled />
+
+          <div style={{ height: 1, background: '#f0f0f0', margin: '0 20px' }} />
+
+          <SettingsLinkItem label="关于我们" onClick={() => setShowAbout(true)} />
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <LogoutButton onClick={() => setShowLogoutConfirm(true)} />
+        </div>
       </div>
-
-      {/* Settings List */}
-      <div>
-        <CoachModeSwitch
-          isCoach={isCoach}
-          isPending={enableCoachRole.isPending}
-          onToggle={handleCoachSwitchClick}
-        />
-
-        <SettingsLinkItem label="修改手机号" onClick={handlePhoneClick} disabled />
-
-        <SettingsLinkItem label="关于我们" onClick={() => setShowAbout(true)} />
-      </div>
-
-      <LogoutButton onClick={() => setShowLogoutConfirm(true)} />
 
       {/* Coach Mode Confirm Dialog */}
       <ConfirmDialog
@@ -95,10 +110,67 @@ export function SettingsPage() {
 
       {/* About Dialog */}
       {showAbout && (
-        <div role="dialog">
-          <p>羽约 v1.0.0</p>
-          <p>羽毛球社交平台</p>
-          <button onClick={() => setShowAbout(false)}>关闭</button>
+        <div
+          role="dialog"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 24,
+              padding: '32px 24px',
+              width: '80%',
+              maxWidth: 320,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                background: '#00C853',
+                borderRadius: 16,
+                margin: '0 auto 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 32,
+                fontWeight: 'bold',
+              }}
+            >
+              S
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 20 }}>羽约 SmashMate</h3>
+            <p style={{ margin: '0 0 24px', color: '#666', fontSize: 14 }}>版本 v1.0.0</p>
+            <button
+              onClick={() => setShowAbout(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#f5f5f5',
+                border: 'none',
+                borderRadius: 999,
+                fontSize: 16,
+                fontWeight: 500,
+                color: '#111',
+                cursor: 'pointer',
+              }}
+            >
+              关闭
+            </button>
+          </div>
         </div>
       )}
     </div>

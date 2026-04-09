@@ -1,4 +1,5 @@
 import React from 'react';
+import { RightOutlined } from '@ant-design/icons';
 
 interface SettingsLinkItemProps {
   label: string;
@@ -13,12 +14,19 @@ export function SettingsLinkItem({ label, onClick, disabled = false }: SettingsL
       aria-disabled={disabled ? 'true' : undefined}
       onClick={onClick}
       style={{
-        padding: '12px 16px',
-        color: disabled ? '#999' : undefined,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '18px 20px',
+        color: disabled ? '#999' : '#111',
         cursor: disabled ? 'not-allowed' : 'pointer',
+        fontSize: 16,
+        fontWeight: 500,
+        background: '#fff',
       }}
     >
-      {label}
+      <span>{label}</span>
+      <RightOutlined style={{ color: '#ccc', fontSize: 14 }} />
     </div>
   );
 }

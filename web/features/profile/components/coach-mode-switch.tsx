@@ -1,4 +1,5 @@
 import React from 'react';
+import { Switch } from 'antd';
 
 interface CoachModeSwitchProps {
   isCoach: boolean;
@@ -8,11 +9,9 @@ interface CoachModeSwitchProps {
 
 export function CoachModeSwitch({ isCoach, isPending, onToggle }: CoachModeSwitchProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-      <span>教练模式</span>
-      <input
-        type="checkbox"
-        role="switch"
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px' }}>
+      <span style={{ fontSize: 16, fontWeight: 500, color: '#111' }}>开启教练模式</span>
+      <Switch
         checked={isCoach}
         disabled={isCoach || isPending}
         onChange={onToggle}
