@@ -195,16 +195,21 @@ describe('ProfileEditPage', () => {
   });
 
   // 来源: web-app-profile.md §6.1 — 前端校验规则 — avatarUrl 非空时必须以 http(s):// 开头
-  it('should show error when avatar URL is invalid', async () => {
+  it('should show error when avatar URL is invalid from the backend', async () => {
     const user = userEvent.setup();
-    const promptSpy = vi.spyOn(globalThis, 'prompt').mockReturnValue('not-a-url');
+    mockUpdateProfileState = {
+      mutate: vi.fn((data, options) => {
+        if (options && typeof options.onError === 'function') {
+          options.onError(Object.assign(new Error('error'), { code: 'USER_INVALID_AVATAR_URL' }));
+        }
+      }),
+      isPending: false,
+    };
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: /修改头像/i }));
     await user.click(screen.getByRole('button', { name: /保存/i }));
 
     expect(screen.getByText(/请输入合法的头像链接/)).toBeInTheDocument();
-    promptSpy.mockRestore();
   });
 
   // 来源: web-app-profile.md §6.1 — 前端校验规则 — bio 最长 200 个字符

@@ -6,7 +6,6 @@ import { useUpdateProfile } from '../hooks/useUpdateProfile';
 import { uploadAvatar } from '../api/profile-api';
 import { TopBar } from '../components/top-bar';
 import { ProfileForm } from '../components/profile-form';
-import { PhoneDisplay } from '../components/phone-display';
 import { ConfirmDialog } from '../components/confirm-dialog';
 
 export function ProfileEditPage() {
@@ -167,6 +166,7 @@ export function ProfileEditPage() {
           onAvatarButtonClick={handleAvatarButtonClick}
           avatarUploading={avatarUploading}
           errors={errors}
+          phone={currentUser.phone}
         />
 
         {/* Hidden file input for avatar selection */}
@@ -177,8 +177,6 @@ export function ProfileEditPage() {
           style={{ display: 'none' }}
           onChange={handleFileSelected}
         />
-
-        <PhoneDisplay phone={currentUser.phone} />
 
         <ConfirmDialog
           visible={showConfirm}

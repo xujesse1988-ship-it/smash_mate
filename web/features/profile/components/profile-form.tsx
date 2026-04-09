@@ -9,6 +9,7 @@ interface ProfileFormProps {
   onAvatarButtonClick: () => void;
   avatarUploading?: boolean;
   errors: Record<string, string>;
+  phone: string;
 }
 
 export function ProfileForm({
@@ -20,6 +21,7 @@ export function ProfileForm({
   onAvatarButtonClick,
   avatarUploading = false,
   errors,
+  phone,
 }: ProfileFormProps) {
   return (
     <div
@@ -184,6 +186,27 @@ export function ProfileForm({
             {errors.bio && (
               <div style={{ marginTop: 6, color: '#ff4d4f', fontSize: 12 }}>{errors.bio}</div>
             )}
+          </div>
+        </div>
+
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
+        >
+          <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
+            手机号
+          </label>
+          <div
+            style={{
+              padding: '10px 12px',
+              border: '1px solid #cfcfcf',
+              background: '#f3f3f3',
+              color: '#888',
+              fontSize: 16,
+              lineHeight: 1.5,
+              boxSizing: 'border-box',
+            }}
+          >
+            {phone}
           </div>
         </div>
       </div>
