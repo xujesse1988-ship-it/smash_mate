@@ -96,5 +96,19 @@ export function createUserController(): Router {
     },
   );
 
+  // GET /api/users
+  router.get(
+    '/users',
+    authMiddleware,
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getAllUsers();
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   return router;
 }

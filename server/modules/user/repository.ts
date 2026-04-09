@@ -14,6 +14,12 @@ export class UserRepository {
     return prisma.user.findMany({ where: { id: { in: ids } } });
   }
 
+  async findAllUsers() {
+    return prisma.user.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   async create(data: { phone: string; nickname: string; isCoach: boolean }) {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data });
