@@ -195,7 +195,20 @@ export function CoachProfilePage() {
                 cursor: 'pointer',
               }}
             >
-              <div style={{ fontWeight: 600 }}>{gc.title}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ fontWeight: 600 }}>{gc.title}</div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                    background: '#e3f2fd',
+                    color: '#1565c0',
+                  }}
+                >
+                  团课
+                </span>
+              </div>
               <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
                 {new Date(gc.startTime).toLocaleDateString('zh-CN', {
                   month: '2-digit',
