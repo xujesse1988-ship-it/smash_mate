@@ -9,6 +9,7 @@ import { useUpdateActivity } from '../hooks/useUpdateActivity';
 import { useCancelActivity } from '../hooks/useCancelActivity';
 import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
 import { BackButton } from '../../../shared/components/BackButton';
+import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import type { MatchRecord } from '../api/activity-api';
 import { STATUS_LABELS } from '../constants';
 import { VenueSearchInput } from '../components/venue-search-input';
@@ -245,51 +246,23 @@ export function ActivityDetailPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>开始时间</label>
-              <input
-                type="datetime-local"
-                value={
-                  editForm.startTime ? new Date(editForm.startTime).toISOString().slice(0, 16) : ''
+              <DateTimePicker
+                label="开始时间"
+                value={editForm.startTime || undefined}
+                onChange={(iso) =>
+                  setEditForm({ ...editForm, startTime: iso })
                 }
-                onChange={(e) =>
-                  setEditForm({
-                    ...editForm,
-                    startTime: e.target.value ? new Date(e.target.value).toISOString() : '',
-                  })
-                }
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 8,
-                  marginTop: 4,
-                  boxSizing: 'border-box',
-                  fontSize: 14,
-                }}
+                placeholder="选择开始时间"
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>结束时间</label>
-              <input
-                type="datetime-local"
-                value={
-                  editForm.endTime ? new Date(editForm.endTime).toISOString().slice(0, 16) : ''
+              <DateTimePicker
+                label="结束时间"
+                value={editForm.endTime || undefined}
+                onChange={(iso) =>
+                  setEditForm({ ...editForm, endTime: iso })
                 }
-                onChange={(e) =>
-                  setEditForm({
-                    ...editForm,
-                    endTime: e.target.value ? new Date(e.target.value).toISOString() : '',
-                  })
-                }
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 8,
-                  marginTop: 4,
-                  boxSizing: 'border-box',
-                  fontSize: 14,
-                }}
+                placeholder="选择结束时间"
               />
             </div>
             <div style={{ marginBottom: 12 }}>

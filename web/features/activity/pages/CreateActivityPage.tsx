@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker } from 'antd';
+import { Input } from 'antd';
 import { BackButton } from '../../../shared/components/BackButton';
+import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import { useCreateActivity } from '../hooks/useCreateActivity';
 import { VenueSearchInput } from '../components/venue-search-input';
 import type { VenueSearchItem } from '../api/venue-api';
@@ -115,36 +116,38 @@ export function CreateActivityPage() {
 
       {/* Start time */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>开始时间</label>
-        <DatePicker
-          showTime
-          onChange={(_, dateString) => {
-            const str = Array.isArray(dateString) ? dateString[0] : dateString;
-            setStartTime(str ? new Date(str).toISOString() : null);
+        <DateTimePicker
+          label="开始时间"
+          value={startTime || undefined}
+          onChange={(iso) => {
+            setStartTime(iso);
+            setFormErrors((prev) => {
+              const next = { ...prev };
+              delete next.startTime;
+              return next;
+            });
           }}
-          style={{ width: '100%' }}
           placeholder="选择开始时间"
+          error={formErrors.startTime}
         />
-        {formErrors.startTime && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.startTime}</div>
-        )}
       </div>
 
       {/* End time */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>结束时间</label>
-        <DatePicker
-          showTime
-          onChange={(_, dateString) => {
-            const str = Array.isArray(dateString) ? dateString[0] : dateString;
-            setEndTime(str ? new Date(str).toISOString() : null);
+        <DateTimePicker
+          label="结束时间"
+          value={endTime || undefined}
+          onChange={(iso) => {
+            setEndTime(iso);
+            setFormErrors((prev) => {
+              const next = { ...prev };
+              delete next.endTime;
+              return next;
+            });
           }}
-          style={{ width: '100%' }}
           placeholder="选择结束时间"
+          error={formErrors.endTime}
         />
-        {formErrors.endTime && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.endTime}</div>
-        )}
       </div>
 
       {/* Participant count */}

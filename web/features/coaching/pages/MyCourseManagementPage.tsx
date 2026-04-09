@@ -12,6 +12,7 @@ import { useCancelGroupClass } from '../hooks/useCancelGroupClass';
 import { useSetAvailability } from '../hooks/useSetAvailability';
 import { useCancelPrivateLesson } from '../hooks/useCancelPrivateLesson';
 import { BackButton } from '../../../shared/components/BackButton';
+import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
 
@@ -555,21 +556,19 @@ export function MyCourseManagementPage() {
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>开始时间</label>
-              <input
-                type="datetime-local"
-                value={formStartTime}
-                onChange={(e) => setFormStartTime(e.target.value)}
-                style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
+              <DateTimePicker
+                label="开始时间"
+                value={formStartTime || undefined}
+                onChange={(iso) => setFormStartTime(iso)}
+                placeholder="选择开始时间"
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>结束时间</label>
-              <input
-                type="datetime-local"
-                value={formEndTime}
-                onChange={(e) => setFormEndTime(e.target.value)}
-                style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
+              <DateTimePicker
+                label="结束时间"
+                value={formEndTime || undefined}
+                onChange={(iso) => setFormEndTime(iso)}
+                placeholder="选择结束时间"
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
@@ -684,21 +683,19 @@ export function MyCourseManagementPage() {
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>开始时间</label>
-              <input
-                type="datetime-local"
-                value={formStartTime}
-                onChange={(e) => setFormStartTime(e.target.value)}
-                style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
+              <DateTimePicker
+                label="开始时间"
+                value={formStartTime || undefined}
+                onChange={(iso) => setFormStartTime(iso)}
+                placeholder="选择开始时间"
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>结束时间</label>
-              <input
-                type="datetime-local"
-                value={formEndTime}
-                onChange={(e) => setFormEndTime(e.target.value)}
-                style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
+              <DateTimePicker
+                label="结束时间"
+                value={formEndTime || undefined}
+                onChange={(iso) => setFormEndTime(iso)}
+                placeholder="选择结束时间"
               />
             </div>
             <div style={{ marginBottom: '12px' }}>
@@ -813,31 +810,19 @@ export function MyCourseManagementPage() {
                   时间段 {index + 1}
                 </div>
                 <div style={{ marginBottom: '8px' }}>
-                  <label>开始时间</label>
-                  <input
-                    type="datetime-local"
-                    value={item.startTime}
-                    onChange={(e) => handleUpdateSlotItem(index, 'startTime', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      marginTop: '4px',
-                      boxSizing: 'border-box',
-                    }}
+                  <DateTimePicker
+                    label="开始时间"
+                    value={item.startTime || undefined}
+                    onChange={(iso) => handleUpdateSlotItem(index, 'startTime', iso)}
+                    placeholder="选择开始时间"
                   />
                 </div>
                 <div style={{ marginBottom: '8px' }}>
-                  <label>结束时间</label>
-                  <input
-                    type="datetime-local"
-                    value={item.endTime}
-                    onChange={(e) => handleUpdateSlotItem(index, 'endTime', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      marginTop: '4px',
-                      boxSizing: 'border-box',
-                    }}
+                  <DateTimePicker
+                    label="结束时间"
+                    value={item.endTime || undefined}
+                    onChange={(iso) => handleUpdateSlotItem(index, 'endTime', iso)}
+                    placeholder="选择结束时间"
                   />
                 </div>
                 <div>
