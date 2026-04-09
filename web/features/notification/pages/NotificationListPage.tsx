@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useNotifications } from '../hooks/useNotifications';
 import { useMarkAsRead } from '../hooks/useMarkAsRead';
@@ -12,19 +13,14 @@ import { NotificationList } from '../components/notification-list';
 import type { NotificationItem } from '../api/notification-api';
 
 export function NotificationListPage() {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
   // Convert filterStatus to isRead parameter
   const isReadParam = filterStatus === 'all' ? undefined : filterStatus === 'read';
 
-  const {
-    data,
-    isLoading,
-    error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useNotifications({ isRead: isReadParam });
+  const { data, isLoading, error, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useNotifications({ isRead: isReadParam });
 
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
@@ -60,11 +56,49 @@ export function NotificationListPage() {
     markAllAsRead.mutate();
   }, [markAllAsRead]);
 
+  const pageHeader = (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 16px',
+        borderBottom: '1px solid #f0f0f0',
+        background: '#fff',
+        margin: '-16px -16px 16px',
+      }}
+    >
+      <button
+        aria-label="返回"
+        onClick={() => navigate(-1)}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 16,
+          padding: 0,
+          color: '#111',
+        }}
+      >
+        &lt; 返回
+      </button>
+      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>通知</h2>
+    </div>
+  );
+
   // Loading state
   if (isLoading) {
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        {pageHeader}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
           <NotificationFilter value={filterStatus} onChange={handleFilterChange} />
         </div>
         <div style={{ textAlign: 'center', padding: 48 }}>
@@ -78,12 +112,18 @@ export function NotificationListPage() {
   if (error) {
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        {pageHeader}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
           <NotificationFilter value={filterStatus} onChange={handleFilterChange} />
         </div>
-        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>
-          加载失败，请重试
-        </div>
+        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>加载失败，请重试</div>
       </div>
     );
   }
@@ -92,6 +132,7 @@ export function NotificationListPage() {
 
   return (
     <div style={{ padding: 16 }}>
+      {pageHeader}
       {/* Filter tabs + mark all read button */}
       <div
         style={{
@@ -103,18 +144,13 @@ export function NotificationListPage() {
       >
         <NotificationFilter value={filterStatus} onChange={handleFilterChange} />
         {hasUnread && (
-          <MarkAllReadButton
-            onClick={handleMarkAllAsRead}
-            isPending={markAllAsRead.isPending}
-          />
+          <MarkAllReadButton onClick={handleMarkAllAsRead} isPending={markAllAsRead.isPending} />
         )}
       </div>
 
       {/* Notification list or empty state */}
       {notifications.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>
-          暂无通知
-        </div>
+        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>暂无通知</div>
       ) : (
         <NotificationList
           notifications={notifications}

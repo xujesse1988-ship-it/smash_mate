@@ -56,7 +56,9 @@ vi.mock('react-router-dom', async () => {
 
 // Mock useNotifications hook
 let mockNotificationsData: {
-  data: { pages: Array<{ items: unknown[]; total: number; page: number; pageSize: number }> } | undefined;
+  data:
+    | { pages: Array<{ items: unknown[]; total: number; page: number; pageSize: number }> }
+    | undefined;
   isLoading: boolean;
   error: unknown;
   hasNextPage: boolean;
@@ -210,9 +212,20 @@ describe('NotificationListPage', () => {
   it('should render notification list with notification items', () => {
     renderPage();
 
+    expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
+    expect(screen.getByText('通知')).toBeInTheDocument();
     expect(screen.getByText('新成员加入')).toBeInTheDocument();
     expect(screen.getByText('新学员报名')).toBeInTheDocument();
     expect(screen.getByText('新私教预约')).toBeInTheDocument();
+  });
+
+  it('should navigate back when clicking back button', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /返回/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
   // 来源: web-app-notification.md §3 — NotificationItem — 显示标题和内容
@@ -227,9 +240,9 @@ describe('NotificationListPage', () => {
   it('should render filter tabs (全部 / 未读 / 已读)', () => {
     renderPage();
 
-    expect(screen.getByText(/全部/)).toBeInTheDocument();
-    expect(screen.getByText(/未读/)).toBeInTheDocument();
-    expect(screen.getByText(/已读/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '全部' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '未读' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '已读' })).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -327,7 +340,7 @@ describe('NotificationListPage', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const unreadTab = screen.getByText(/未读/);
+    const unreadTab = screen.getByRole('button', { name: '未读' });
     await user.click(unreadTab);
 
     // 切换筛选 Tab 后应能重新渲染（具体行为由 hook 实现控制）
@@ -339,7 +352,7 @@ describe('NotificationListPage', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const readTab = screen.getByText(/已读/);
+    const readTab = screen.getByRole('button', { name: '已读' });
     await user.click(readTab);
 
     expect(readTab).toBeInTheDocument();
@@ -408,7 +421,11 @@ describe('NotificationListPage', () => {
 
     // 点击未读的通知项（"新成员加入"）
     const notificationItem = screen.getByText('新成员加入');
-    await user.click(notificationItem.closest('[role="button"]') || notificationItem.closest('button') || notificationItem);
+    await user.click(
+      notificationItem.closest('[role="button"]') ||
+        notificationItem.closest('button') ||
+        notificationItem,
+    );
 
     // 应调用标记已读
     expect(mockMarkAsReadMutate).toHaveBeenCalledWith('notif-uuid-1');
@@ -423,7 +440,11 @@ describe('NotificationListPage', () => {
 
     // 点击已读的通知项（"新学员报名"）
     const notificationItem = screen.getByText('新学员报名');
-    await user.click(notificationItem.closest('[role="button"]') || notificationItem.closest('button') || notificationItem);
+    await user.click(
+      notificationItem.closest('[role="button"]') ||
+        notificationItem.closest('button') ||
+        notificationItem,
+    );
 
     // 不应调用标记已读（已经是已读状态）
     expect(mockMarkAsReadMutate).not.toHaveBeenCalled();
@@ -438,7 +459,11 @@ describe('NotificationListPage', () => {
 
     // 点击私教通知项（"新私教预约"）
     const notificationItem = screen.getByText('新私教预约');
-    await user.click(notificationItem.closest('[role="button"]') || notificationItem.closest('button') || notificationItem);
+    await user.click(
+      notificationItem.closest('[role="button"]') ||
+        notificationItem.closest('button') ||
+        notificationItem,
+    );
 
     // 应调用跳转，targetType 为 private-lesson
     expect(mockNotificationNavigate).toHaveBeenCalledWith('private-lesson', 'pl-uuid-1');
@@ -483,7 +508,11 @@ describe('NotificationListPage', () => {
     renderPage();
 
     const notificationItem = screen.getByText('收到新评价');
-    await user.click(notificationItem.closest('[role="button"]') || notificationItem.closest('button') || notificationItem);
+    await user.click(
+      notificationItem.closest('[role="button"]') ||
+        notificationItem.closest('button') ||
+        notificationItem,
+    );
 
     expect(mockNotificationNavigate).toHaveBeenCalledWith('coach-profile', 'coach-user-uuid-1');
   });

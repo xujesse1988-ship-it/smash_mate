@@ -39,6 +39,7 @@ function hasLocalTopBar(pathname: string, userId: string | null): boolean {
     pathname === '/activities/create' ||
     pathname === '/my-activities' ||
     pathname === '/my-enrollments' ||
+    pathname === '/notifications' ||
     pathname === '/profile/edit' ||
     pathname === '/profile/coach-edit' ||
     pathname === '/settings' ||
