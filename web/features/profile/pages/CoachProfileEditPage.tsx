@@ -59,9 +59,7 @@ export function CoachProfileEditPage() {
 
   function toggleSpecialty(value: CoachSpecialty) {
     setSpecialties((prev) =>
-      prev.includes(value)
-        ? prev.filter((s) => s !== value)
-        : [...prev, value],
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
     );
   }
 
@@ -112,7 +110,12 @@ export function CoachProfileEditPage() {
   }
 
   return (
-    <div>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #eef7f1 0%, #f8fafc 220px, #f6f8fb 100%)',
+      }}
+    >
       <TopBar
         title="教练资料"
         onBack={handleBack}
@@ -120,17 +123,65 @@ export function CoachProfileEditPage() {
         saveDisabled={updateCoachProfile.isPending}
       />
 
-      <CoachBioInput
-        value={bio}
-        onChange={setBio}
-        error={errors.bio}
-      />
+      <div style={{ padding: '18px 16px 40px', maxWidth: 760, margin: '0 auto' }}>
+        <section
+          style={{
+            padding: 20,
+            marginBottom: 16,
+            background: 'linear-gradient(135deg, #10261a 0%, #1f5130 100%)',
+            borderRadius: 28,
+            color: '#fff',
+            boxShadow: '0 20px 44px rgba(16, 38, 26, 0.18)',
+          }}
+        >
+          <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>Coach Profile</div>
+          <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800, lineHeight: 1.2 }}>
+            打造你的教练名片
+          </div>
+          <p
+            style={{
+              margin: '10px 0 0',
+              fontSize: 14,
+              lineHeight: 1.7,
+              color: 'rgba(255,255,255,0.82)',
+            }}
+          >
+            完善简介和擅长方向后，找教练页会更准确地展示你的教学特点，学员也更容易找到你。
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+            <span
+              style={{
+                padding: '8px 12px',
+                borderRadius: 999,
+                background: 'rgba(255,255,255,0.14)',
+                fontSize: 13,
+              }}
+            >
+              已填写简介 {bio.trim() ? '1/1' : '0/1'}
+            </span>
+            <span
+              style={{
+                padding: '8px 12px',
+                borderRadius: 999,
+                background: 'rgba(255,255,255,0.14)',
+                fontSize: 13,
+              }}
+            >
+              已选择标签 {specialties.length} 个
+            </span>
+          </div>
+        </section>
 
-      <SpecialtySelector
-        specialties={specialties}
-        onToggle={toggleSpecialty}
-        error={errors.specialties}
-      />
+        <div style={{ display: 'grid', gap: 16 }}>
+          <CoachBioInput value={bio} onChange={setBio} error={errors.bio} />
+
+          <SpecialtySelector
+            specialties={specialties}
+            onToggle={toggleSpecialty}
+            error={errors.specialties}
+          />
+        </div>
+      </div>
 
       <ConfirmDialog
         visible={showConfirm}
