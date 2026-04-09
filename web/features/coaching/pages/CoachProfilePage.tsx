@@ -72,6 +72,23 @@ export function CoachProfilePage() {
 
   return (
     <div style={{ padding: '16px' }}>
+      {/* Back button */}
+      <button
+        aria-label="返回"
+        onClick={() => navigate(-1)}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          fontSize: 16,
+          color: '#333',
+          padding: '4px 0',
+          marginBottom: 12,
+        }}
+      >
+        ‹ 返回
+      </button>
+
       {/* Coach Info Header */}
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
         {coach.avatarUrl ? (
