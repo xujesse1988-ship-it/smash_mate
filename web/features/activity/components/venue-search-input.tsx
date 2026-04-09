@@ -90,7 +90,18 @@ export function VenueSearchInput({
         cancelled = true;
       };
     }
-  }, [isFocused, deferredSearchValue, selectedVenue, userId, geolocation, recentVenues.length, closestVenues.length]);
+  }, [
+    isFocused,
+    deferredSearchValue,
+    selectedVenue,
+    userId,
+    geolocation.latitude,
+    geolocation.longitude,
+    geolocation.permission,
+    geolocation.requestLocation,
+    recentVenues.length,
+    closestVenues.length,
+  ]);
 
   useEffect(() => {
     if (selectedVenueName) {
