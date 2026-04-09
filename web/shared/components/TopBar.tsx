@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useUnreadCount } from '../hooks/useUnreadCount';
+import { BackButton } from './BackButton';
 
 /**
  * Global top bar shown in AppLayout.
@@ -12,9 +13,10 @@ import { useUnreadCount } from '../hooks/useUnreadCount';
  */
 interface TopBarProps {
   title: string;
+  showBackBtn?: boolean;
 }
 
-export function TopBar({ title }: TopBarProps) {
+export function TopBar({ title, showBackBtn }: TopBarProps) {
   const navigate = useNavigate();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
@@ -30,7 +32,10 @@ export function TopBar({ title }: TopBarProps) {
         background: '#fff',
       }}
     >
-      <span style={{ fontSize: 18, fontWeight: 600 }}>{title}</span>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {showBackBtn && <BackButton onClick={() => navigate(-1)} style={{ marginRight: 12, padding: 0 }} />}
+        <span style={{ fontSize: 18, fontWeight: 600 }}>{title}</span>
+      </div>
       <Badge count={unreadCount} size="small" offset={[-2, 2]}>
         <BellOutlined
           style={{ fontSize: 20, cursor: 'pointer' }}

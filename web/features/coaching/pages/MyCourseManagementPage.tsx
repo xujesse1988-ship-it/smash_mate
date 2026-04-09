@@ -207,12 +207,6 @@ export function MyCourseManagementPage() {
 
   return (
     <div style={{ padding: '16px' }}>
-      {/* Header with back button */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
-        <div style={{ fontWeight: 600, fontSize: 18 }}>课程管理</div>
-      </div>
-
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', marginBottom: '16px' }}>
         <button

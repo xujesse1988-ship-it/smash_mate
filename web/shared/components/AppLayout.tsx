@@ -82,6 +82,7 @@ export function AppLayout() {
   const title = resolveTitle(location.pathname, userId);
   const showTabBar = isMainPage(location.pathname, userId);
   const showTopBar = !hasLocalTopBar(location.pathname, userId);
+  const showBackBtnInTopBar = location.pathname === '/my-courses';
 
   return (
     <div
@@ -91,7 +92,7 @@ export function AppLayout() {
         minHeight: '100vh',
       }}
     >
-      {showTopBar && <TopBar title={title} />}
+      {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} />}
       <div style={{ flex: 1, overflow: 'auto' }}>
         <Outlet />
       </div>
