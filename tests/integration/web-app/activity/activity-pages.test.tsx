@@ -746,6 +746,46 @@ describe('ActivityDetailPage Integration', () => {
     });
   });
 
+  it('should render match records when backend returns { items } envelope', async () => {
+    const mockRecord = {
+      id: 'record-uuid-2',
+      sourceType: 'activity',
+      sourceId: 'activity-uuid-1',
+      matchType: 'singles',
+      recordedBy: 'current-user-id',
+      recorder: {
+        id: 'current-user-id',
+        nickname: '当前用户',
+        avatarUrl: null,
+      },
+      players: {
+        sideA: [{ userId: 'user-a', nickname: '选手甲', avatarUrl: null }],
+        sideB: [{ userId: 'user-b', nickname: '选手乙', avatarUrl: null }],
+      },
+      games: [{ gameNumber: 1, scoreA: 21, scoreB: 18 }],
+      result: 'A_WIN',
+      createdAt: '2026-04-05T17:00:00.000Z',
+    };
+
+    server.use(
+      http.get('/api/activities/:id', () => {
+        return HttpResponse.json({
+          data: { ...mockActivityDetail, status: 'completed' },
+        });
+      }),
+      http.get('/api/activities/:id/match-records', () => {
+        return HttpResponse.json({ data: { items: [mockRecord] } });
+      }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('选手甲')).toBeInTheDocument();
+      expect(screen.getByText('选手乙')).toBeInTheDocument();
+    });
+  });
+
   it('should show disabled full button for non-participant when activity is full', async () => {
     server.use(
       http.get('/api/activities/:id', () => {

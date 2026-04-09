@@ -1,8 +1,4 @@
-import {
-  resolveUrl,
-  handleResponse,
-  getAuthHeaders,
-} from '../../../shared/utils/api-client';
+import { resolveUrl, handleResponse, getAuthHeaders } from '../../../shared/utils/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,21 +98,14 @@ export async function getActivities(params: {
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
-  if (params.pageSize !== undefined)
-    searchParams.set('pageSize', String(params.pageSize));
-  if (params.dateFilter !== undefined)
-    searchParams.set('dateFilter', params.dateFilter);
-  if (params.dateStart !== undefined)
-    searchParams.set('dateStart', params.dateStart);
+  if (params.pageSize !== undefined) searchParams.set('pageSize', String(params.pageSize));
+  if (params.dateFilter !== undefined) searchParams.set('dateFilter', params.dateFilter);
+  if (params.dateStart !== undefined) searchParams.set('dateStart', params.dateStart);
   if (params.dateEnd !== undefined) searchParams.set('dateEnd', params.dateEnd);
-  if (params.maxDistance !== undefined)
-    searchParams.set('maxDistance', String(params.maxDistance));
-  if (params.latitude !== undefined)
-    searchParams.set('latitude', String(params.latitude));
-  if (params.longitude !== undefined)
-    searchParams.set('longitude', String(params.longitude));
-  if (params.hasSlot !== undefined)
-    searchParams.set('hasSlot', String(params.hasSlot));
+  if (params.maxDistance !== undefined) searchParams.set('maxDistance', String(params.maxDistance));
+  if (params.latitude !== undefined) searchParams.set('latitude', String(params.latitude));
+  if (params.longitude !== undefined) searchParams.set('longitude', String(params.longitude));
+  if (params.hasSlot !== undefined) searchParams.set('hasSlot', String(params.hasSlot));
   if (params.sortBy !== undefined) searchParams.set('sortBy', params.sortBy);
 
   const qs = searchParams.toString();
@@ -269,18 +258,15 @@ export interface MatchRecord {
   createdAt: string;
 }
 
-export async function getActivityMatchRecords(
-  activityId: string,
-): Promise<MatchRecord[]> {
-  const response = await fetch(
-    resolveUrl(`/api/activities/${activityId}/match-records`),
-    {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    },
-  );
+export async function getActivityMatchRecords(activityId: string): Promise<MatchRecord[]> {
+  const response = await fetch(resolveUrl(`/api/activities/${activityId}/match-records`), {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
 
-  return handleResponse<MatchRecord[]>(response);
+  const data = await handleResponse<MatchRecord[] | { items: MatchRecord[] }>(response);
+
+  return Array.isArray(data) ? data : data.items;
 }
 
 // ---------------------------------------------------------------------------
@@ -294,8 +280,7 @@ export async function getUserActivities(
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
-  if (params.pageSize !== undefined)
-    searchParams.set('pageSize', String(params.pageSize));
+  if (params.pageSize !== undefined) searchParams.set('pageSize', String(params.pageSize));
   if (params.role !== undefined) searchParams.set('role', params.role);
   if (params.status !== undefined) searchParams.set('status', params.status);
 
