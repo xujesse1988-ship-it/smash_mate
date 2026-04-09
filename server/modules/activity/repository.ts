@@ -162,9 +162,13 @@ export class ActivityRepository {
     }
 
     // Standard Prisma query without distance
+    // Use endTime > now so in-progress activities stay visible;
+    // when a date filter is active, use startTime for that range instead.
     const where: Prisma.ActivityWhereInput = {
       status: hasSlot ? 'open' : { not: 'cancelled' },
-      startTime: dateConditions.startTime ?? { gt: now },
+      ...(dateConditions.startTime
+        ? { startTime: dateConditions.startTime }
+        : { endTime: { gt: now } }),
     };
 
     const [items, total] = await Promise.all([
@@ -242,7 +246,8 @@ export class ActivityRepository {
         paramIndex++;
       }
     } else {
-      conditions.push(`a."startTime" > $${paramIndex}`);
+      // Show ongoing + future activities (endTime > now)
+      conditions.push(`a."endTime" > $${paramIndex}`);
       values.push(now);
       paramIndex++;
     }
