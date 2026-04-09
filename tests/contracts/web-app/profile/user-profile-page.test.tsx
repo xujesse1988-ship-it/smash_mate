@@ -217,35 +217,22 @@ describe('UserProfilePage', () => {
     mockParamsId = CURRENT_USER_ID;
     renderPage();
 
-    expect(screen.getByText(/我发起的活动/)).toBeInTheDocument();
-    expect(screen.getByText(/我参加的活动/)).toBeInTheDocument();
+    expect(screen.getByText(/我的活动/)).toBeInTheDocument();
     expect(screen.getByText(/战绩记录/)).toBeInTheDocument();
     expect(screen.getByText(/个人资料/)).toBeInTheDocument();
     expect(screen.getByText(/设置/)).toBeInTheDocument();
   });
 
-  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我发起的活动" 导航目标
-  it('should navigate to /my-activities?role=initiated when clicking "我发起的活动"', async () => {
+  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我的活动" 导航目标
+  it('should navigate to /my-activities when clicking "我的活动"', async () => {
     const user = userEvent.setup();
     mockParamsId = CURRENT_USER_ID;
     renderPage();
 
-    const link = screen.getByText(/我发起的活动/);
+    const link = screen.getByText(/我的活动/);
     await user.click(link.closest('[role="button"]') || link.closest('button') || link);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/my-activities?role=initiated');
-  });
-
-  // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我参加的活动" 导航目标
-  it('should navigate to /my-activities?role=participated when clicking "我参加的活动"', async () => {
-    const user = userEvent.setup();
-    mockParamsId = CURRENT_USER_ID;
-    renderPage();
-
-    const link = screen.getByText(/我参加的活动/);
-    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/my-activities?role=participated');
+    expect(mockNavigate).toHaveBeenCalledWith('/my-activities');
   });
 
   // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "战绩记录" 导航目标
@@ -380,7 +367,7 @@ describe('UserProfilePage', () => {
     renderPage();
 
     expect(screen.getByText('他人')).toBeInTheDocument();
-    expect(screen.queryByText(/我发起的活动/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/我的活动/)).not.toBeInTheDocument();
     expect(screen.queryByText(/设置/)).not.toBeInTheDocument();
   });
 

@@ -3,7 +3,6 @@ import {
   CalendarOutlined,
   ReadOutlined,
   SettingOutlined,
-  TeamOutlined,
   TrophyOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -18,14 +17,9 @@ interface QuickLinkListProps {
 export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps) {
   const items = [
     {
-      label: '我发起的活动',
+      label: '我的活动',
       icon: <CalendarOutlined />,
-      onClick: () => navigate('/my-activities?role=initiated'),
-    },
-    {
-      label: '我参加的活动',
-      icon: <TeamOutlined />,
-      onClick: () => navigate('/my-activities?role=participated'),
+      onClick: () => navigate('/my-activities'),
     },
     ...(isCoach
       ? [
