@@ -15,7 +15,18 @@ export class UserRepository {
   }
 
   async create(data: { phone: string; nickname: string; isCoach: boolean }) {
-    return prisma.user.create({ data });
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({ data });
+
+      // Auto-create CoachProfile when registering as coach
+      if (data.isCoach) {
+        await tx.coachProfile.create({
+          data: { userId: user.id, bio: null, specialties: [] },
+        });
+      }
+
+      return user;
+    });
   }
 
   async update(id: string, data: { nickname?: string; avatarUrl?: string; bio?: string }) {
@@ -23,7 +34,20 @@ export class UserRepository {
   }
 
   async updateCoachRole(id: string, isCoach: boolean) {
-    return prisma.user.update({ where: { id }, data: { isCoach } });
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({ where: { id }, data: { isCoach } });
+
+      // Auto-create CoachProfile when enabling coach role
+      if (isCoach) {
+        await tx.coachProfile.upsert({
+          where: { userId: id },
+          update: {},
+          create: { userId: id, bio: null, specialties: [] },
+        });
+      }
+
+      return user;
+    });
   }
 
   async createVerificationCode(data: { phone: string; code: string; expiresAt: Date }) {
