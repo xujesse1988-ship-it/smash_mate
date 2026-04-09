@@ -3,6 +3,7 @@ import {
   CalendarOutlined,
   ReadOutlined,
   SettingOutlined,
+  TeamOutlined,
   TrophyOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -32,6 +33,11 @@ export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps)
             label: '课程管理',
             icon: <ReadOutlined />,
             onClick: () => navigate('/my-courses'),
+          },
+          {
+            label: '教练资料',
+            icon: <TeamOutlined />,
+            onClick: () => navigate('/profile/coach-edit'),
           },
         ]
       : [

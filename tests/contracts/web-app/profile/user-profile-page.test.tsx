@@ -311,6 +311,7 @@ describe('UserProfilePage', () => {
 
     expect(screen.getByText(/我的报名/)).toBeInTheDocument();
     expect(screen.getByText(/课程管理/)).toBeInTheDocument();
+    expect(screen.getByText(/教练资料/)).toBeInTheDocument();
   });
 
   // 来源: web-app-profile.md §2 — 交互流程 — 快捷入口 — "我的报名" 导航目标（教练用户）
@@ -343,6 +344,21 @@ describe('UserProfilePage', () => {
     await user.click(link.closest('[role="button"]') || link.closest('button') || link);
 
     expect(mockNavigate).toHaveBeenCalledWith('/my-courses');
+  });
+
+  it('should navigate to /profile/coach-edit when clicking "教练资料" for coach user', async () => {
+    const user = userEvent.setup();
+    mockParamsId = CURRENT_USER_ID;
+    mockCurrentUserData = {
+      data: { id: CURRENT_USER_ID, isCoach: true },
+      isLoading: false,
+    };
+    renderPage();
+
+    const link = screen.getByText(/教练资料/);
+    await user.click(link.closest('[role="button"]') || link.closest('button') || link);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/profile/coach-edit');
   });
 
   // =========================================================================

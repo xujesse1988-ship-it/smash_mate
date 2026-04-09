@@ -257,6 +257,21 @@ describe('CoachProfileEditPage', () => {
     expect(mockUpdateCoachProfileMutate).toHaveBeenCalled();
   });
 
+  it('should include selected specialty tags when saving coach profile', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /双打/i }));
+    await user.click(screen.getByRole('button', { name: /保存/i }));
+
+    expect(mockUpdateCoachProfileMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        specialties: expect.arrayContaining(['singles', 'footwork', 'doubles']),
+      }),
+      expect.any(Object),
+    );
+  });
+
   // 来源: web-app-profile.md §2 — CoachProfileEditPage — 页面状态 — submitting
   it('should disable save button when submission is pending', () => {
     mockUpdateCoachProfileState = {
@@ -283,7 +298,8 @@ describe('CoachProfileEditPage', () => {
     await user.type(bioInput, '新简介');
 
     // 点击返回按钮
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 应弹出确认弹窗
@@ -301,7 +317,8 @@ describe('CoachProfileEditPage', () => {
     await user.type(bioInput, '新简介');
 
     // 点击返回
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 确认离开
@@ -322,7 +339,8 @@ describe('CoachProfileEditPage', () => {
     await user.type(bioInput, '新简介');
 
     // 点击返回
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 取消
