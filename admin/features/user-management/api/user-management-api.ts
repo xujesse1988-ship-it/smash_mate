@@ -16,7 +16,7 @@ export async function getAllUsers(): Promise<User[]> {
     throw new Error('No token found');
   }
 
-  const response = await fetch(resolveUrl('/api/users'), {
+  const response = await fetch(resolveUrl('/api/admin/users'), {
     headers: {
       Authorization: `Bearer ${token}`,
     },

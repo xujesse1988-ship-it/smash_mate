@@ -306,6 +306,19 @@ export class UserService {
     }));
   }
 
+  async getAllUsersForAdmin() {
+    const users = await this.repo.findAllUsers();
+    return users.map((user) => ({
+      id: user.id,
+      phone: user.phone,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      isCoach: user.isCoach,
+      createdAt: user.createdAt,
+    }));
+  }
+
   // --- Cross-module service methods ---
 
   async getUserById(id: string): Promise<UserPublicInfo | null> {

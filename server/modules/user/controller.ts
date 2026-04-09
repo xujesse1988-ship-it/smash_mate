@@ -110,5 +110,19 @@ export function createUserController(): Router {
     },
   );
 
+  // GET /api/admin/users — 管理员专用，返回未脱敏手机号
+  router.get(
+    '/admin/users',
+    authMiddleware,
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getAllUsersForAdmin();
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   return router;
 }
