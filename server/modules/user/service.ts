@@ -200,7 +200,9 @@ export class UserService {
     if (input.avatarUrl !== undefined) {
       if (
         typeof input.avatarUrl !== 'string' ||
-        (!input.avatarUrl.startsWith('http://') && !input.avatarUrl.startsWith('https://'))
+        (!input.avatarUrl.startsWith('http://') &&
+          !input.avatarUrl.startsWith('https://') &&
+          !input.avatarUrl.startsWith('/api/uploads/'))
       ) {
         throw new AppError(400, 'USER_INVALID_AVATAR_URL', '头像 URL 格式不合法');
       }

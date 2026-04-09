@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { uploadAvatar } from '../api/profile-api';
 import { TopBar } from '../components/top-bar';
 import { ProfileForm } from '../components/profile-form';
 import { PhoneDisplay } from '../components/phone-display';
@@ -18,6 +19,8 @@ export function ProfileEditPage() {
   const [bio, setBio] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track initial values for dirty detection
   const initialValues = useRef<{ nickname: string; avatarUrl: string; bio: string } | null>(null);
@@ -58,9 +61,9 @@ export function ProfileEditPage() {
       newErrors.nickname = '昵称长度需在 2-20 个字符之间';
     }
 
-    // avatarUrl: optional, must start with http:// or https://
-    if (avatarUrl && !avatarUrl.match(/^https?:\/\//)) {
-      newErrors.avatarUrl = '请输入合法的头像链接';
+    // avatarUrl: optional, must start with http:// or https:// or /api/uploads/
+    if (avatarUrl && !avatarUrl.match(/^https?:\/\//) && !avatarUrl.startsWith('/api/uploads/')) {
+      newErrors.avatarUrl = '头像链接格式不合法';
     }
 
     // bio: optional, max 200 chars
@@ -113,15 +116,36 @@ export function ProfileEditPage() {
   }
 
   function handleAvatarButtonClick() {
-    const nextAvatarUrl = globalThis.prompt('请输入头像 URL，留空可移除头像', avatarUrl);
+    fileInputRef.current?.click();
+  }
 
-    if (nextAvatarUrl === null) return;
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    setAvatarUrl(nextAvatarUrl.trim());
-    setErrors((prev) => {
-      const { avatarUrl: _avatarUrl, ...rest } = prev;
-      return rest;
-    });
+    // Reset input value so the same file can be re-selected
+    e.target.value = '';
+
+    // Validate file size client-side (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('图片大小不能超过 5MB');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const url = await uploadAvatar(file);
+      setAvatarUrl(url);
+      setErrors((prev) => {
+        const { avatarUrl: _avatarUrl, ...rest } = prev;
+        return rest;
+      });
+      message.success('头像上传成功');
+    } catch {
+      message.error('头像上传失败，请重试');
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   return (
@@ -141,7 +165,17 @@ export function ProfileEditPage() {
           onBioChange={setBio}
           avatarUrl={avatarUrl}
           onAvatarButtonClick={handleAvatarButtonClick}
+          avatarUploading={avatarUploading}
           errors={errors}
+        />
+
+        {/* Hidden file input for avatar selection */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          style={{ display: 'none' }}
+          onChange={handleFileSelected}
         />
 
         <PhoneDisplay phone={currentUser.phone} />

@@ -95,6 +95,32 @@ export async function updateProfile(data: {
 }
 
 // ---------------------------------------------------------------------------
+// POST /api/upload/avatar
+// ---------------------------------------------------------------------------
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const token =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  // NOTE: Do NOT set Content-Type — browser will set it with the correct boundary
+
+  const response = await fetch(resolveUrl('/api/upload/avatar'), {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const result = await handleResponse<{ avatarUrl: string }>(response);
+  return result.avatarUrl;
+}
+
+// ---------------------------------------------------------------------------
 // PUT /api/users/me/coach-role
 // ---------------------------------------------------------------------------
 

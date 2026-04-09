@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { config } from './infra/config.js';
 import { logger } from './infra/logger.js';
 import { errorHandler } from './infra/error-handler.js';
@@ -11,6 +12,7 @@ import { createActivityController } from './modules/activity/controller.js';
 import { createCoachingController } from './modules/coaching/controller.js';
 import { createMatchRecordController } from './modules/match-record/controller.js';
 import { createReviewController } from './modules/review/controller.js';
+import { createUploadController } from './modules/upload/controller.js';
 
 const app = express();
 
@@ -25,12 +27,16 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Serve uploaded avatar files
+app.use('/api/uploads/avatars', express.static(path.resolve(process.cwd(), 'uploads', 'avatars')));
+
 // Mount module routes
 app.use('/api', createUserController());
 app.use('/api', createVenueController());
 app.use('/api', createNotificationController());
 app.use('/api', createActivityController());
 app.use('/api', createCoachingController());
+app.use('/api', createUploadController());
 app.use('/api', createMatchRecordController());
 app.use('/api', createReviewController());
 

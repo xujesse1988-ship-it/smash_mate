@@ -30,3 +30,6 @@ playwright-report/
 # Logs
 *.log
 npm-debug.log*
+
+# Uploads
+uploads/

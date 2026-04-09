@@ -7,6 +7,7 @@ interface ProfileFormProps {
   onBioChange: (value: string) => void;
   avatarUrl: string;
   onAvatarButtonClick: () => void;
+  avatarUploading?: boolean;
   errors: Record<string, string>;
 }
 
@@ -17,6 +18,7 @@ export function ProfileForm({
   onBioChange,
   avatarUrl,
   onAvatarButtonClick,
+  avatarUploading = false,
   errors,
 }: ProfileFormProps) {
   return (
@@ -59,6 +61,7 @@ export function ProfileForm({
             type="button"
             aria-label={avatarUrl ? '修改头像' : '添加头像'}
             onClick={onAvatarButtonClick}
+            disabled={avatarUploading}
             style={{
               position: 'absolute',
               right: 8,
@@ -66,7 +69,7 @@ export function ProfileForm({
               width: 42,
               height: 42,
               borderRadius: 12,
-              background: '#111',
+              background: avatarUploading ? '#666' : '#111',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -74,13 +77,34 @@ export function ProfileForm({
               fontSize: 22,
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)',
               border: 'none',
-              cursor: 'pointer',
+              cursor: avatarUploading ? 'not-allowed' : 'pointer',
+              opacity: avatarUploading ? 0.7 : 1,
             }}
           >
-            +
+            {avatarUploading ? (
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 18,
+                  height: 18,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  animation: 'avatar-spin 0.8s linear infinite',
+                }}
+              />
+            ) : (
+              '+'
+            )}
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes avatar-spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
       <div
         style={{
@@ -91,7 +115,7 @@ export function ProfileForm({
           fontSize: 13,
         }}
       >
-        点击头像右下角 + 添加或修改头像
+        {avatarUploading ? '上传中...' : '点击头像右下角 + 选择照片'}
       </div>
 
       {errors.avatarUrl && (
