@@ -136,8 +136,10 @@ describe('ProfileEditPage', () => {
   it('should render form with current avatar URL pre-filled', () => {
     renderPage();
 
-    const avatarInput = screen.getByDisplayValue('https://example.com/avatar.jpg');
-    expect(avatarInput).toBeInTheDocument();
+    const avatarPreview = screen.getByAltText('头像预览');
+    expect(avatarPreview).toHaveAttribute('src', 'https://example.com/avatar.jpg');
+    expect(screen.getByRole('button', { name: /修改头像/i })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/输入头像 URL/i)).not.toBeInTheDocument();
   });
 
   // 来源: web-app-profile.md §2 — ProfileEditPage — 交互流程 — 回填表单
@@ -195,14 +197,14 @@ describe('ProfileEditPage', () => {
   // 来源: web-app-profile.md §6.1 — 前端校验规则 — avatarUrl 非空时必须以 http(s):// 开头
   it('should show error when avatar URL is invalid', async () => {
     const user = userEvent.setup();
+    const promptSpy = vi.spyOn(globalThis, 'prompt').mockReturnValue('not-a-url');
     renderPage();
 
-    const avatarInput = screen.getByDisplayValue('https://example.com/avatar.jpg');
-    await user.clear(avatarInput);
-    await user.type(avatarInput, 'not-a-url');
+    await user.click(screen.getByRole('button', { name: /修改头像/i }));
     await user.click(screen.getByRole('button', { name: /保存/i }));
 
     expect(screen.getByText(/请输入合法的头像链接/)).toBeInTheDocument();
+    promptSpy.mockRestore();
   });
 
   // 来源: web-app-profile.md §6.1 — 前端校验规则 — bio 最长 200 个字符
@@ -265,7 +267,8 @@ describe('ProfileEditPage', () => {
     await user.type(nicknameInput, '新昵称');
 
     // 点击返回按钮
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 应弹出确认弹窗
@@ -283,7 +286,8 @@ describe('ProfileEditPage', () => {
     await user.type(nicknameInput, '新昵称');
 
     // 点击返回
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 确认离开
@@ -304,7 +308,8 @@ describe('ProfileEditPage', () => {
     await user.type(nicknameInput, '新昵称');
 
     // 点击返回
-    const backButton = screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
+    const backButton =
+      screen.getByRole('button', { name: /返回|back/i }) || screen.getByLabelText(/返回/);
     await user.click(backButton);
 
     // 取消

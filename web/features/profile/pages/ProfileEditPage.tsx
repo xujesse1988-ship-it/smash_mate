@@ -112,6 +112,18 @@ export function ProfileEditPage() {
     }
   }
 
+  function handleAvatarButtonClick() {
+    const nextAvatarUrl = globalThis.prompt('请输入头像 URL，留空可移除头像', avatarUrl);
+
+    if (nextAvatarUrl === null) return;
+
+    setAvatarUrl(nextAvatarUrl.trim());
+    setErrors((prev) => {
+      const { avatarUrl: _avatarUrl, ...rest } = prev;
+      return rest;
+    });
+  }
+
   return (
     <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
@@ -128,7 +140,7 @@ export function ProfileEditPage() {
           bio={bio}
           onBioChange={setBio}
           avatarUrl={avatarUrl}
-          onAvatarUrlChange={setAvatarUrl}
+          onAvatarButtonClick={handleAvatarButtonClick}
           errors={errors}
         />
 

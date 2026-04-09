@@ -381,7 +381,11 @@ describe('ProfileEditPage Integration', () => {
       { timeout: 10000 },
     );
 
-    expect(screen.getByDisplayValue('https://example.com/avatar.jpg')).toBeInTheDocument();
+    expect(screen.getByAltText('头像预览')).toHaveAttribute(
+      'src',
+      'https://example.com/avatar.jpg',
+    );
+    expect(screen.getByRole('button', { name: /修改头像/i })).toBeInTheDocument();
     expect(screen.getByDisplayValue('热爱羽毛球')).toBeInTheDocument();
     expect(screen.getByText(/138\*{4}1234/)).toBeInTheDocument();
   });
@@ -414,6 +418,7 @@ describe('ProfileEditPage Integration', () => {
 
   it('should validate avatar URL and show error for invalid format', async () => {
     const user = userEvent.setup();
+    const promptSpy = vi.spyOn(globalThis, 'prompt').mockReturnValue('not-a-url');
 
     server.use(
       http.get('/api/users/me', () => {
@@ -425,17 +430,16 @@ describe('ProfileEditPage Integration', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByDisplayValue('https://example.com/avatar.jpg')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /修改头像/i })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
 
-    const avatarInput = screen.getByDisplayValue('https://example.com/avatar.jpg');
-    await user.clear(avatarInput);
-    await user.type(avatarInput, 'not-a-url');
+    await user.click(screen.getByRole('button', { name: /修改头像/i }));
     await user.click(screen.getByRole('button', { name: /保存/i }));
 
     expect(screen.getByText(/请输入合法的头像链接/)).toBeInTheDocument();
+    promptSpy.mockRestore();
   });
 
   it('should call PUT /api/users/me with only changed fields on save', async () => {

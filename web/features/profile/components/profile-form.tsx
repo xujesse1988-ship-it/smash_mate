@@ -6,7 +6,7 @@ interface ProfileFormProps {
   bio: string;
   onBioChange: (value: string) => void;
   avatarUrl: string;
-  onAvatarUrlChange: (value: string) => void;
+  onAvatarButtonClick: () => void;
   errors: Record<string, string>;
 }
 
@@ -16,7 +16,7 @@ export function ProfileForm({
   bio,
   onBioChange,
   avatarUrl,
-  onAvatarUrlChange,
+  onAvatarButtonClick,
   errors,
 }: ProfileFormProps) {
   return (
@@ -55,8 +55,10 @@ export function ProfileForm({
             />
           )}
 
-          <div
-            aria-hidden="true"
+          <button
+            type="button"
+            aria-label={avatarUrl ? '修改头像' : '添加头像'}
+            onClick={onAvatarButtonClick}
             style={{
               position: 'absolute',
               right: 8,
@@ -71,40 +73,41 @@ export function ProfileForm({
               justifyContent: 'center',
               fontSize: 22,
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.16)',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
             +
-          </div>
+          </button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: 18 }}>
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
-        >
-          <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
-            头像
-          </label>
-          <div>
-            <input
-              value={avatarUrl}
-              onChange={(e) => onAvatarUrlChange(e.target.value)}
-              placeholder="输入头像 URL"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: errors.avatarUrl ? '1px solid #ff4d4f' : '1px solid #cfcfcf',
-                borderRadius: 0,
-                boxSizing: 'border-box',
-                fontSize: 16,
-              }}
-            />
-            {errors.avatarUrl && (
-              <div style={{ marginTop: 6, color: '#ff4d4f', fontSize: 12 }}>{errors.avatarUrl}</div>
-            )}
-          </div>
-        </div>
+      <div
+        style={{
+          textAlign: 'center',
+          marginTop: -8,
+          marginBottom: 20,
+          color: '#666',
+          fontSize: 13,
+        }}
+      >
+        点击头像右下角 + 添加或修改头像
+      </div>
 
+      {errors.avatarUrl && (
+        <div
+          style={{
+            marginBottom: 18,
+            color: '#ff4d4f',
+            fontSize: 12,
+            textAlign: 'center',
+          }}
+        >
+          {errors.avatarUrl}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gap: 18 }}>
         <div
           style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
         >
