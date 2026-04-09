@@ -131,7 +131,7 @@ export function PrivateLessonBookingPage() {
 
   return (
     <div style={{ padding: '16px' }}>
-      <h2>预约私教</h2>
+
 
       {/* CoachBriefHeader */}
       <CoachBriefHeaderErrorBoundary>

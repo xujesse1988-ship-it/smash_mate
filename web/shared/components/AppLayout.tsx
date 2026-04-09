@@ -82,7 +82,9 @@ export function AppLayout() {
   const title = resolveTitle(location.pathname, userId);
   const showTabBar = isMainPage(location.pathname, userId);
   const showTopBar = !hasLocalTopBar(location.pathname, userId);
-  const showBackBtnInTopBar = location.pathname === '/my-courses';
+  const showBackBtnInTopBar =
+    location.pathname === '/my-courses' ||
+    /^\/coaches\/[^/]+\/private-lessons$/.test(location.pathname);
 
   return (
     <div
