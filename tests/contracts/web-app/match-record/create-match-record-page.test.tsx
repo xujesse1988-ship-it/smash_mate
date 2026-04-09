@@ -187,8 +187,8 @@ describe('CreateMatchRecordPage', () => {
     renderPage();
 
     // 应显示 A 方和 B 方的选手区域
-    expect(screen.getByText(/A/i)).toBeInTheDocument();
-    expect(screen.getByText(/B/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/A.*方/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/B.*方/i).length).toBeGreaterThanOrEqual(1);
   });
 
   // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 组件结构 — ScoreSection
@@ -196,7 +196,7 @@ describe('CreateMatchRecordPage', () => {
     renderPage();
 
     // 至少应有比分输入区域
-    expect(screen.getByText(/第.*局|比分/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/第.*局|比分/i).length).toBeGreaterThanOrEqual(1);
   });
 
   // 来源: web-app-match-record.md §2 — CreateMatchRecordPage — 组件结构 — SubmitButton
@@ -544,8 +544,22 @@ describe('CreateMatchRecordPage', () => {
       isError: false,
       error: null,
     };
-    mockSearchParams = new URLSearchParams('sourceType=activity&sourceId=activity-uuid-1');
     renderPage();
+
+    // Fill form to pass validation: guest toggle, guest names, scores
+    const toggles = screen.getAllByRole('switch');
+    await userEvent.click(toggles[0]); // sideA guest mode
+    await userEvent.click(toggles[1]); // sideB guest mode
+
+    const inputs = screen.getAllByPlaceholderText(/输入昵称/);
+    await userEvent.type(inputs[0], 'Guest1');
+    await userEvent.type(inputs[1], 'Guest2');
+
+    const scoreInputs = screen.getAllByRole('spinbutton');
+    if (scoreInputs.length >= 2) {
+      await userEvent.type(scoreInputs[0], '21');
+      await userEvent.type(scoreInputs[1], '10');
+    }
 
     const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
     await userEvent.click(submitButton);
@@ -570,12 +584,21 @@ describe('CreateMatchRecordPage', () => {
       error: null,
     };
     mockSearchParams = new URLSearchParams('sourceType=group-class&sourceId=gc-uuid-1');
-    mockSourceParticipantsState = {
-      participants: mockParticipants,
-      isLoading: false,
-      error: null,
-    };
     renderPage();
+
+    const toggles = screen.getAllByRole('switch');
+    await userEvent.click(toggles[0]);
+    await userEvent.click(toggles[1]);
+
+    const inputs = screen.getAllByPlaceholderText(/输入昵称/);
+    await userEvent.type(inputs[0], 'G1');
+    await userEvent.type(inputs[1], 'G2');
+
+    const scoreInputs = screen.getAllByRole('spinbutton');
+    if (scoreInputs.length >= 2) {
+      await userEvent.type(scoreInputs[0], '21');
+      await userEvent.type(scoreInputs[1], '15');
+    }
 
     const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
     await userEvent.click(submitButton);
@@ -597,12 +620,18 @@ describe('CreateMatchRecordPage', () => {
       error: null,
     };
     mockSearchParams = new URLSearchParams('sourceType=private-lesson&sourceId=pl-uuid-1');
-    mockSourceParticipantsState = {
-      participants: [],
-      isLoading: false,
-      error: null,
-    };
     renderPage();
+
+    // Guest mode is locked ON for private-lesson
+    const inputs = screen.getAllByPlaceholderText(/输入昵称/);
+    await userEvent.type(inputs[0], 'G1');
+    await userEvent.type(inputs[1], 'G2');
+
+    const scoreInputs = screen.getAllByRole('spinbutton');
+    if (scoreInputs.length >= 2) {
+      await userEvent.type(scoreInputs[0], '21');
+      await userEvent.type(scoreInputs[1], '8');
+    }
 
     const submitButton = screen.getByRole('button', { name: /提交战绩|提交/ });
     await userEvent.click(submitButton);

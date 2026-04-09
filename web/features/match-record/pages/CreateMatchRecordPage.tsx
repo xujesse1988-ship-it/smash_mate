@@ -80,9 +80,16 @@ export function CreateMatchRecordPage() {
 
   if (!sourceType || !sourceId) {
     return (
-      <div style={{ padding: 24, textAlign: 'center' }}>
-        <p>请从活动或课程详情页进入战绩录入</p>
-        <BackButton onClick={() => navigate(-1)} />
+      <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
+            <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
+            <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>录入战绩</span>
+          </div>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 18, textAlign: 'center', border: '1px solid #ececec' }}>
+            <p style={{ color: '#666' }}>请从活动或课程详情页进入战绩录入</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -291,33 +298,35 @@ function CreateMatchRecordForm({
     );
 
     return (
-      <div key={key} style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span>非平台用户</span>
-          <Switch
-            role="switch"
-            size="small"
-            checked={player.isGuest}
-            disabled={isPrivateLesson}
-            onChange={(checked) =>
-              updatePlayer(side, index, {
-                isGuest: checked,
-                userId: null,
-                guestName: '',
-              })
-            }
-          />
+      <div key={key} style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: '#444' }}>{side}方队员 {index + 1}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: '#888' }}>非平台用户</span>
+            <Switch
+              size="small"
+              checked={player.isGuest}
+              disabled={isPrivateLesson}
+              onChange={(checked) =>
+                updatePlayer(side, index, {
+                  isGuest: checked,
+                  userId: null,
+                  guestName: '',
+                })
+              }
+            />
+          </div>
         </div>
         {player.isGuest ? (
           <input
             placeholder="输入昵称"
             value={player.guestName}
             onChange={(e) => updatePlayer(side, index, { guestName: e.target.value })}
-            style={{ width: '100%', padding: '4px 8px' }}
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d9d9d9', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
           />
         ) : (
           <Select
-            style={{ width: '100%' }}
+            style={{ width: '100%', height: 42 }}
             placeholder="请选定参与者"
             value={player.userId ?? undefined}
             onChange={(value) => updatePlayer(side, index, { userId: value })}
@@ -332,83 +341,115 @@ function CreateMatchRecordForm({
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      {/* Match Type Selector */}
-      <div style={{ marginBottom: 16 }}>
-        <Radio.Group
-          value={matchType}
-          onChange={(e) => handleMatchTypeChange(e.target.value as MatchType)}
-          optionType="button"
-          buttonStyle="solid"
-        >
-          <Radio.Button value="singles">单打</Radio.Button>
-          <Radio.Button value="doubles">双打</Radio.Button>
-        </Radio.Group>
-      </div>
-
-      {/* Player Section */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ marginBottom: 12 }}>
-          <h4>A 方</h4>
-          {sideA.map((p, i) => renderPlayerSelector('A', i, p))}
+    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100vh' }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto', paddingBottom: 40 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
+          <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
+          <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>录入战绩</span>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <h4>B 方</h4>
-          {sideB.map((p, i) => renderPlayerSelector('B', i, p))}
-        </div>
-      </div>
 
-      {formErrors.players && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.players}</div>
-      )}
-      {formErrors.guestName && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.guestName}</div>
-      )}
-      {formErrors.duplicate && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.duplicate}</div>
-      )}
-
-      {/* Score Section */}
-      <div style={{ marginBottom: 16 }}>
-        {games.map((g, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span>第 {i + 1} 局</span>
-            <InputNumber
-              min={0}
-              max={30}
-              value={g.scoreA}
-              onChange={(v) => updateGame(i, 'scoreA', v)}
-              placeholder="比分A"
-            />
-            <span>:</span>
-            <InputNumber
-              min={0}
-              max={30}
-              value={g.scoreB}
-              onChange={(v) => updateGame(i, 'scoreB', v)}
-              placeholder="比分B"
-            />
-            {games.length > 1 && (
-              <button type="button" onClick={() => removeGame(i)}>
-                删除
-              </button>
-            )}
+        {/* Match Type and Players Card */}
+        <div style={{ background: '#fff', padding: '24px 20px', borderRadius: 18, border: '1px solid #ececec', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <Radio.Group
+              value={matchType}
+              onChange={(e) => handleMatchTypeChange(e.target.value as MatchType)}
+              optionType="button"
+              buttonStyle="solid"
+            >
+              <Radio.Button value="singles" style={{ width: 100, textAlign: 'center' }}>单打</Radio.Button>
+              <Radio.Button value="doubles" style={{ width: 100, textAlign: 'center' }}>双打</Radio.Button>
+            </Radio.Group>
           </div>
-        ))}
-        <button type="button" onClick={addGame}>
-          添加一局
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div>
+              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: '#111' }}>A 方队伍</h4>
+              {sideA.map((p, i) => renderPlayerSelector('A', i, p))}
+            </div>
+            <div style={{ height: 1, background: '#f0f0f0' }} />
+            <div>
+              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: '#111' }}>B 方队伍</h4>
+              {sideB.map((p, i) => renderPlayerSelector('B', i, p))}
+            </div>
+          </div>
+
+          {formErrors.players && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.players}</div>}
+          {formErrors.guestName && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.guestName}</div>}
+          {formErrors.duplicate && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.duplicate}</div>}
+        </div>
+
+        {/* Scores Card */}
+        <div style={{ background: '#fff', padding: '24px 20px', borderRadius: 18, border: '1px solid #ececec', marginBottom: 24 }}>
+          <h4 style={{ margin: '0 0 16px', fontSize: 16, color: '#111' }}>比赛比分</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {games.map((g, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f9f9f9', borderRadius: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 500, color: '#444' }}>第 {i + 1} 局</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <InputNumber
+                    min={0}
+                    max={30}
+                    value={g.scoreA}
+                    onChange={(v) => updateGame(i, 'scoreA', v)}
+                    placeholder="0"
+                    style={{ width: 64, height: 40, fontSize: 16, textAlign: 'center' }}
+                  />
+                  <span style={{ fontSize: 18, fontWeight: 600, color: '#999' }}>:</span>
+                  <InputNumber
+                    min={0}
+                    max={30}
+                    value={g.scoreB}
+                    onChange={(v) => updateGame(i, 'scoreB', v)}
+                    placeholder="0"
+                    style={{ width: 64, height: 40, fontSize: 16, textAlign: 'center' }}
+                  />
+                  {games.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeGame(i)}
+                      style={{ background: 'none', border: 'none', color: '#ff4d4f', fontSize: 14, cursor: 'pointer', padding: '0 4px' }}
+                    >
+                      删除
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addGame}
+            style={{ width: '100%', marginTop: 16, padding: '12px', background: '#fff', border: '1px dashed #d9d9d9', borderRadius: 12, color: '#111', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
+          >
+            + 添加一局
+          </button>
+          {formErrors.games && <div style={{ color: '#ff4d4f', marginTop: 12, fontSize: 13 }}>{formErrors.games}</div>}
+        </div>
+
+        {apiErrorMessage && <div style={{ color: '#ff4d4f', marginBottom: 16, textAlign: 'center', fontSize: 14 }}>{apiErrorMessage}</div>}
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={createMutation.isPending}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: '#111',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 999,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+            opacity: createMutation.isPending ? 0.7 : 1,
+          }}
+        >
+          {createMutation.isPending ? '提交中...' : '提交战绩'}
         </button>
       </div>
-
-      {formErrors.games && <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.games}</div>}
-
-      {/* API Error */}
-      {apiErrorMessage && <div style={{ color: 'red', marginBottom: 8 }}>{apiErrorMessage}</div>}
-
-      {/* Submit */}
-      <button type="button" onClick={handleSubmit} disabled={createMutation.isPending}>
-        提交战绩
-      </button>
     </div>
   );
 }
