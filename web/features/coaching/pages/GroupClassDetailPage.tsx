@@ -127,9 +127,7 @@ export function GroupClassDetailPage() {
           <span style={{ color: '#1565c0', fontWeight: 500 }}>已结束</span>
           <button
             onClick={() =>
-              navigate(
-                `/match-records/create?sourceType=group-class&sourceId=${groupClassId}`,
-              )
+              navigate(`/match-records/create?sourceType=group-class&sourceId=${groupClassId}`)
             }
             style={{
               marginLeft: '12px',
@@ -157,16 +155,34 @@ export function GroupClassDetailPage() {
 
   return (
     <div style={{ padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '8px' }}>
+        <button
+          aria-label="返回"
+          onClick={() => navigate(-1)}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            padding: 0,
+          }}
+        >
+          &lt; 返回
+        </button>
+      </div>
+
       {/* Status Tag - only for open/full status */}
       {(groupClass.status === 'open' || groupClass.status === 'full') && (
         <div style={{ marginBottom: '8px' }}>
-          <span style={{
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: 12,
-            background: groupClass.status === 'open' ? '#e8f5e9' : '#fff3e0',
-            color: groupClass.status === 'open' ? '#2e7d32' : '#e65100',
-          }}>
+          <span
+            style={{
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: 12,
+              background: groupClass.status === 'open' ? '#e8f5e9' : '#fff3e0',
+              color: groupClass.status === 'open' ? '#2e7d32' : '#e65100',
+            }}
+          >
             {STATUS_MAP[groupClass.status]}
           </span>
         </div>
@@ -178,12 +194,33 @@ export function GroupClassDetailPage() {
       {/* Coach Brief */}
       <div
         onClick={() => navigate(`/coaches/${groupClass.coachId}`)}
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '12px',
+          cursor: 'pointer',
+        }}
       >
         {groupClass.coach.avatarUrl ? (
-          <img src={groupClass.coach.avatarUrl} alt={groupClass.coach.nickname} style={{ width: 32, height: 32, borderRadius: '50%' }} />
+          <img
+            src={groupClass.coach.avatarUrl}
+            alt={groupClass.coach.nickname}
+            style={{ width: 32, height: 32, borderRadius: '50%' }}
+          />
         ) : (
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: '#e0e0e0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+            }}
+          >
             {groupClass.coach.nickname.charAt(0)}
           </div>
         )}
@@ -196,13 +233,16 @@ export function GroupClassDetailPage() {
           <div style={{ color: '#666', fontSize: 14 }}>{groupClass.venue.name}</div>
         )}
         <div style={{ color: '#666', fontSize: 14, marginTop: 4 }}>
-          {new Date(groupClass.startTime).toLocaleString()} - {new Date(groupClass.endTime).toLocaleTimeString()}
+          {new Date(groupClass.startTime).toLocaleString()} -{' '}
+          {new Date(groupClass.endTime).toLocaleTimeString()}
         </div>
         <div style={{ fontSize: 14, marginTop: 4 }}>
           {groupClass.currentParticipants}/{groupClass.maxParticipants}人
         </div>
         {groupClass.feeDescription && (
-          <div style={{ color: '#666', fontSize: 14, marginTop: 4 }}>{groupClass.feeDescription}</div>
+          <div style={{ color: '#666', fontSize: 14, marginTop: 4 }}>
+            {groupClass.feeDescription}
+          </div>
         )}
       </div>
 
@@ -216,11 +256,29 @@ export function GroupClassDetailPage() {
       <div style={{ marginBottom: '16px' }}>
         <h3>报名学员 ({groupClass.enrollments.length})</h3>
         {groupClass.enrollments.map((enrollment) => (
-          <div key={enrollment.userId} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0' }}>
+          <div
+            key={enrollment.userId}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0' }}
+          >
             {enrollment.avatarUrl ? (
-              <img src={enrollment.avatarUrl} alt={enrollment.nickname} style={{ width: 32, height: 32, borderRadius: '50%' }} />
+              <img
+                src={enrollment.avatarUrl}
+                alt={enrollment.nickname}
+                style={{ width: 32, height: 32, borderRadius: '50%' }}
+              />
             ) : (
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: '#e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14,
+                }}
+              >
                 {enrollment.nickname.charAt(0)}
               </div>
             )}
@@ -237,12 +295,15 @@ export function GroupClassDetailPage() {
         <div>
           <h3>战绩</h3>
           {matchRecordsData?.items?.map((record) => (
-            <div key={record.id} style={{
-              padding: '8px',
-              border: '1px solid #f0f0f0',
-              borderRadius: '8px',
-              marginBottom: '8px',
-            }}>
+            <div
+              key={record.id}
+              style={{
+                padding: '8px',
+                border: '1px solid #f0f0f0',
+                borderRadius: '8px',
+                marginBottom: '8px',
+              }}
+            >
               <div style={{ fontSize: 12 }}>
                 {record.games.map((g) => `${g.scoreA}:${g.scoreB}`).join(' / ')}
               </div>
@@ -252,7 +313,14 @@ export function GroupClassDetailPage() {
                     setDeletingRecordId(record.id);
                     setShowDeleteConfirm(true);
                   }}
-                  style={{ fontSize: 12, color: '#ff5252', background: 'none', border: 'none', cursor: 'pointer', marginTop: 4 }}
+                  style={{
+                    fontSize: 12,
+                    color: '#ff5252',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginTop: 4,
+                  }}
                 >
                   删除
                 </button>
@@ -264,22 +332,54 @@ export function GroupClassDetailPage() {
 
       {/* Cancel Enrollment Confirm Dialog */}
       {showCancelEnrollConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '80%',
+              maxWidth: '360px',
+            }}
+          >
             <p>是否取消报名？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowCancelEnrollConfirm(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>
+              <button
+                onClick={() => setShowCancelEnrollConfirm(false)}
+                style={{
+                  padding: '6px 16px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                }}
+              >
                 返回
               </button>
-              <button onClick={handleCancelEnrollment} style={{ padding: '6px 16px', background: '#ff5252', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+              <button
+                onClick={handleCancelEnrollment}
+                style={{
+                  padding: '6px 16px',
+                  background: '#ff5252',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                }}
+              >
                 确认
               </button>
             </div>
@@ -289,22 +389,57 @@ export function GroupClassDetailPage() {
 
       {/* Delete Record Confirm Dialog */}
       {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '80%',
+              maxWidth: '360px',
+            }}
+          >
             <p>确定删除战绩？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowDeleteConfirm(false); setDeletingRecordId(null); }} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletingRecordId(null);
+                }}
+                style={{
+                  padding: '6px 16px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                }}
+              >
                 返回
               </button>
-              <button onClick={handleDeleteRecord} style={{ padding: '6px 16px', background: '#ff5252', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+              <button
+                onClick={handleDeleteRecord}
+                style={{
+                  padding: '6px 16px',
+                  background: '#ff5252',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                }}
+              >
                 确定
               </button>
             </div>

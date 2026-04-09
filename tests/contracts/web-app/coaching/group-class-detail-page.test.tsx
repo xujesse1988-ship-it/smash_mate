@@ -241,6 +241,19 @@ describe('GroupClassDetailPage', () => {
     expect(screen.getByText(/加载/i)).toBeInTheDocument();
   });
 
+  it('should render back button and navigate back when clicked', async () => {
+    const user = userEvent.setup();
+    mockGroupClassDetailState = { data: mockGroupClassOpen, isLoading: false, error: null };
+    renderPage();
+
+    const backButton = screen.getByRole('button', { name: /返回/i });
+    expect(backButton).toBeInTheDocument();
+
+    await user.click(backButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
   // =========================================================================
   // 错误状态
   // =========================================================================
@@ -411,15 +424,9 @@ describe('GroupClassDetailPage', () => {
     const createRecordButton = screen.getByText(/录入战绩/i);
     await userEvent.click(createRecordButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('/match-records/create'),
-    );
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('sourceType=group-class'),
-    );
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('sourceId=gc-uuid-1'),
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/match-records/create'));
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('sourceType=group-class'));
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('sourceId=gc-uuid-1'));
   });
 
   // =========================================================================
