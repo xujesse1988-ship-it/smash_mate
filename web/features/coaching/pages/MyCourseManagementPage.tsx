@@ -519,6 +519,9 @@ export function MyCourseManagementPage() {
               padding: '24px',
               width: '90%',
               maxWidth: '400px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             <h3>发布团课</h3>
@@ -646,6 +649,9 @@ export function MyCourseManagementPage() {
               padding: '24px',
               width: '90%',
               maxWidth: '400px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             <h3>修改团课</h3>
