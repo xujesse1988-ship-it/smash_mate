@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useEnableCoachRole } from '../hooks/useEnableCoachRole';
 import { useAuthStore } from '../../../stores/auth-store';
 import { CoachModeSwitch } from '../components/coach-mode-switch';
@@ -57,9 +58,7 @@ export function SettingsPage() {
     <div>
       {/* TopBar */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px' }}>
-        <button aria-label="返回" onClick={() => navigate(-1)}>
-          返回
-        </button>
+        <BackButton onClick={() => navigate(-1)} />
         <span style={{ marginLeft: 8 }}>设置</span>
       </div>
 
@@ -71,16 +70,9 @@ export function SettingsPage() {
           onToggle={handleCoachSwitchClick}
         />
 
-        <SettingsLinkItem
-          label="修改手机号"
-          onClick={handlePhoneClick}
-          disabled
-        />
+        <SettingsLinkItem label="修改手机号" onClick={handlePhoneClick} disabled />
 
-        <SettingsLinkItem
-          label="关于我们"
-          onClick={() => setShowAbout(true)}
-        />
+        <SettingsLinkItem label="关于我们" onClick={() => setShowAbout(true)} />
       </div>
 
       <LogoutButton onClick={() => setShowLogoutConfirm(true)} />

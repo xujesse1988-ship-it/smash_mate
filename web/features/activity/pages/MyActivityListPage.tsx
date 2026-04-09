@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useMyActivities } from '../hooks/useMyActivities';
 import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
 import { ActivityCard } from '../components/ActivityCard';
@@ -71,14 +72,15 @@ export function MyActivityListPage() {
   return (
     <div>
       {/* Header with back button */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
-        <button
-          aria-label="返回"
-          onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
-        >
-          &lt; 返回
-        </button>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '12px 16px',
+          borderBottom: '1px solid #f0f0f0',
+        }}
+      >
+        <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 18 }}>我的活动</h2>
       </div>
 
@@ -110,12 +112,30 @@ export function MyActivityListPage() {
       <div style={{ padding: '8px 16px', position: 'relative' }}>
         <button
           onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-          style={{ fontSize: 13, padding: '2px 8px', border: '1px solid #ddd', borderRadius: 4, background: '#fff', cursor: 'pointer' }}
+          style={{
+            fontSize: 13,
+            padding: '2px 8px',
+            border: '1px solid #ddd',
+            borderRadius: 4,
+            background: '#fff',
+            cursor: 'pointer',
+          }}
         >
           状态{status ? `: ${STATUS_LABELS[status]}` : ''}
         </button>
         {showStatusDropdown && (
-          <div style={{ position: 'absolute', top: 36, left: 16, background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 8, zIndex: 10 }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 36,
+              left: 16,
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 8,
+              padding: 8,
+              zIndex: 10,
+            }}
+          >
             {statusOptions.map((opt) => (
               <div
                 key={opt.value ?? 'all'}
@@ -139,9 +159,7 @@ export function MyActivityListPage() {
 
       {/* Error state */}
       {activitiesQuery.error && (
-        <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>
-          加载失败，请重试
-        </div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>加载失败，请重试</div>
       )}
 
       {/* Empty state */}
@@ -149,9 +167,7 @@ export function MyActivityListPage() {
         !activitiesQuery.error &&
         activitiesQuery.data &&
         allActivities.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>
-            暂无活动
-          </div>
+          <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>暂无活动</div>
         )}
 
       {/* Activity list */}

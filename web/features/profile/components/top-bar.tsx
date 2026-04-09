@@ -1,5 +1,5 @@
 import React from 'react';
-import { LeftOutlined } from '@ant-design/icons';
+import { BackButton } from '../../../shared/components/BackButton';
 
 interface TopBarProps {
   title: string;
@@ -28,28 +28,7 @@ export function TopBar({
       }}
     >
       <div style={{ width: 88, display: 'flex', justifyContent: 'flex-start' }}>
-        {showBackButton ? (
-          <button
-            aria-label="返回"
-            onClick={onBack}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: 0,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 16,
-              color: '#111',
-            }}
-          >
-            <LeftOutlined style={{ fontSize: 16 }} />
-            返回
-          </button>
-        ) : (
-          <span />
-        )}
+        {showBackButton ? <BackButton onClick={onBack} /> : <span />}
       </div>
 
       <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>{title}</span>

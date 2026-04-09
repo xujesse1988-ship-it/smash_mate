@@ -8,6 +8,7 @@ import { useLeaveActivity } from '../hooks/useLeaveActivity';
 import { useUpdateActivity } from '../hooks/useUpdateActivity';
 import { useCancelActivity } from '../hooks/useCancelActivity';
 import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
+import { BackButton } from '../../../shared/components/BackButton';
 import type { MatchRecord } from '../api/activity-api';
 import { STATUS_LABELS } from '../constants';
 import { VenueSearchInput } from '../components/venue-search-input';
@@ -195,21 +196,7 @@ export function ActivityDetailPage() {
           borderBottom: '1px solid #f0f0f0',
         }}
       >
-        <button
-          aria-label="返回"
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 16,
-            color: '#333',
-            padding: '4px 0',
-            marginRight: 12,
-          }}
-        >
-          ‹ 返回
-        </button>
+        <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>约球详情</h2>
       </div>
 
@@ -285,7 +272,9 @@ export function ActivityDetailPage() {
               <label style={{ fontSize: 13, color: '#666' }}>结束时间</label>
               <input
                 type="datetime-local"
-                value={editForm.endTime ? new Date(editForm.endTime).toISOString().slice(0, 16) : ''}
+                value={
+                  editForm.endTime ? new Date(editForm.endTime).toISOString().slice(0, 16) : ''
+                }
                 onChange={(e) =>
                   setEditForm({
                     ...editForm,
@@ -373,9 +362,7 @@ export function ActivityDetailPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>🕐</span>
               <div>
-                <div style={{ fontSize: 14, color: '#333' }}>
-                  {formatDate(activity.startTime)}
-                </div>
+                <div style={{ fontSize: 14, color: '#333' }}>{formatDate(activity.startTime)}</div>
                 <div style={{ fontSize: 14, color: '#555', marginTop: 2 }}>
                   {formatTime(activity.startTime)} - {formatTime(activity.endTime)}
                 </div>
@@ -455,9 +442,7 @@ export function ActivityDetailPage() {
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
-                    {p.nickname}
-                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>{p.nickname}</span>
                 </div>
                 {p.userId === activity.creatorId && (
                   <span

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { InputNumber, Switch, Select, Radio, message } from 'antd';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useSourceParticipants } from '../hooks/useSourceParticipants';
 import { useCreateMatchRecord } from '../hooks/useCreateMatchRecord';
 
@@ -74,27 +75,19 @@ export function CreateMatchRecordPage() {
   const sourceId = searchParams.get('sourceId');
 
   // Validate URL params
-  const isValidSourceType = VALID_SOURCE_TYPES.includes(
-    rawSourceType as SourceType,
-  );
+  const isValidSourceType = VALID_SOURCE_TYPES.includes(rawSourceType as SourceType);
   const sourceType = isValidSourceType ? (rawSourceType as SourceType) : null;
 
   if (!sourceType || !sourceId) {
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
         <p>请从活动或课程详情页进入战绩录入</p>
-        <button type="button" onClick={() => navigate(-1)}>返回</button>
+        <BackButton onClick={() => navigate(-1)} />
       </div>
     );
   }
 
-  return (
-    <CreateMatchRecordForm
-      sourceType={sourceType}
-      sourceId={sourceId}
-      navigate={navigate}
-    />
-  );
+  return <CreateMatchRecordForm sourceType={sourceType} sourceId={sourceId} navigate={navigate} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,19 +104,12 @@ function CreateMatchRecordForm({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const isPrivateLesson = sourceType === 'private-lesson';
-  const { participants, isLoading, error } = useSourceParticipants(
-    sourceType,
-    sourceId,
-  );
+  const { participants, isLoading, error } = useSourceParticipants(sourceType, sourceId);
   const createMutation = useCreateMatchRecord();
 
   const [matchType, setMatchType] = useState<MatchType>('singles');
-  const [sideA, setSideA] = useState<PlayerFormItem[]>(
-    buildInitialSide(1, isPrivateLesson),
-  );
-  const [sideB, setSideB] = useState<PlayerFormItem[]>(
-    buildInitialSide(1, isPrivateLesson),
-  );
+  const [sideA, setSideA] = useState<PlayerFormItem[]>(buildInitialSide(1, isPrivateLesson));
+  const [sideB, setSideB] = useState<PlayerFormItem[]>(buildInitialSide(1, isPrivateLesson));
   const [games, setGames] = useState<GameFormItem[]>([emptyGame()]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -149,7 +135,7 @@ function CreateMatchRecordForm({
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
         <p>加载失败，请重试</p>
-        <button type="button" onClick={() => navigate(-1)}>返回</button>
+        <BackButton onClick={() => navigate(-1)} />
       </div>
     );
   }
@@ -176,15 +162,9 @@ function CreateMatchRecordForm({
     setFormErrors({});
   };
 
-  const updatePlayer = (
-    side: 'A' | 'B',
-    index: number,
-    update: Partial<PlayerFormItem>,
-  ) => {
+  const updatePlayer = (side: 'A' | 'B', index: number, update: Partial<PlayerFormItem>) => {
     const setter = side === 'A' ? setSideA : setSideB;
-    setter((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, ...update } : p)),
-    );
+    setter((prev) => prev.map((p, i) => (i === index ? { ...p, ...update } : p)));
   };
 
   const addGame = () => {
@@ -196,14 +176,8 @@ function CreateMatchRecordForm({
     setGames((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateGame = (
-    index: number,
-    field: 'scoreA' | 'scoreB',
-    value: number | null,
-  ) => {
-    setGames((prev) =>
-      prev.map((g, i) => (i === index ? { ...g, [field]: value } : g)),
-    );
+  const updateGame = (index: number, field: 'scoreA' | 'scoreB', value: number | null) => {
+    setGames((prev) => prev.map((g, i) => (i === index ? { ...g, [field]: value } : g)));
   };
 
   // --- Validation ---
@@ -251,12 +225,7 @@ function CreateMatchRecordForm({
         errors.games = '请填写所有比分';
         break;
       }
-      if (
-        g.scoreA < 0 ||
-        g.scoreA > 30 ||
-        g.scoreB < 0 ||
-        g.scoreB > 30
-      ) {
+      if (g.scoreA < 0 || g.scoreA > 30 || g.scoreB < 0 || g.scoreB > 30) {
         errors.games = '单局比分需在0-30之间，且不可同时为0';
         break;
       }
@@ -310,16 +279,12 @@ function CreateMatchRecordForm({
     ? (createMutation.error as Error & { code?: string })
     : null;
   const apiErrorMessage = apiError?.code
-    ? ERROR_CODE_MAP[apiError.code] ?? apiError.message
+    ? (ERROR_CODE_MAP[apiError.code] ?? apiError.message)
     : null;
 
   // --- Render ---
 
-  const renderPlayerSelector = (
-    side: 'A' | 'B',
-    index: number,
-    player: PlayerFormItem,
-  ) => {
+  const renderPlayerSelector = (side: 'A' | 'B', index: number, player: PlayerFormItem) => {
     const key = `${side}-${index}`;
     const availableParticipants = participants.filter(
       (p) => !selectedUserIds.has(p.userId) || p.userId === player.userId,
@@ -347,9 +312,7 @@ function CreateMatchRecordForm({
           <input
             placeholder="输入昵称"
             value={player.guestName}
-            onChange={(e) =>
-              updatePlayer(side, index, { guestName: e.target.value })
-            }
+            onChange={(e) => updatePlayer(side, index, { guestName: e.target.value })}
             style={{ width: '100%', padding: '4px 8px' }}
           />
         ) : (
@@ -408,10 +371,7 @@ function CreateMatchRecordForm({
       {/* Score Section */}
       <div style={{ marginBottom: 16 }}>
         {games.map((g, i) => (
-          <div
-            key={i}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}
-          >
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <span>第 {i + 1} 局</span>
             <InputNumber
               min={0}
@@ -435,24 +395,18 @@ function CreateMatchRecordForm({
             )}
           </div>
         ))}
-        <button type="button" onClick={addGame}>添加一局</button>
+        <button type="button" onClick={addGame}>
+          添加一局
+        </button>
       </div>
 
-      {formErrors.games && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.games}</div>
-      )}
+      {formErrors.games && <div style={{ color: 'red', marginBottom: 8 }}>{formErrors.games}</div>}
 
       {/* API Error */}
-      {apiErrorMessage && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{apiErrorMessage}</div>
-      )}
+      {apiErrorMessage && <div style={{ color: 'red', marginBottom: 8 }}>{apiErrorMessage}</div>}
 
       {/* Submit */}
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={createMutation.isPending}
-      >
+      <button type="button" onClick={handleSubmit} disabled={createMutation.isPending}>
         提交战绩
       </button>
     </div>

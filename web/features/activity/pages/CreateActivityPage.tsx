@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, DatePicker } from 'antd';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useCreateActivity } from '../hooks/useCreateActivity';
 import { VenueSearchInput } from '../components/venue-search-input';
 import type { VenueSearchItem } from '../api/venue-api';
@@ -73,20 +74,7 @@ export function CreateActivityPage() {
     <div style={{ padding: 16 }}>
       {/* Header with back button */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
-        <button
-          aria-label="返回"
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 16,
-            padding: '4px 8px',
-            marginRight: 8,
-          }}
-        >
-          &lt; 返回
-        </button>
+        <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 8px', marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 18 }}>发起约球</h2>
       </div>
 

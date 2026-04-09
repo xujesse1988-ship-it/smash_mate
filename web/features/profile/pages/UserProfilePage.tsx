@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../stores/auth-store';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useMatchStats } from '../hooks/useMatchStats';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
+import { BackButton } from '../../../shared/components/BackButton';
 import { UserInfoSection } from '../components/user-info-section';
 import { MatchStatsCard } from '../components/match-stats-card';
 import { QuickLinkList } from '../components/quick-link-list';
@@ -53,20 +54,7 @@ export function UserProfilePage() {
     <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {!isOwnProfile && (
-          <button
-            aria-label="返回"
-            onClick={() => navigate(-1)}
-            style={{
-              marginBottom: 12,
-              padding: '6px 0',
-              border: 'none',
-              background: 'transparent',
-              color: '#333',
-              cursor: 'pointer',
-            }}
-          >
-            返回
-          </button>
+          <BackButton onClick={() => navigate(-1)} style={{ marginBottom: 12, padding: '6px 0' }} />
         )}
 
         <section

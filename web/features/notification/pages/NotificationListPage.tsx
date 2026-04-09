@@ -7,6 +7,7 @@ import { useMarkAllAsRead } from '../hooks/useMarkAllAsRead';
 import { useNotificationNavigate } from '../hooks/useNotificationNavigate';
 import { useUnreadCount } from '../../../shared/hooks/useUnreadCount';
 import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
+import { BackButton } from '../../../shared/components/BackButton';
 import { NotificationFilter, type FilterStatus } from '../components/notification-filter';
 import { MarkAllReadButton } from '../components/mark-all-read-button';
 import { NotificationList } from '../components/notification-list';
@@ -68,20 +69,7 @@ export function NotificationListPage() {
         margin: '-16px -16px 16px',
       }}
     >
-      <button
-        aria-label="返回"
-        onClick={() => navigate(-1)}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: 16,
-          padding: 0,
-          color: '#111',
-        }}
-      >
-        &lt; 返回
-      </button>
+      <BackButton onClick={() => navigate(-1)} />
       <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>通知</h2>
     </div>
   );

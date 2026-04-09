@@ -6,6 +6,7 @@ import { useEnrollGroupClass } from '../hooks/useEnrollGroupClass';
 import { useCancelEnrollment } from '../hooks/useCancelEnrollment';
 import { useGroupClassMatchRecords } from '../hooks/useGroupClassMatchRecords';
 import { useDeleteMatchRecord } from '../hooks/useDeleteMatchRecord';
+import { BackButton } from '../../../shared/components/BackButton';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,21 +101,7 @@ export function GroupClassDetailPage() {
           borderBottom: '1px solid #f0f0f0',
         }}
       >
-        <button
-          aria-label="返回"
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 16,
-            color: '#333',
-            padding: '4px 0',
-            marginRight: 12,
-          }}
-        >
-          ‹ 返回
-        </button>
+        <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>团课详情</h2>
       </div>
 
@@ -228,9 +215,7 @@ export function GroupClassDetailPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>🕐</span>
             <div>
-              <div style={{ fontSize: 14, color: '#333' }}>
-                {formatDate(groupClass.startTime)}
-              </div>
+              <div style={{ fontSize: 14, color: '#333' }}>{formatDate(groupClass.startTime)}</div>
               <div style={{ fontSize: 14, color: '#555', marginTop: 2 }}>
                 {formatTime(groupClass.startTime)} - {formatTime(groupClass.endTime)}
               </div>
@@ -238,7 +223,14 @@ export function GroupClassDetailPage() {
           </div>
 
           {/* Participant count */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: groupClass.feeDescription ? 14 : 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: groupClass.feeDescription ? 14 : 0,
+            }}
+          >
             <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>👥</span>
             <div style={{ fontSize: 14, color: '#333' }}>
               <span style={{ fontWeight: 600 }}>{groupClass.currentParticipants}</span>

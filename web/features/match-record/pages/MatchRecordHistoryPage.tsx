@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Tag } from 'antd';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useMatchStats } from '../hooks/useMatchStats';
 import { useMatchRecordHistory } from '../hooks/useMatchRecordHistory';
 import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
@@ -127,20 +128,7 @@ export function MatchRecordHistoryPage() {
             borderBottom: '1px solid #f0f0f0',
           }}
         >
-          <button
-            aria-label="返回"
-            onClick={() => navigate(-1)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 16,
-              marginRight: 8,
-              padding: 0,
-            }}
-          >
-            &lt; 返回
-          </button>
+          <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
           <h2 style={{ margin: 0, fontSize: 18 }}>战绩记录</h2>
         </div>
 

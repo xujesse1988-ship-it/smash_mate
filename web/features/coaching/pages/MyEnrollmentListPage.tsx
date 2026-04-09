@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../../../shared/components/BackButton';
 import { useMyEnrollments } from '../hooks/useMyEnrollments';
 
 const TYPE_FILTERS = [
@@ -64,20 +65,7 @@ export function MyEnrollmentListPage() {
             borderBottom: '1px solid #f0f0f0',
           }}
         >
-          <button
-            aria-label="返回"
-            onClick={() => navigate(-1)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 16,
-              marginRight: 8,
-              padding: 0,
-            }}
-          >
-            &lt; 返回
-          </button>
+          <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
           <h2 style={{ margin: 0, fontSize: 18 }}>我的课程</h2>
         </div>
 

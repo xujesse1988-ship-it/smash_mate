@@ -11,6 +11,7 @@ import { useUpdateGroupClass } from '../hooks/useUpdateGroupClass';
 import { useCancelGroupClass } from '../hooks/useCancelGroupClass';
 import { useSetAvailability } from '../hooks/useSetAvailability';
 import { useCancelPrivateLesson } from '../hooks/useCancelPrivateLesson';
+import { BackButton } from '../../../shared/components/BackButton';
 import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
 
@@ -207,21 +208,7 @@ export function MyCourseManagementPage() {
     <div style={{ padding: '16px' }}>
       {/* Header with back button */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <button
-          aria-label="返回"
-          onClick={() => navigate(-1)}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            fontSize: 16,
-            color: '#333',
-            padding: '4px 0',
-            marginRight: 12,
-          }}
-        >
-          ‹ 返回
-        </button>
+        <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
         <div style={{ fontWeight: 600, fontSize: 18 }}>课程管理</div>
       </div>
 
