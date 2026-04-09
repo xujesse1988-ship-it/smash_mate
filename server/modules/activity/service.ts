@@ -544,7 +544,7 @@ export class ActivityService {
     const updated = await this.repo.update(activityId, updateData);
 
     // Get venue info for response — prefer repo-included venue, fall back to venueService
-    const venue = (updated as any).venue ?? (
+    const venue = updated.venue ?? (
       (input.venueId ?? activity.venueId)
         ? await this.venueService.getVenueById(input.venueId ?? activity.venueId)
         : null
@@ -693,6 +693,15 @@ export class ActivityService {
       page,
       pageSize,
     };
+  }
+
+  // =========================================================================
+  // GET /api/users/:id/recent-venues — User recent venues
+  // =========================================================================
+
+  async getUserRecentVenues(userId: string) {
+    const items = await this.repo.findRecentVenuesForUser(userId, 3);
+    return { items };
   }
 
   // =========================================================================

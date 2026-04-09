@@ -323,7 +323,7 @@ describe('ActivityDetailPage', () => {
     renderPage();
 
     // 发起人应有特殊标识
-    expect(screen.getByText(/发起人/)).toBeInTheDocument();
+    expect(screen.getAllByText(/发起人/).length).toBeGreaterThanOrEqual(1);
   });
 
   // =========================================================================

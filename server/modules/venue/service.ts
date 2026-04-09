@@ -136,16 +136,15 @@ export class VenueService {
   }
 
   async searchVenues(query: VenueSearchQuery) {
-    // 1. Validate keyword
-    const keyword = query.keyword?.trim();
-    if (!keyword) {
-      throw new AppError(400, 'VENUE_INVALID_KEYWORD', '搜索关键词不能为空');
-    }
-
-    // 2. Validate coordinates
+    // 1. Validate keyword and coordinates
+    const keyword = query.keyword?.trim() || '';
     const { latitude, longitude } = query;
     const hasLat = latitude !== undefined && latitude !== null;
     const hasLng = longitude !== undefined && longitude !== null;
+
+    if (!keyword && !(hasLat && hasLng)) {
+      throw new AppError(400, 'VENUE_INVALID_KEYWORD', '若无关键词，必须提供经纬度以获取附近球馆');
+    }
 
     if (hasLat !== hasLng) {
       throw new AppError(400, 'VENUE_INVALID_COORDINATES', '经纬度必须同时提供或同时不提供');

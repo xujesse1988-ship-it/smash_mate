@@ -554,6 +554,43 @@ export class ActivityRepository {
   }
 
   /**
+   * Find recent venues that the user participated in activities at.
+   */
+  async findRecentVenuesForUser(userId: string, limit: number = 3) {
+    const activities = await prisma.activity.findMany({
+      where: {
+        participants: { some: { userId } },
+        venueId: { not: null },
+      },
+      select: {
+        venue: {
+          select: { id: true, name: true, address: true, latitude: true, longitude: true },
+        },
+      },
+      orderBy: { startTime: 'desc' },
+      take: 50, // fetch enough to distinct
+    });
+
+    const seen = new Set<string>();
+    const venues = [];
+
+    for (const a of activities) {
+      if (a.venue && !seen.has(a.venue.id)) {
+        seen.add(a.venue.id);
+        venues.push({
+          ...a.venue,
+          // Add this property to make interface compatibility easier down the line
+          latitude: a.venue.latitude ?? undefined,
+          longitude: a.venue.longitude ?? undefined,
+        });
+        if (venues.length >= limit) break;
+      }
+    }
+
+    return venues;
+  }
+
+  /**
    * Find activities to transition status (for scheduled task).
    */
   async findActivitiesToTransition(fromStatuses: string[], timeField: string, now: Date) {

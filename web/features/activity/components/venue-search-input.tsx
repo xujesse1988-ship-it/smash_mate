@@ -1,6 +1,9 @@
-import React, { useDeferredValue, useEffect, useState } from 'react';
+import React, { useDeferredValue, useEffect, useState, useRef } from 'react';
 import type { VenueSearchItem } from '../api/venue-api';
 import { searchVenues } from '../api/venue-api';
+import { useAuthStore } from '../../../stores/auth-store';
+import { useGeolocation } from '../../../shared/hooks/useGeolocation';
+import { getUserRecentVenues } from '../api/activity-api';
 
 interface VenueSearchInputProps {
   selectedVenue: VenueSearchItem | null;
@@ -21,9 +24,73 @@ export function VenueSearchInput({
   const [items, setItems] = useState<VenueSearchItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
+
+  const [isFocused, setIsFocused] = useState(false);
+  const [recentVenues, setRecentVenues] = useState<VenueSearchItem[]>([]);
+  const [closestVenues, setClosestVenues] = useState<VenueSearchItem[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { userId } = useAuthStore();
+  const geolocation = useGeolocation();
+
   const deferredSearchValue = useDeferredValue(searchValue);
   const selectedVenueId = selectedVenue?.id;
   const selectedVenueName = selectedVenue?.name;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsFocused(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const isKeywordEmpty = deferredSearchValue.trim().length === 0;
+    if (isFocused && isKeywordEmpty && !selectedVenue) {
+      let cancelled = false;
+
+      const fetchRecommendations = async () => {
+        setIsLoadingRecommendations(true);
+        try {
+          if (userId && recentVenues.length === 0) {
+            try {
+              const recent = await getUserRecentVenues(userId);
+              if (!cancelled) setRecentVenues(recent.items);
+            } catch (err) {
+              console.error('Failed to fetch recent venues', err);
+            }
+          }
+          if (geolocation.latitude && geolocation.longitude && closestVenues.length === 0) {
+            try {
+              const closest = await searchVenues({
+                keyword: '',
+                latitude: geolocation.latitude,
+                longitude: geolocation.longitude,
+                limit: 5,
+              });
+              if (!cancelled) setClosestVenues(closest.items);
+            } catch (err) {
+              console.error('Failed to fetch closest venues', err);
+            }
+          } else if (geolocation.permission === 'prompt') {
+            geolocation.requestLocation();
+          }
+        } finally {
+          if (!cancelled) setIsLoadingRecommendations(false);
+        }
+      };
+
+      fetchRecommendations();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [isFocused, deferredSearchValue, selectedVenue, userId, geolocation, recentVenues.length, closestVenues.length]);
 
   useEffect(() => {
     if (selectedVenueName) {
@@ -70,16 +137,47 @@ export function VenueSearchInput({
     };
   }, [deferredSearchValue, selectedVenue]);
 
-  const showResults =
-    deferredSearchValue.trim().length > 0 &&
-    (!selectedVenue || deferredSearchValue.trim() !== selectedVenue.name.trim());
+  const isSearching = deferredSearchValue.trim().length > 0;
+  const isSelected = !!selectedVenue && deferredSearchValue.trim() === selectedVenue.name.trim();
+
+  const showSearchResults = isSearching && !isSelected && isFocused;
+  const showRecommendations = !isSearching && !isSelected && isFocused;
+  const showDropdown = showSearchResults || showRecommendations;
+
+  const renderVenueItem = (item: VenueSearchItem) => (
+    <button
+      key={item.id}
+      type="button"
+      onClick={() => {
+        onChangeSelection(item);
+        setSearchValue(item.name);
+        setItems([]);
+        setIsFocused(false);
+      }}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        padding: '10px 12px',
+        border: 'none',
+        borderTop: '1px solid #f5f5f5',
+        background: 'white',
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ fontSize: 14, color: '#222' }}>{item.name}</div>
+      <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+        {item.address || '地址待补充'}
+      </div>
+    </button>
+  );
 
   return (
-    <div>
+    <div ref={containerRef}>
       <input
         type="text"
         placeholder={placeholder}
         value={searchValue}
+        onFocus={() => setIsFocused(true)}
         onChange={(e) => {
           const nextValue = e.target.value;
           setSearchValue(nextValue);
@@ -107,7 +205,7 @@ export function VenueSearchInput({
         <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>{helperText}</div>
       )}
 
-      {showResults && (
+      {showDropdown && (
         <div
           style={{
             marginTop: 8,
@@ -115,49 +213,61 @@ export function VenueSearchInput({
             borderRadius: 8,
             overflow: 'hidden',
             background: '#fff',
+            maxHeight: 300,
+            overflowY: 'auto'
           }}
         >
-          {isLoading && (
-            <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>搜索中...</div>
+          {showSearchResults && (
+            <>
+              {isLoading && (
+                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>搜索中...</div>
+              )}
+
+              {!isLoading && searchError && (
+                <div style={{ padding: '10px 12px', fontSize: 12, color: '#ff4d4f' }}>
+                  {searchError}
+                </div>
+              )}
+
+              {!isLoading && !searchError && items.length === 0 && (
+                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>未找到匹配球馆</div>
+              )}
+
+              {!isLoading && !searchError && items.map(renderVenueItem)}
+            </>
           )}
 
-          {!isLoading && searchError && (
-            <div style={{ padding: '10px 12px', fontSize: 12, color: '#ff4d4f' }}>
-              {searchError}
+          {showRecommendations && (
+            <div style={{ padding: '8px 0' }}>
+              {isLoadingRecommendations && (
+                <div style={{ padding: '4px 12px', fontSize: 12, color: '#999' }}>加载推荐...</div>
+              )}
+
+              {!isLoadingRecommendations && recentVenues.length > 0 && (
+                <>
+                  <div style={{ fontSize: 12, fontWeight: 'bold', color: '#666', padding: '8px 12px 4px' }}>
+                    曾经去过
+                  </div>
+                  {recentVenues.map(renderVenueItem)}
+                </>
+              )}
+
+              {!isLoadingRecommendations && closestVenues.length > 0 && (
+                <>
+                  <div style={{ fontSize: 12, fontWeight: 'bold', color: '#666', padding: '8px 12px 4px', marginTop: recentVenues.length > 0 ? 8 : 0 }}>
+                    离你最近
+                  </div>
+                  {closestVenues
+                    .filter((c) => !recentVenues.find((r) => r.id === c.id))
+                    .map(renderVenueItem)}
+                </>
+              )}
+
+              {!isLoadingRecommendations && recentVenues.length === 0 && closestVenues.length === 0 && (
+                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>请输入球馆名称搜索</div>
+              )}
             </div>
           )}
-
-          {!isLoading && !searchError && items.length === 0 && (
-            <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>未找到匹配球馆</div>
-          )}
-
-          {!isLoading &&
-            !searchError &&
-            items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onChangeSelection(item);
-                  setSearchValue(item.name);
-                  setItems([]);
-                }}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '10px 12px',
-                  border: 'none',
-                  borderTop: '1px solid #f5f5f5',
-                  background: 'white',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ fontSize: 14, color: '#222' }}>{item.name}</div>
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                  {item.address || '地址待补充'}
-                </div>
-              </button>
-            ))}
         </div>
       )}
 

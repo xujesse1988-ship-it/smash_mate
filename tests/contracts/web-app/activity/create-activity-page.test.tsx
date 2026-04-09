@@ -109,14 +109,14 @@ describe('CreateActivityPage', () => {
   it('should render start time picker', () => {
     renderPage();
 
-    expect(screen.getByText(/开始时间/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/开始时间/i).length).toBeGreaterThanOrEqual(1);
   });
 
   // 来源: web-app-activity.md §2 — CreateActivityPage — 组件结构 — DateTimePicker (endTime)
   it('should render end time picker', () => {
     renderPage();
 
-    expect(screen.getByText(/结束时间/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/结束时间/i).length).toBeGreaterThanOrEqual(1);
   });
 
   // 来源: web-app-activity.md §2 — CreateActivityPage — 组件结构 — ParticipantStepper

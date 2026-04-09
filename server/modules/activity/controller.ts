@@ -160,6 +160,20 @@ export function createActivityController(): Router {
     },
   );
 
+  // GET /api/users/:id/recent-venues
+  router.get(
+    '/users/:id/recent-venues',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getUserRecentVenues(req.params.id);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   return router;
 }
 

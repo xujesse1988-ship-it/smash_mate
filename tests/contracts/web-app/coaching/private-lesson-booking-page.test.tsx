@@ -81,8 +81,8 @@ import { PrivateLessonBookingPage } from '@web/features/coaching/pages/PrivateLe
 
 const mockSlotWithVenues = {
   id: 'slot-uuid-1',
-  startTime: '2026-04-11T10:00:00.000Z',
-  endTime: '2026-04-11T12:00:00.000Z',
+  startTime: '2026-04-11T02:00:00.000Z', // 10:00 local (+8)
+  endTime: '2026-04-11T04:00:00.000Z',
   venues: [
     { id: 'venue-uuid-1', name: '朝阳体育中心羽毛球馆', address: '北京市朝阳区...' },
     { id: 'venue-uuid-2', name: '海淀体育馆', address: '北京市海淀区...' },
@@ -93,8 +93,8 @@ const mockSlotWithVenues = {
 
 const mockSlotWithOneVenue = {
   id: 'slot-uuid-2',
-  startTime: '2026-04-12T14:00:00.000Z',
-  endTime: '2026-04-12T16:00:00.000Z',
+  startTime: '2026-04-12T06:00:00.000Z', // 14:00 local (+8)
+  endTime: '2026-04-12T08:00:00.000Z',
   venues: [
     { id: 'venue-uuid-1', name: '朝阳体育中心羽毛球馆', address: '北京市朝阳区...' },
   ],
@@ -104,8 +104,8 @@ const mockSlotWithOneVenue = {
 
 const mockSlotNoVenue = {
   id: 'slot-uuid-3',
-  startTime: '2026-04-13T09:00:00.000Z',
-  endTime: '2026-04-13T11:00:00.000Z',
+  startTime: '2026-04-13T01:00:00.000Z', // 09:00 local (+8)
+  endTime: '2026-04-13T03:00:00.000Z',
   venues: [],
   feeDescription: null,
   isBooked: false,
@@ -113,8 +113,8 @@ const mockSlotNoVenue = {
 
 const mockSlotBooked = {
   id: 'slot-uuid-4',
-  startTime: '2026-04-14T10:00:00.000Z',
-  endTime: '2026-04-14T12:00:00.000Z',
+  startTime: '2026-04-14T02:00:00.000Z', // 10:00 local (+8)
+  endTime: '2026-04-14T04:00:00.000Z',
   venues: [],
   feeDescription: null,
   isBooked: true,

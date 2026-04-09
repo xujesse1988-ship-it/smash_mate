@@ -294,3 +294,18 @@ export async function getUserActivities(
 
   return handleResponse<PaginatedResult<ActivityListItem>>(response);
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/users/:id/recent-venues
+// ---------------------------------------------------------------------------
+
+export async function getUserRecentVenues(userId: string): Promise<{ items: Venue[] }> {
+  const url = resolveUrl(`/api/users/${userId}/recent-venues`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse<{ items: Venue[] }>(response);
+}
