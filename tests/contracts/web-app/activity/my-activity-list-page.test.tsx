@@ -24,15 +24,13 @@ import React from 'react';
 // ---------------------------------------------------------------------------
 
 const mockNavigate = vi.fn();
-let mockSearchParams = new URLSearchParams();
-const mockSetSearchParams = vi.fn();
+const mockUseMyActivities = vi.fn();
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useSearchParams: () => [mockSearchParams, mockSetSearchParams],
   };
 });
 
@@ -63,7 +61,10 @@ let mockMyActivitiesState = {
 };
 
 vi.mock('@web/features/activity/hooks/useMyActivities', () => ({
-  useMyActivities: () => mockMyActivitiesState,
+  useMyActivities: (params: unknown) => {
+    mockUseMyActivities(params);
+    return mockMyActivitiesState;
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -118,7 +119,6 @@ function renderPage() {
 describe('MyActivityListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchParams = new URLSearchParams();
     mockMyActivitiesState = {
       data: null,
       isLoading: false,
@@ -133,13 +133,12 @@ describe('MyActivityListPage', () => {
   // 基本渲染
   // =========================================================================
 
-  // 来源: web-app-activity.md §2 — MyActivityListPage — 组件结构 — RoleFilterTabs
-  it('should render role filter tabs (all, initiated, participated)', () => {
+  it('should not render role filter tabs', () => {
     renderPage();
 
-    expect(screen.getByText(/全部/i)).toBeInTheDocument();
-    expect(screen.getByText(/我发起的/i)).toBeInTheDocument();
-    expect(screen.getByText(/我参加的/i)).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.queryByText(/我发起的/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/我参加的/i)).not.toBeInTheDocument();
   });
 
   // 来源: web-app-activity.md §2 — MyActivityListPage — 组件结构 — StatusFilter
@@ -222,55 +221,13 @@ describe('MyActivityListPage', () => {
     expect(screen.getByText(/已结束/i)).toBeInTheDocument();
   });
 
-  // =========================================================================
-  // 角色筛选 Tab 交互
-  // =========================================================================
-
-  // 来源: web-app-activity.md §2 — MyActivityListPage — 交互流程 — 角色筛选
-  it('should default to "all" tab when no role query param', () => {
+  it('should request all activities without role filter', () => {
     renderPage();
 
-    // "全部" Tab 应为选中状态
-    const allTab = screen.getByText(/全部/i);
-    expect(allTab).toBeInTheDocument();
-  });
-
-  // 来源: web-app-activity.md §2 — MyActivityListPage — 页面状态 — role 支持 URL 查询参数
-  it('should set initial role tab from URL query param "initiated"', () => {
-    mockSearchParams = new URLSearchParams('role=initiated');
-    renderPage();
-
-    // "我发起的" Tab 应为选中状态
-    // 通过检查 tab 按钮的 aria-selected 或 class
-    const initiatedTab = screen.getByText(/我发起的/i);
-    expect(initiatedTab).toBeInTheDocument();
-  });
-
-  // 来源: web-app-activity.md §2 — MyActivityListPage — 页面状态 — role URL 查询参数 "participated"
-  it('should set initial role tab from URL query param "participated"', () => {
-    mockSearchParams = new URLSearchParams('role=participated');
-    renderPage();
-
-    const participatedTab = screen.getByText(/我参加的/i);
-    expect(participatedTab).toBeInTheDocument();
-  });
-
-  // 来源: web-app-activity.md §2 — MyActivityListPage — 交互流程 — Tab 切换
-  it('should switch role filter when tab is clicked', async () => {
-    const user = userEvent.setup();
-    mockMyActivitiesState = {
-      ...mockMyActivitiesState,
-      data: {
-        pages: [{ items: [], total: 0, page: 1, pageSize: 20 }],
-      },
-    };
-    renderPage();
-
-    await user.click(screen.getByText(/我发起的/i));
-
-    // Tab 切换后应触发数据重新加载（通过 hook 参数变化实现）
-    // 此测试验证 Tab 可点击，实际数据加载由 hook 控制
-    expect(screen.getByText(/我发起的/i)).toBeInTheDocument();
+    expect(mockUseMyActivities).toHaveBeenCalledWith({
+      userId: 'current-user-id',
+      status: null,
+    });
   });
 
   // =========================================================================

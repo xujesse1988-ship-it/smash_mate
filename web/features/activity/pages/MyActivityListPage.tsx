@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
 import { BackButton } from '../../../shared/components/BackButton';
 import { useMyActivities } from '../hooks/useMyActivities';
@@ -7,34 +7,18 @@ import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
 import { ActivityCard } from '../components/ActivityCard';
 import { STATUS_LABELS } from '../constants';
 
-// Map URL query param role values to API role values
-const ROLE_MAP: Record<string, string | null> = {
-  all: null,
-  initiated: 'creator',
-  participated: 'participant',
-};
-
 // ---------------------------------------------------------------------------
 // MyActivityListPage
 // ---------------------------------------------------------------------------
 
 export function MyActivityListPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const currentUserId = useAuthStore((state) => state.userId);
-
-  // Parse initial role from URL
-  const urlRole = searchParams.get('role') || 'all';
-  const initialApiRole = ROLE_MAP[urlRole] ?? null;
-
-  const [activeTab, setActiveTab] = useState<string>(urlRole);
-  const [role, setRole] = useState<string | null>(initialApiRole);
   const [status, setStatus] = useState<string | null>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   const activitiesQuery = useMyActivities({
     userId: currentUserId || '',
-    role,
     status,
   });
 
@@ -48,17 +32,6 @@ export function MyActivityListPage() {
     isFetchingNextPage: activitiesQuery.isFetchingNextPage,
     fetchNextPage: activitiesQuery.fetchNextPage,
   });
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    setRole(ROLE_MAP[tab] ?? null);
-  };
-
-  const tabs = [
-    { key: 'all', label: '全部' },
-    { key: 'initiated', label: '我发起的' },
-    { key: 'participated', label: '我参加的' },
-  ];
 
   const statusOptions = [
     { value: null, label: '全部状态' },
@@ -82,30 +55,6 @@ export function MyActivityListPage() {
       >
         <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 18 }}>我的活动</h2>
-      </div>
-
-      {/* Role filter tabs */}
-      <div role="tablist" style={{ display: 'flex', borderBottom: '1px solid #f0f0f0' }}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            style={{
-              flex: 1,
-              padding: '8px 0',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              borderBottom: activeTab === tab.key ? '2px solid #00C853' : '2px solid transparent',
-              fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? '#00C853' : '#666',
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
       </div>
 
       {/* Status filter */}
