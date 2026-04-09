@@ -155,7 +155,7 @@ export function GroupClassDetailPage() {
 
   return (
     <div style={{ padding: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
         <button
           aria-label="返回"
           onClick={() => navigate(-1)}
@@ -164,11 +164,14 @@ export function GroupClassDetailPage() {
             border: 'none',
             cursor: 'pointer',
             fontSize: 16,
-            padding: 0,
+            color: '#333',
+            padding: '4px 0',
+            marginRight: 12,
           }}
         >
-          &lt; 返回
+          ‹ 返回
         </button>
+        <div style={{ fontWeight: 600, fontSize: 18 }}>团课详情</div>
       </div>
 
       {/* Status Tag - only for open/full status */}
