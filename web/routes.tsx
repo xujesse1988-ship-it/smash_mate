@@ -10,6 +10,11 @@ const LoginPage = React.lazy(() =>
     default: m.LoginPage,
   })),
 );
+const LogoutPage = React.lazy(() =>
+  import('./features/auth/pages/LogoutPage').then((m) => ({
+    default: m.LogoutPage,
+  })),
+);
 const ActivityListPage = React.lazy(() =>
   import('./features/activity/pages/ActivityListPage').then((m) => ({
     default: m.ActivityListPage,
@@ -108,6 +113,7 @@ export function AppRoutes() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
 
         {/* Authenticated routes wrapped in AuthGuard + AppLayout */}
         <Route element={<AuthGuard />}>
