@@ -8,6 +8,7 @@ export function useUpdateProfile() {
     mutationFn: updateProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['current-user'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
   });
 }
