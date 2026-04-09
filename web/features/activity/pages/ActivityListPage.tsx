@@ -30,8 +30,7 @@ export function ActivityListPage() {
     longitude: geolocation.longitude,
   });
 
-  const allActivities =
-    activitiesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const allActivities = activitiesQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   const { sentinelRef } = useInfiniteScroll({
     hasNextPage: activitiesQuery.hasNextPage,
@@ -50,30 +49,65 @@ export function ActivityListPage() {
   };
 
   return (
-    <div style={{ paddingBottom: 80 }}>
+    <div style={{ paddingBottom: 120 }}>
       {/* FilterBar */}
-      <div style={{ padding: '8px 16px', display: 'flex', gap: 8, alignItems: 'center', borderBottom: '1px solid #f0f0f0' }}>
+      <div
+        style={{
+          padding: '8px 16px',
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          borderBottom: '1px solid #f0f0f0',
+        }}
+      >
         {/* Time filter button - uses "日期" to not conflict with sort "按时间" */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowDatePanel(!showDatePanel)}
-            style={{ fontSize: 13, padding: '2px 8px', border: '1px solid #ddd', borderRadius: 4, background: '#fff', cursor: 'pointer' }}
+            style={{
+              fontSize: 13,
+              padding: '2px 8px',
+              border: '1px solid #ddd',
+              borderRadius: 4,
+              background: '#fff',
+              cursor: 'pointer',
+            }}
           >
-            日期{dateFilter ? ` (${dateFilter === 'today' ? '今天' : dateFilter === 'tomorrow' ? '明天' : '本周'})` : ''}
+            日期
+            {dateFilter
+              ? ` (${dateFilter === 'today' ? '今天' : dateFilter === 'tomorrow' ? '明天' : '本周'})`
+              : ''}
           </button>
           {showDatePanel && (
-            <div style={{ position: 'absolute', top: 32, left: 0, background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 8, zIndex: 10 }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 32,
+                left: 0,
+                background: '#fff',
+                border: '1px solid #eee',
+                borderRadius: 8,
+                padding: 8,
+                zIndex: 10,
+              }}
+            >
               {['today', 'tomorrow', 'this_week'].map((f) => (
                 <div
                   key={f}
-                  onClick={() => { setDateFilter(f); setShowDatePanel(false); }}
+                  onClick={() => {
+                    setDateFilter(f);
+                    setShowDatePanel(false);
+                  }}
                   style={{ padding: '4px 16px', cursor: 'pointer' }}
                 >
                   {f === 'today' ? '今天' : f === 'tomorrow' ? '明天' : '本周'}
                 </div>
               ))}
               <div
-                onClick={() => { setDateFilter(null); setShowDatePanel(false); }}
+                onClick={() => {
+                  setDateFilter(null);
+                  setShowDatePanel(false);
+                }}
                 style={{ padding: '4px 16px', cursor: 'pointer', color: '#999' }}
               >
                 不限
@@ -87,23 +121,47 @@ export function ActivityListPage() {
           <div style={{ position: 'relative' }}>
             <button
               onClick={handleDistanceClick}
-              style={{ fontSize: 13, padding: '2px 8px', border: '1px solid #ddd', borderRadius: 4, background: '#fff', cursor: 'pointer' }}
+              style={{
+                fontSize: 13,
+                padding: '2px 8px',
+                border: '1px solid #ddd',
+                borderRadius: 4,
+                background: '#fff',
+                cursor: 'pointer',
+              }}
             >
               范围{maxDistance ? ` (${maxDistance}km)` : ''}
             </button>
             {showDistancePanel && (
-              <div style={{ position: 'absolute', top: 32, left: 0, background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 8, zIndex: 10 }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 32,
+                  left: 0,
+                  background: '#fff',
+                  border: '1px solid #eee',
+                  borderRadius: 8,
+                  padding: 8,
+                  zIndex: 10,
+                }}
+              >
                 {[3, 5, 10].map((d) => (
                   <div
                     key={d}
-                    onClick={() => { setMaxDistance(d); setShowDistancePanel(false); }}
+                    onClick={() => {
+                      setMaxDistance(d);
+                      setShowDistancePanel(false);
+                    }}
                     style={{ padding: '4px 16px', cursor: 'pointer' }}
                   >
                     {d}km
                   </div>
                 ))}
                 <div
-                  onClick={() => { setMaxDistance(null); setShowDistancePanel(false); }}
+                  onClick={() => {
+                    setMaxDistance(null);
+                    setShowDistancePanel(false);
+                  }}
                   style={{ padding: '4px 16px', cursor: 'pointer', color: '#999' }}
                 >
                   不限
@@ -124,14 +182,22 @@ export function ActivityListPage() {
       <div style={{ padding: '4px 16px', display: 'flex', gap: 8, fontSize: 13 }}>
         <span
           onClick={() => setSortBy('time')}
-          style={{ cursor: 'pointer', color: sortBy === 'time' ? '#00C853' : '#666', fontWeight: sortBy === 'time' ? 600 : 400 }}
+          style={{
+            cursor: 'pointer',
+            color: sortBy === 'time' ? '#00C853' : '#666',
+            fontWeight: sortBy === 'time' ? 600 : 400,
+          }}
         >
           按时间
         </span>
         {geolocation.permission === 'granted' && (
           <span
             onClick={() => setSortBy('distance')}
-            style={{ cursor: 'pointer', color: sortBy === 'distance' ? '#00C853' : '#666', fontWeight: sortBy === 'distance' ? 600 : 400 }}
+            style={{
+              cursor: 'pointer',
+              color: sortBy === 'distance' ? '#00C853' : '#666',
+              fontWeight: sortBy === 'distance' ? 600 : 400,
+            }}
           >
             按距离
           </span>
@@ -145,9 +211,7 @@ export function ActivityListPage() {
 
       {/* Error state */}
       {activitiesQuery.error && (
-        <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>
-          加载失败，请重试
-        </div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>加载失败，请重试</div>
       )}
 
       {/* Empty state */}
@@ -155,9 +219,7 @@ export function ActivityListPage() {
         !activitiesQuery.error &&
         activitiesQuery.data &&
         allActivities.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>
-            暂无活动
-          </div>
+          <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>暂无活动</div>
         )}
 
       {/* Activity list */}
@@ -182,7 +244,7 @@ export function ActivityListPage() {
         onClick={() => navigate('/activities/create')}
         style={{
           position: 'fixed',
-          bottom: 24,
+          bottom: 88,
           right: 24,
           width: 56,
           height: 56,
