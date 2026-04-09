@@ -23,4 +23,5 @@ export const config = {
   phoneLockDurationMinutes: parseInt(process.env.PHONE_LOCK_DURATION_MINUTES || '30', 10),
   phoneLockMaxFailures: parseInt(process.env.PHONE_LOCK_MAX_FAILURES || '5', 10),
   codeResendIntervalSeconds: parseInt(process.env.CODE_RESEND_INTERVAL_SECONDS || '60', 10),
+  devVerificationCode: process.env.DEV_VERIFICATION_CODE || undefined,
 };

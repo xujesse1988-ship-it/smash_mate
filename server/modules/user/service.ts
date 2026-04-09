@@ -70,8 +70,8 @@ export class UserService {
       }
     }
 
-    // 4. Generate verification code
-    const code = generateCode();
+    // 4. Generate verification code (use dev code if configured)
+    const code = config.devVerificationCode || generateCode();
     const expiresAt = new Date(Date.now() + config.verificationCodeExpireMinutes * 60 * 1000);
 
     // 5. Store verification code
@@ -103,28 +103,35 @@ export class UserService {
       throw new AppError(429, 'AUTH_PHONE_LOCKED', '该手机号已被锁定，请稍后再试');
     }
 
-    // 4. Verify code (only unused codes are valid for login)
-    const latestCode = await this.repo.findLatestVerificationCode(phone, true);
+    // 4. Verify code
+    // Dev shortcut: if DEV_VERIFICATION_CODE is set and matches, skip DB lookup
+    const isDevCodeMatch = config.devVerificationCode && code === config.devVerificationCode;
 
-    // No unused verification code found
-    if (!latestCode) {
-      await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
-      throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
+    if (!isDevCodeMatch) {
+      // Normal flow: verify against DB (only unused codes are valid for login)
+      const latestCode = await this.repo.findLatestVerificationCode(phone, true);
+
+      // No unused verification code found
+      if (!latestCode) {
+        await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
+        throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
+      }
+
+      // Code expired
+      if (latestCode.expiresAt < new Date()) {
+        throw new AppError(401, 'AUTH_CODE_EXPIRED', '验证码已过期');
+      }
+
+      // Code mismatch
+      if (latestCode.code !== code) {
+        await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
+        throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
+      }
+
+      // 5. Code matches - mark used and reset phone lock
+      await this.repo.markVerificationCodeUsed(latestCode.id);
     }
 
-    // Code expired
-    if (latestCode.expiresAt < new Date()) {
-      throw new AppError(401, 'AUTH_CODE_EXPIRED', '验证码已过期');
-    }
-
-    // Code mismatch
-    if (latestCode.code !== code) {
-      await this.incrementFailCount(phoneLock.id, phoneLock.failCount);
-      throw new AppError(401, 'AUTH_CODE_WRONG', '验证码错误');
-    }
-
-    // 5. Code matches - mark used and reset phone lock
-    await this.repo.markVerificationCodeUsed(latestCode.id);
     await this.repo.updatePhoneLock(phoneLock.id, { failCount: 0, lockedUntil: null });
 
     // 6. Find or create user
