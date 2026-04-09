@@ -1,23 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import vitePluginImp from 'vite-plugin-imp';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    vitePluginImp({
-      optimize: true,
-      libList: [
-        {
-          libName: 'antd',
-          libDirectory: 'es',
-          // antd v5 使用 CSS-in-JS，不需要单独引入 CSS 文件
-          style: () => false,
-        },
-      ],
-    }),
-  ],
+  plugins: [react()],
   root: path.resolve(__dirname),
   resolve: {
     alias: {
@@ -43,14 +29,41 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // React 核心单独一个 chunk，体积小、缓存稳定
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // Ant Design 体积最大，单独拆出，不影响其他 chunk 缓存
           'vendor-antd': ['antd', '@ant-design/icons'],
-          // 数据请求库
           'vendor-query': ['@tanstack/react-query'],
         },
       },
     },
+  },
+  // 开发模式：明确告知 Vite 预构建 antd 各子模块，避免整包打进一个 9MB 文件
+  optimizeDeps: {
+    include: [
+      'antd/es/button',
+      'antd/es/input',
+      'antd/es/form',
+      'antd/es/table',
+      'antd/es/card',
+      'antd/es/message',
+      'antd/es/spin',
+      'antd/es/tag',
+      'antd/es/avatar',
+      'antd/es/checkbox',
+      'antd/es/modal',
+      'antd/es/select',
+      'antd/es/typography',
+      'antd/es/layout',
+      'antd/es/menu',
+      'antd/es/config-provider',
+      '@ant-design/icons/es/icons/UserOutlined',
+      '@ant-design/icons/es/icons/BellOutlined',
+      '@ant-design/icons/es/icons/EnvironmentOutlined',
+      '@ant-design/icons/es/icons/ShopOutlined',
+      '@ant-design/icons/es/icons/TeamOutlined',
+      '@ant-design/icons/es/icons/LeftOutlined',
+      '@ant-design/icons/es/icons/RightOutlined',
+      '@ant-design/icons/es/icons/PlusOutlined',
+      '@ant-design/icons/es/icons/SyncOutlined',
+    ],
   },
 });
