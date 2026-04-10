@@ -31,16 +31,16 @@ import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
 import { NotificationService } from '@server/modules/notification/service.js';
 import { NotificationRepository } from '@server/modules/notification/repository.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
 import {
   createTestGroupClass,
   addTestEnrollment,
   createTestPrivateLessonSlot,
   createTestPrivateLesson,
-  cleanupCoachingTestData,
   getTestPrisma,
 } from '@tests/fixtures/coaching.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -55,10 +55,7 @@ function futureDate(hoursFromNow: number): string {
 }
 
 async function cleanupAll() {
-  await prisma.notification.deleteMany();
-  await cleanupCoachingTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {
@@ -1300,7 +1297,7 @@ describe('processStatusTransitions (status auto-transition)', () => {
     const groupClass = await createTestGroupClass({
       coachId: coach.id,
       startTime: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-      endTime: new Date(Date.now() + 60 * 60 * 1000),   // 1 hour from now
+      endTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
       status: 'open',
     });
 
@@ -1315,7 +1312,7 @@ describe('processStatusTransitions (status auto-transition)', () => {
     const groupClass = await createTestGroupClass({
       coachId: coach.id,
       startTime: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-      endTime: new Date(Date.now() - 60 * 60 * 1000),       // 1 hour ago
+      endTime: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
       status: 'in_progress',
     });
 

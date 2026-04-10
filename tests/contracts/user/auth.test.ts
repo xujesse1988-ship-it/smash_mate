@@ -11,9 +11,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import jwt from 'jsonwebtoken';
+import { config } from '@server/infra/config.js';
 import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
 import type { SendCodeInput, LoginInput } from '@server/modules/user/types.js';
+
+const originalDevVerificationCode = config.devVerificationCode;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -73,6 +76,7 @@ describe('POST /api/auth/send-code — UserService.sendCode', () => {
   let repo: ReturnType<typeof createMockRepository>;
 
   beforeEach(() => {
+    config.devVerificationCode = undefined;
     repo = createMockRepository();
     service = new UserService(repo as unknown as UserRepository);
   });
@@ -311,6 +315,7 @@ describe('POST /api/auth/login — UserService.login', () => {
   }
 
   beforeEach(() => {
+    config.devVerificationCode = undefined;
     repo = createMockRepository();
     service = new UserService(repo as unknown as UserRepository);
   });
@@ -824,4 +829,8 @@ describe('POST /api/auth/login — UserService.login', () => {
       statusCode: 401,
     });
   });
+});
+
+afterAll(() => {
+  config.devVerificationCode = originalDevVerificationCode;
 });

@@ -14,6 +14,15 @@ export interface ApiError {
   message: string;
 }
 
+function getLocalStorageToken(key: string): string | null {
+  const storage = globalThis.localStorage;
+  if (!storage || typeof storage.getItem !== 'function') {
+    return null;
+  }
+
+  return storage.getItem(key);
+}
+
 /**
  * Resolve a relative API path to a full URL.
  * In the browser the path is returned as-is (Vite proxy handles it).
@@ -31,8 +40,7 @@ export function resolveUrl(path: string): string {
  * present in localStorage, the Authorization bearer header.
  */
 export function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = getLocalStorageToken('token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };

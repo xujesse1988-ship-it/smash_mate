@@ -19,26 +19,18 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
-import {
-  createTestActivity,
-  addTestParticipant,
-  cleanupActivityTestData,
-} from '@tests/fixtures/activity.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
+import { createTestActivity, addTestParticipant } from '@tests/fixtures/activity.js';
 import {
   createTestGroupClass,
   createTestCoachProfile,
   addTestEnrollment,
   createTestPrivateLessonSlot,
   createTestPrivateLesson,
-  cleanupCoachingTestData,
 } from '@tests/fixtures/coaching.js';
-import {
-  cleanupMatchRecordTestData,
-  createTestFullMatchRecord,
-  getTestPrisma,
-} from '@tests/fixtures/match-record.js';
+import { createTestFullMatchRecord, getTestPrisma } from '@tests/fixtures/match-record.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -52,11 +44,7 @@ function pastDate(hoursAgo: number): Date {
 }
 
 async function cleanup() {
-  await cleanupMatchRecordTestData();
-  await cleanupCoachingTestData();
-  await cleanupActivityTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {

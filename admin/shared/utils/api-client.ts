@@ -9,11 +9,20 @@
  * Design reference: docs/module-design/admin.md §6 "API Client 配置"
  */
 
-import { useAdminAuthStore } from '@/stores/auth-store';
+import { useAdminAuthStore } from '@admin/stores/auth-store';
 
 export interface ApiError {
   code: string;
   message: string;
+}
+
+function getLocalStorageToken(key: string): string | null {
+  const storage = globalThis.localStorage;
+  if (!storage || typeof storage.getItem !== 'function') {
+    return null;
+  }
+
+  return storage.getItem(key);
 }
 
 /**
@@ -34,10 +43,7 @@ export function resolveUrl(path: string): string {
  * Uses admin_token key to isolate from web-app tokens.
  */
 export function getAdminAuthHeaders(): Record<string, string> {
-  const token =
-    typeof localStorage !== 'undefined'
-      ? localStorage.getItem('admin_token')
-      : null;
+  const token = getLocalStorageToken('admin_token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };

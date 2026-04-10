@@ -16,18 +16,17 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
 import {
   createTestGroupClass,
   createTestCoachProfile,
   addTestEnrollment,
   createTestPrivateLessonSlot,
   createTestPrivateLesson,
-  cleanupCoachingTestData,
 } from '@tests/fixtures/coaching.js';
-import { cleanupReviewTestData, createTestReview, getTestPrisma } from '@tests/fixtures/review.js';
-import { cleanupNotificationTestData } from '@tests/fixtures/notification.js';
+import { createTestReview, getTestPrisma } from '@tests/fixtures/review.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -40,11 +39,7 @@ function pastDate(hoursAgo: number): Date {
 }
 
 async function cleanup() {
-  await cleanupNotificationTestData();
-  await cleanupReviewTestData();
-  await cleanupCoachingTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {

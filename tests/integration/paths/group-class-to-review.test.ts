@@ -12,16 +12,10 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
-import {
-  createTestCoachProfile,
-  cleanupCoachingTestData,
-  getTestPrisma,
-} from '@tests/fixtures/coaching.js';
-import { cleanupReviewTestData } from '@tests/fixtures/review.js';
-import { cleanupMatchRecordTestData } from '@tests/fixtures/match-record.js';
-import { cleanupNotificationTestData } from '@tests/fixtures/notification.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
+import { createTestCoachProfile, getTestPrisma } from '@tests/fixtures/coaching.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -40,12 +34,7 @@ function futureDate(hoursFromNow: number): Date {
 }
 
 async function cleanup() {
-  await cleanupMatchRecordTestData();
-  await cleanupReviewTestData();
-  await cleanupNotificationTestData();
-  await cleanupCoachingTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {
@@ -156,9 +145,7 @@ describe('关键路径: 教练团课全流程（发布→报名→结束→评�
     const { UserService } = await import('@server/modules/user/service.js');
     const { UserRepository } = await import('@server/modules/user/repository.js');
     const { NotificationService } = await import('@server/modules/notification/service.js');
-    const { NotificationRepository } = await import(
-      '@server/modules/notification/repository.js'
-    );
+    const { NotificationRepository } = await import('@server/modules/notification/repository.js');
 
     const coachingService = new CoachingService(
       new CoachingRepository(),

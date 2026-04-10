@@ -19,7 +19,8 @@ import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
 import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
-import { createTestUser, cleanupUserTestData, getTestPrisma } from '@tests/fixtures/user.js';
+import { createTestUser, getTestPrisma } from '@tests/fixtures/user.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -33,11 +34,11 @@ function signToken(userId: string): string {
 }
 
 beforeAll(async () => {
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterEach(async () => {
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterAll(async () => {

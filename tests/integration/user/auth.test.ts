@@ -18,9 +18,9 @@ import {
   createTestUser,
   createTestVerificationCode,
   createTestPhoneLock,
-  cleanupUserTestData,
   getTestPrisma,
 } from '@tests/fixtures/user.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -32,11 +32,11 @@ function nextPhone(): string {
 }
 
 beforeAll(async () => {
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterEach(async () => {
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterAll(async () => {

@@ -52,6 +52,7 @@ export default defineConfig({
           name: 'server',
           globals: true,
           environment: 'node',
+          fileParallelism: false,
           include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
           exclude: [
             'tests/e2e/**',

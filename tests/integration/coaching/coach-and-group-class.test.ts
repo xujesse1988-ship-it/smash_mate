@@ -28,15 +28,15 @@ import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
 import { NotificationService } from '@server/modules/notification/service.js';
 import { NotificationRepository } from '@server/modules/notification/repository.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
 import {
   createTestCoachProfile,
   createTestGroupClass,
   addTestEnrollment,
-  cleanupCoachingTestData,
   getTestPrisma,
 } from '@tests/fixtures/coaching.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -57,11 +57,7 @@ function futureDate(hoursFromNow: number): string {
 }
 
 async function cleanupAll() {
-  // Must clean in correct order due to foreign key constraints
-  await prisma.notification.deleteMany();
-  await cleanupCoachingTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {
@@ -187,9 +183,7 @@ describe('GET /api/coaches', () => {
     });
     const token = signToken(coach.id);
 
-    const res = await request(app)
-      .get('/api/coaches')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/coaches').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.items).toBeDefined();
@@ -236,9 +230,7 @@ describe('GET /api/coaches', () => {
     const user = await createTestUser();
     const token = signToken(user.id);
 
-    const res = await request(app)
-      .get('/api/coaches')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/coaches').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.items).toHaveLength(0);

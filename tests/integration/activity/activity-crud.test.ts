@@ -26,14 +26,10 @@ import { UserService } from '@server/modules/user/service.js';
 import { UserRepository } from '@server/modules/user/repository.js';
 import { NotificationService } from '@server/modules/notification/service.js';
 import { NotificationRepository } from '@server/modules/notification/repository.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
-import {
-  createTestActivity,
-  addTestParticipant,
-  cleanupActivityTestData,
-  getTestPrisma,
-} from '@tests/fixtures/activity.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
+import { createTestActivity, addTestParticipant, getTestPrisma } from '@tests/fixtures/activity.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -54,15 +50,11 @@ function futureDate(hoursFromNow: number): string {
 }
 
 beforeAll(async () => {
-  await cleanupActivityTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterEach(async () => {
-  await cleanupActivityTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterAll(async () => {
@@ -206,12 +198,14 @@ describe('POST /api/activities', () => {
   });
 
   it('should return 401 when no token is provided', async () => {
-    const res = await request(app).post('/api/activities').send({
-      venueId: 'some-id',
-      startTime: futureDate(24),
-      endTime: futureDate(26),
-      maxParticipants: 8,
-    });
+    const res = await request(app)
+      .post('/api/activities')
+      .send({
+        venueId: 'some-id',
+        startTime: futureDate(24),
+        endTime: futureDate(26),
+        maxParticipants: 8,
+      });
 
     expect(res.status).toBe(401);
   });
@@ -236,9 +230,7 @@ describe('GET /api/activities', () => {
       endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
     });
 
-    const res = await request(app)
-      .get('/api/activities')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/activities').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.items).toHaveLength(1);
@@ -292,9 +284,7 @@ describe('GET /api/activities', () => {
       endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
     });
 
-    const res = await request(app)
-      .get('/api/activities')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/activities').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     const item = res.body.data.items[0];
@@ -318,9 +308,7 @@ describe('GET /api/activities', () => {
       endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
     });
 
-    const res = await request(app)
-      .get('/api/activities')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/activities').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.items).toHaveLength(0);

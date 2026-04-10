@@ -17,13 +17,9 @@ import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
 import { VenueService } from '@server/modules/venue/service.js';
 import { VenueRepository } from '@server/modules/venue/repository.js';
-import {
-  createTestCity,
-  createTestVenue,
-  cleanupVenueTestData,
-  getTestPrisma,
-} from '@tests/fixtures/venue.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue, getTestPrisma } from '@tests/fixtures/venue.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -37,13 +33,11 @@ function signToken(userId: string): string {
 }
 
 beforeAll(async () => {
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterEach(async () => {
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterAll(async () => {

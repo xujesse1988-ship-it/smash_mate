@@ -12,13 +12,10 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
-import { createTestCity, createTestVenue, cleanupVenueTestData } from '@tests/fixtures/venue.js';
-import {
-  cleanupActivityTestData,
-} from '@tests/fixtures/activity.js';
-import { cleanupMatchRecordTestData, getTestPrisma } from '@tests/fixtures/match-record.js';
-import { cleanupNotificationTestData } from '@tests/fixtures/notification.js';
+import { createTestUser } from '@tests/fixtures/user.js';
+import { createTestCity, createTestVenue } from '@tests/fixtures/venue.js';
+import { getTestPrisma } from '@tests/fixtures/match-record.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -37,11 +34,7 @@ function futureDate(hoursFromNow: number): Date {
 }
 
 async function cleanup() {
-  await cleanupMatchRecordTestData();
-  await cleanupNotificationTestData();
-  await cleanupActivityTestData();
-  await cleanupVenueTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 }
 
 beforeAll(async () => {

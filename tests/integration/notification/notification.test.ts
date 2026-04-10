@@ -21,13 +21,13 @@ import app from '@server/app.js';
 import { config } from '@server/infra/config.js';
 import { NotificationService } from '@server/modules/notification/service.js';
 import { NotificationRepository } from '@server/modules/notification/repository.js';
-import { createTestUser, cleanupUserTestData } from '@tests/fixtures/user.js';
+import { createTestUser } from '@tests/fixtures/user.js';
 import {
   createTestNotification,
   createTestNotifications,
-  cleanupNotificationTestData,
   getTestPrisma,
 } from '@tests/fixtures/notification.js';
+import { resetTestDatabase } from '@tests/fixtures/database.js';
 
 const prisma = getTestPrisma();
 
@@ -41,13 +41,11 @@ function signToken(userId: string): string {
 }
 
 beforeAll(async () => {
-  await cleanupNotificationTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterEach(async () => {
-  await cleanupNotificationTestData();
-  await cleanupUserTestData();
+  await resetTestDatabase();
 });
 
 afterAll(async () => {
@@ -670,9 +668,7 @@ describe('NotificationService.createBatch — cross-module integration', () => {
   });
 
   it('should reject non-array input', async () => {
-    await expect(
-      service.createBatch('not-an-array' as never),
-    ).rejects.toMatchObject({
+    await expect(service.createBatch('not-an-array' as never)).rejects.toMatchObject({
       code: 'NOTIFICATION_INVALID_PARAMS',
     });
   });
