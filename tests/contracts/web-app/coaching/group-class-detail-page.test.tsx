@@ -301,7 +301,10 @@ describe('GroupClassDetailPage', () => {
     mockGroupClassDetailState = { data: mockGroupClassOpen, isLoading: false, error: null };
     renderPage();
 
-    expect(screen.getByText(/5\/10/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent?.includes('5 / 10 人') ?? false)
+        .length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   // =========================================================================
@@ -438,7 +441,7 @@ describe('GroupClassDetailPage', () => {
     mockGroupClassDetailState = { data: mockGroupClassCancelled, isLoading: false, error: null };
     renderPage();
 
-    expect(screen.getByText(/已取消/i)).toBeInTheDocument();
+    expect(screen.getByText('该团课已取消')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /报名/i })).not.toBeInTheDocument();
   });
 
@@ -447,7 +450,7 @@ describe('GroupClassDetailPage', () => {
     mockGroupClassDetailState = { data: mockGroupClassInProgress, isLoading: false, error: null };
     renderPage();
 
-    expect(screen.getByText(/进行中/i)).toBeInTheDocument();
+    expect(screen.getByText(/课程进行中/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /报名/i })).not.toBeInTheDocument();
   });
 

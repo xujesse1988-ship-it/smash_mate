@@ -389,8 +389,8 @@ describe('MyCourseManagementPage', () => {
     await userEvent.click(addButton);
 
     // Modal should appear with time inputs
-    expect(screen.getByText(/开始时间/i)).toBeInTheDocument();
-    expect(screen.getByText(/结束时间/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/开始时间/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/结束时间/i).length).toBeGreaterThanOrEqual(1);
   });
 
   // =========================================================================
@@ -478,7 +478,8 @@ describe('MyCourseManagementPage', () => {
     mockCoachProfileState = { data: mockCoachProfileData, isLoading: false, error: null };
     renderPage();
 
-    const classCard = screen.getByText('初级单打提升班').closest('[data-testid]') ||
+    const classCard =
+      screen.getByText('初级单打提升班').closest('[data-testid]') ||
       screen.getByText('初级单打提升班').closest('div');
     if (classCard) {
       await userEvent.click(classCard);

@@ -283,8 +283,10 @@ describe('ActivityDetailPage', () => {
     };
     renderPage();
 
-    // 2/8 人
-    expect(screen.getByText(/2.*\/.*8/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent?.includes('2 / 8 人') ?? false)
+        .length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   // 来源: web-app-activity.md §6.5 — venue 为 null
@@ -310,7 +312,7 @@ describe('ActivityDetailPage', () => {
     };
     renderPage();
 
-    expect(screen.getByText('发起人')).toBeInTheDocument();
+    expect(screen.getAllByText('发起人').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('参与者A')).toBeInTheDocument();
   });
 

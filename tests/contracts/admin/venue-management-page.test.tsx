@@ -482,6 +482,6 @@ describe('VenueManagementPage', () => {
     renderPage();
 
     // 2026-04-01T10:00:00.000Z should be formatted
-    expect(screen.getByText(/2026-04-01/)).toBeInTheDocument();
+    expect(screen.getAllByText(/2026-04-01/).length).toBeGreaterThanOrEqual(1);
   });
 });

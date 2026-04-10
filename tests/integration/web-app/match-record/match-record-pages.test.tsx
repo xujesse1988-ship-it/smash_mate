@@ -334,8 +334,8 @@ describe('CreateMatchRecordPage Integration', () => {
     );
 
     // Should render player sections
-    expect(screen.getByText(/A/i)).toBeInTheDocument();
-    expect(screen.getByText(/B/i)).toBeInTheDocument();
+    expect(screen.getByText('A 方队伍')).toBeInTheDocument();
+    expect(screen.getByText('B 方队伍')).toBeInTheDocument();
   }, 15000);
 
   it('should load participants from group class API for group-class source', async () => {

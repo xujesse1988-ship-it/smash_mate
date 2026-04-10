@@ -261,7 +261,7 @@ describe('CoachProfilePage', () => {
     renderPage();
 
     expect(screen.getByText(/4\.5/)).toBeInTheDocument();
-    expect(screen.getByText(/15/)).toBeInTheDocument();
+    expect(screen.getByText(/\(15条\)/)).toBeInTheDocument();
   });
 
   // 来源: web-app-coaching.md §6.2 — 教练主页数据聚合逻辑 — 评分显示规则 (null)
@@ -322,7 +322,8 @@ describe('CoachProfilePage', () => {
     mockCoachProfileState = { data: mockCoachProfile, isLoading: false, error: null };
     renderPage();
 
-    const groupClassCard = screen.getByText('初级单打提升班').closest('[data-testid]') ||
+    const groupClassCard =
+      screen.getByText('初级单打提升班').closest('[data-testid]') ||
       screen.getByText('初级单打提升班').closest('div');
     if (groupClassCard) {
       await userEvent.click(groupClassCard);

@@ -916,7 +916,7 @@ describe('MyActivityListPage Integration', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/activities/activity-uuid-1');
   });
 
-  it('should pass role filter to API when tab is changed', async () => {
+  it('should pass status filter to API when selection is changed', async () => {
     let capturedUrl = '';
 
     server.use(
@@ -936,13 +936,13 @@ describe('MyActivityListPage Integration', () => {
       expect(capturedUrl).toContain('/api/users/current-user-id/activities');
     });
 
-    // Click "我发起的" tab
-    await user.click(screen.getByText(/我发起的/i));
+    await user.click(screen.getByRole('button', { name: /状态/i }));
+    await user.click(screen.getByText('报名中'));
 
-    // Wait for new request with role=creator
+    // Wait for new request with status=open
     await waitFor(() => {
       const url = new URL(capturedUrl);
-      expect(url.searchParams.get('role')).toBe('creator');
+      expect(url.searchParams.get('status')).toBe('open');
     });
   });
 
@@ -981,7 +981,7 @@ describe('MyActivityListPage Integration', () => {
     });
   });
 
-  it('should render role filter tabs correctly', async () => {
+  it('should render status filter options correctly', async () => {
     server.use(
       http.get('/api/users/:id/activities', () => {
         return HttpResponse.json({
@@ -992,9 +992,11 @@ describe('MyActivityListPage Integration', () => {
 
     renderPage();
 
-    expect(screen.getByText(/全部/i)).toBeInTheDocument();
-    expect(screen.getByText(/我发起的/i)).toBeInTheDocument();
-    expect(screen.getByText(/我参加的/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /状态/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /状态/i }));
+    expect(screen.getByText('全部状态')).toBeInTheDocument();
+    expect(screen.getByText('报名中')).toBeInTheDocument();
+    expect(screen.getByText('已结束')).toBeInTheDocument();
   });
 
   it('should display activity status tags in cards', async () => {

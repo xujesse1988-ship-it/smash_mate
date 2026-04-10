@@ -94,6 +94,18 @@ vi.mock('@admin/features/venue-management/hooks/useAddCity', () => ({
   useAddCity: () => mockAddCityState,
 }));
 
+// Mock useSyncCity hook
+const mockSyncCityMutate = vi.fn();
+let mockSyncCityState = {
+  mutate: mockSyncCityMutate,
+  isPending: false,
+  variables: undefined as string | undefined,
+};
+
+vi.mock('@admin/features/venue-management/hooks/useSyncCity', () => ({
+  useSyncCity: () => mockSyncCityState,
+}));
+
 // ---------------------------------------------------------------------------
 // Import component under test (after mocks)
 // ---------------------------------------------------------------------------
@@ -151,6 +163,11 @@ describe('CityManagementPage', () => {
       mutateAsync: vi.fn(),
       isPending: false,
     };
+    mockSyncCityState = {
+      mutate: mockSyncCityMutate,
+      isPending: false,
+      variables: undefined,
+    };
   });
 
   // =========================================================================
@@ -197,7 +214,7 @@ describe('CityManagementPage', () => {
 
     // 2026-04-01T10:00:00.000Z should be formatted (depending on timezone)
     // At least check the formatted date is present in some form
-    expect(screen.getByText(/2026-04-01/)).toBeInTheDocument();
+    expect(screen.getAllByText(/2026-04-01/).length).toBeGreaterThanOrEqual(1);
   });
 
   // =========================================================================

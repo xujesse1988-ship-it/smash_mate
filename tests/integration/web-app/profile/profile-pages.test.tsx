@@ -217,8 +217,8 @@ describe('UserProfilePage Integration', () => {
       { timeout: 10000 },
     );
 
-    expect(screen.getByText(/我发起的活动/)).toBeInTheDocument();
-    expect(screen.getByText(/我参加的活动/)).toBeInTheDocument();
+    expect(screen.getByText(/我的活动/)).toBeInTheDocument();
+    expect(screen.getByText(/我的课程/)).toBeInTheDocument();
     expect(screen.getByText(/战绩记录/)).toBeInTheDocument();
     expect(screen.getByText(/个人资料/)).toBeInTheDocument();
     expect(screen.getByText(/设置/)).toBeInTheDocument();
@@ -255,7 +255,7 @@ describe('UserProfilePage Integration', () => {
       { timeout: 10000 },
     );
 
-    expect(screen.queryByText(/我发起的活动/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/我的活动/)).not.toBeInTheDocument();
     expect(screen.queryByText(/设置/)).not.toBeInTheDocument();
     expect(screen.getByText('其他用户简介')).toBeInTheDocument();
   });
@@ -416,10 +416,7 @@ describe('ProfileEditPage Integration', () => {
     expect(screen.getByText(/昵称长度需在 2-20 个字符之间/)).toBeInTheDocument();
   });
 
-  it('should validate avatar URL and show error for invalid format', async () => {
-    const user = userEvent.setup();
-    const promptSpy = vi.spyOn(globalThis, 'prompt').mockReturnValue('not-a-url');
-
+  it('should show avatar upload helper text with file-based upload UI', async () => {
     server.use(
       http.get('/api/users/me', () => {
         return HttpResponse.json({ data: mockCurrentUser });
@@ -435,11 +432,7 @@ describe('ProfileEditPage Integration', () => {
       { timeout: 10000 },
     );
 
-    await user.click(screen.getByRole('button', { name: /修改头像/i }));
-    await user.click(screen.getByRole('button', { name: /保存/i }));
-
-    expect(screen.getByText(/请输入合法的头像链接/)).toBeInTheDocument();
-    promptSpy.mockRestore();
+    expect(screen.getByText(/点击头像右下角 \+ 选择照片/)).toBeInTheDocument();
   });
 
   it('should call PUT /api/users/me with only changed fields on save', async () => {

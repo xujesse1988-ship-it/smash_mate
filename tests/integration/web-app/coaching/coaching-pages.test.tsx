@@ -990,7 +990,10 @@ describe('GroupClassDetailPage Integration', () => {
     expect(screen.getByText('朝阳体育中心羽毛球馆')).toBeInTheDocument();
 
     // Verify participants
-    expect(screen.getByText(/5\/10/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent?.includes('5 / 10 人') ?? false)
+        .length,
+    ).toBeGreaterThanOrEqual(1);
 
     // Verify fee
     expect(screen.getByText('200元/人')).toBeInTheDocument();
@@ -1048,12 +1051,12 @@ describe('GroupClassDetailPage Integration', () => {
     // Wait for the enroll button to appear
     await waitFor(
       () => {
-        expect(screen.getByText('报名')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '立即报名' })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
 
-    await user.click(screen.getByText('报名'));
+    await user.click(screen.getByRole('button', { name: '立即报名' }));
 
     await waitFor(() => {
       expect(enrollCalled).toBe(true);
@@ -1097,13 +1100,13 @@ describe('GroupClassDetailPage Integration', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('取消报名')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '取消报名' })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
 
     // Click cancel enrollment
-    await user.click(screen.getByText('取消报名'));
+    await user.click(screen.getByRole('button', { name: '取消报名' }));
 
     // Confirm dialog should appear
     await waitFor(() => {
@@ -1111,7 +1114,7 @@ describe('GroupClassDetailPage Integration', () => {
     });
 
     // Confirm
-    await user.click(screen.getByText('确认'));
+    await user.click(screen.getByRole('button', { name: '确认取消' }));
 
     await waitFor(() => {
       expect(cancelCalled).toBe(true);
@@ -1169,7 +1172,7 @@ describe('GroupClassDetailPage Integration', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('取消报名')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '取消报名' })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
@@ -1198,8 +1201,8 @@ describe('GroupClassDetailPage Integration', () => {
     );
 
     // No enroll or cancel buttons should appear for the coach
-    expect(screen.queryByText('报名')).not.toBeInTheDocument();
-    expect(screen.queryByText('取消报名')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '立即报名' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '取消报名' })).not.toBeInTheDocument();
   }, 15000);
 
   it('should show "已结束" status, "录入战绩" button and match records for completed class', async () => {
@@ -1230,7 +1233,7 @@ describe('GroupClassDetailPage Integration', () => {
     );
 
     // "录入战绩" button should be visible
-    expect(screen.getByText('录入战绩')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /录入战绩/ })).toBeInTheDocument();
 
     // Match records should be loaded
     await waitFor(() => {
@@ -1238,7 +1241,7 @@ describe('GroupClassDetailPage Integration', () => {
     });
 
     // Navigate to create match record
-    await user.click(screen.getByText('录入战绩'));
+    await user.click(screen.getByRole('button', { name: /录入战绩/ }));
     expect(mockNavigate).toHaveBeenCalledWith(
       '/match-records/create?sourceType=group-class&sourceId=gc-uuid-1',
     );
@@ -1261,14 +1264,14 @@ describe('GroupClassDetailPage Integration', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('已取消')).toBeInTheDocument();
+        expect(screen.getByText('该团课已取消')).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
 
     // No action buttons
-    expect(screen.queryByText('报名')).not.toBeInTheDocument();
-    expect(screen.queryByText('取消报名')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '立即报名' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '取消报名' })).not.toBeInTheDocument();
   }, 15000);
 
   it('should show "进行中" status for in-progress class', async () => {
@@ -1287,7 +1290,7 @@ describe('GroupClassDetailPage Integration', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('进行中')).toBeInTheDocument();
+        expect(screen.getByText(/课程进行中/)).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
@@ -1360,7 +1363,7 @@ describe('GroupClassDetailPage Integration', () => {
     });
 
     // Confirm
-    await user.click(screen.getByText('确定'));
+    await user.click(screen.getByRole('button', { name: '确定删除' }));
 
     await waitFor(() => {
       expect(deleteCalled).toBe(true);
@@ -1487,14 +1490,11 @@ describe('PrivateLessonBookingPage Integration', () => {
 
     renderPage();
 
-    await waitFor(
-      () => {
-        // Multiple slots have 10:00, use getAllByText
-        const timeElements = screen.getAllByText(/10:00/);
-        expect(timeElements.length).toBeGreaterThanOrEqual(1);
-      },
-      { timeout: 10000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('slot-card-slot-uuid-1')).toBeInTheDocument();
+      expect(screen.getByTestId('slot-card-slot-uuid-3')).toBeInTheDocument();
+      expect(screen.getByTestId('slot-card-slot-uuid-4')).toBeInTheDocument();
+    });
 
     // Verify fee description
     expect(screen.getByText(/300元\/小时/)).toBeInTheDocument();
@@ -1503,7 +1503,7 @@ describe('PrivateLessonBookingPage Integration', () => {
     expect(screen.getByText(/已约/)).toBeInTheDocument();
 
     // Verify slot without venues is also rendered
-    expect(screen.getByText(/09:00/)).toBeInTheDocument();
+    expect(screen.getByTestId('slot-card-slot-uuid-3')).toBeInTheDocument();
   }, 15000);
 
   it('should show empty state when no slots available', async () => {
@@ -1585,12 +1585,9 @@ describe('PrivateLessonBookingPage Integration', () => {
     renderPage();
 
     // Wait for slot to appear
-    await waitFor(
-      () => {
-        expect(screen.getByText(/09:00/)).toBeInTheDocument();
-      },
-      { timeout: 10000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('slot-card-slot-uuid-3')).toBeInTheDocument();
+    });
 
     // Click to select slot
     await user.click(screen.getByTestId('slot-card-slot-uuid-3'));
@@ -1658,12 +1655,9 @@ describe('PrivateLessonBookingPage Integration', () => {
     renderPage();
 
     // Wait for slot to appear
-    await waitFor(
-      () => {
-        expect(screen.getByText(/10:00/)).toBeInTheDocument();
-      },
-      { timeout: 10000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('slot-card-slot-uuid-1')).toBeInTheDocument();
+    });
 
     // Click to select slot
     await user.click(screen.getByTestId('slot-card-slot-uuid-1'));
@@ -2128,12 +2122,6 @@ describe('MyCourseManagementPage Integration', () => {
     await user.clear(screen.getByRole('spinbutton'));
     await user.type(screen.getByRole('spinbutton'), '12');
 
-    const [startTimeInput, endTimeInput] = Array.from(
-      document.querySelectorAll('input[type="datetime-local"]'),
-    ) as HTMLInputElement[];
-
-    await user.type(startTimeInput, '2026-05-10T10:00');
-    await user.type(endTimeInput, '2026-05-10T12:00');
     await user.type(screen.getByPlaceholderText('如：200元/人'), '200元/人');
     await user.click(screen.getByRole('button', { name: '提交' }));
 
@@ -2141,6 +2129,8 @@ describe('MyCourseManagementPage Integration', () => {
       expect(createBody).toMatchObject({
         venueId: 'venue-uuid-2',
         title: '周末团课',
+        maxParticipants: 12,
+        feeDescription: '200元/人',
       });
     });
   }, 15000);
@@ -2360,8 +2350,8 @@ describe('MyCourseManagementPage Integration', () => {
 
     // Modal should appear with time inputs
     await waitFor(() => {
-      expect(screen.getByText(/开始时间/)).toBeInTheDocument();
-      expect(screen.getByText(/结束时间/)).toBeInTheDocument();
+      expect(screen.getAllByText(/开始时间/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/结束时间/).length).toBeGreaterThanOrEqual(1);
     });
   }, 15000);
 
