@@ -74,7 +74,7 @@ export interface CreateCoachApplicationInput {
 }
 
 export interface ReviewCoachApplicationInput {
-  action: 'approve' | 'reject';
+  status: 'approved' | 'rejected';
   rejectReason?: string;
 }
 

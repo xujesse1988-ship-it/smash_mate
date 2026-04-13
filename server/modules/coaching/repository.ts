@@ -699,10 +699,20 @@ export class CoachingRepository {
     });
   }
 
+  /** Alias used by service layer (matches contract test mock name) */
+  async findLatestApplicationByUser(userId: string) {
+    return this.findLatestApplicationByUserId(userId);
+  }
+
   async findApplicationById(id: string) {
     return prisma.coachApplication.findUnique({
       where: { id },
     });
+  }
+
+  /** Alias used by service layer (matches contract test mock name) */
+  async findCoachApplicationById(id: string) {
+    return this.findApplicationById(id);
   }
 
   async findApplications(query: { status?: string; page: number; pageSize: number }) {
@@ -727,6 +737,11 @@ export class CoachingRepository {
     return { items, total };
   }
 
+  /** Alias used by service layer (matches contract test mock name) */
+  async findCoachApplications(query: { status?: string; page: number; pageSize: number }) {
+    return this.findApplications(query);
+  }
+
   async updateApplicationStatus(
     id: string,
     data: {
@@ -740,6 +755,38 @@ export class CoachingRepository {
       where: { id },
       data,
     });
+  }
+
+  /**
+   * Update coach application and optionally set User.isCoach in a transaction.
+   * Used by service layer (matches contract test mock name).
+   * When approving, also sets User.isCoach = true atomically.
+   */
+  async updateCoachApplication(
+    id: string,
+    data: {
+      status: string;
+      rejectReason?: string;
+      reviewedBy?: string;
+      reviewedAt?: Date;
+    },
+    options?: { setUserIsCoach?: { userId: string; isCoach: boolean } },
+  ) {
+    if (options?.setUserIsCoach) {
+      // Use transaction to ensure atomicity
+      const [updatedApplication] = await prisma.$transaction([
+        prisma.coachApplication.update({
+          where: { id },
+          data,
+        }),
+        prisma.user.update({
+          where: { id: options.setUserIsCoach.userId },
+          data: { isCoach: options.setUserIsCoach.isCoach },
+        }),
+      ]);
+      return updatedApplication;
+    }
+    return this.updateApplicationStatus(id, data);
   }
 
   // ===== Coaching v2: Student Class (GB) =====
@@ -1232,6 +1279,158 @@ export class CoachingRepository {
     });
   }
 
+  // ===== Coaching v2: Alias methods (match contract test mock names) =====
+
+  /** Alias for findStudentClassesByCoachId (matches contract test mock name) */
+  async findStudentClassesByCoach(coachId: string) {
+    return this.findStudentClassesByCoachId(coachId);
+  }
+
+  /** Alias for addStudentToClass (matches contract test mock name) */
+  async addStudentClassMember(data: { studentClassId: string; studentId: string }) {
+    return this.addStudentToClass(data);
+  }
+
+  /** Alias for removeStudentFromClass (matches contract test mock name) */
+  async removeStudentClassMember(studentClassId: string, studentId: string) {
+    return this.removeStudentFromClass(studentClassId, studentId);
+  }
+
+  /** Find a specific student class member (matches contract test mock name) */
+  async findStudentClassMember(studentClassId: string, studentId: string) {
+    return prisma.studentClassMember.findUnique({
+      where: {
+        studentClassId_studentId: {
+          studentClassId,
+          studentId,
+        },
+      },
+    });
+  }
+
+  /** Alias for findClassMembers (matches contract test mock name) */
+  async findStudentClassMembers(studentClassId: string) {
+    return this.findClassMembers(studentClassId);
+  }
+
+  /** Count members in a student class */
+  async countStudentClassMembers(studentClassId: string): Promise<number> {
+    return prisma.studentClassMember.count({
+      where: { studentClassId },
+    });
+  }
+
+  /** Count non-cancelled lessons in a student class */
+  async countClassLessons(studentClassId: string): Promise<number> {
+    return prisma.classLesson.count({
+      where: {
+        studentClassId,
+        status: { not: 'cancelled' },
+      },
+    });
+  }
+
+  /** Get student IDs in a student class */
+  async getStudentClassMemberIds(studentClassId: string): Promise<string[]> {
+    const members = await prisma.studentClassMember.findMany({
+      where: { studentClassId },
+      select: { studentId: true },
+    });
+    return members.map((m) => m.studentId);
+  }
+
+  /** Find lesson notes by class lesson ID */
+  async findLessonNotesByLessonId(classLessonId: string) {
+    return prisma.lessonNote.findMany({
+      where: { classLessonId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ===== Coaching v2: GC repository aliases (contract-test-compatible names) =====
+
+  async createPrivateStudent(data: { coachId: string; studentId: string }) {
+    return this.addPrivateStudent(data);
+  }
+
+  async reactivatePrivateStudent(id: string) {
+    return this.updatePrivateStudentActive(id, true);
+  }
+
+  async deactivatePrivateStudent(id: string) {
+    return this.updatePrivateStudentActive(id, false);
+  }
+
+  async findPrivateStudentsByCoach(
+    coachId: string,
+    options?: { includeInactive?: boolean },
+  ) {
+    return this.findPrivateStudentsByCoachId(coachId, options?.includeInactive);
+  }
+
+  async findPrivateLessonsV2ByStudent(
+    privateStudentId: string,
+    options?: { page?: number; pageSize?: number; status?: string },
+  ) {
+    const result = await this.findPrivateLessonsV2ByPrivateStudentId(
+      privateStudentId,
+      options,
+    );
+    return result.items;
+  }
+
+  async cancelPrivateLessonV2(id: string) {
+    return this.updatePrivateLessonV2Status(id, 'cancelled');
+  }
+
+  // ===== Coaching v2: Batch status transitions (contract-test-compatible names) =====
+
+  async updateClassLessonsStarted(now: Date): Promise<number> {
+    const lessons = await this.findScheduledClassLessonsToStart(now);
+    for (const l of lessons) {
+      await this.updateClassLessonStatus(l.id, 'in_progress');
+    }
+    return lessons.length;
+  }
+
+  async updateClassLessonsCompleted(now: Date): Promise<number> {
+    const lessons = await this.findInProgressClassLessonsToEnd(now);
+    for (const l of lessons) {
+      await this.updateClassLessonStatus(l.id, 'completed');
+    }
+    return lessons.length;
+  }
+
+  async updatePrivateLessonsV2Started(now: Date): Promise<number> {
+    const lessons = await this.findScheduledPrivateLessonsV2ToStart(now);
+    for (const l of lessons) {
+      await this.updatePrivateLessonV2Status(l.id, 'in_progress');
+    }
+    return lessons.length;
+  }
+
+  async updatePrivateLessonsV2Completed(now: Date): Promise<number> {
+    const lessons = await this.findInProgressPrivateLessonsV2ToEnd(now);
+    for (const l of lessons) {
+      await this.updatePrivateLessonV2Status(l.id, 'completed');
+    }
+    return lessons.length;
+  }
+
+  // ===== Coaching v2: Raw finders (for cross-module service calls) =====
+
+  async findClassLessonByIdRaw(id: string) {
+    return prisma.classLesson.findUnique({
+      where: { id },
+    });
+  }
+
+  async findPrivateLessonV2ByIdRaw(id: string) {
+    return prisma.privateLessonV2.findUnique({
+      where: { id },
+    });
+  }
+
   // ===== Coaching v2: Cross-module (for match-record) =====
 
   async getClassLessonParticipantIds(lessonId: string): Promise<string[]> {
@@ -1253,5 +1452,50 @@ export class CoachingRepository {
 
     const studentIds = lesson.studentClass.members.map((m) => m.studentId);
     return [...new Set([lesson.coachId, ...studentIds])];
+  }
+
+  // ===== Coaching v2: Additional GB/GC aliases for contract tests =====
+
+  async findClassLessonsByClass(
+    classId: string,
+    options?: { page?: number; pageSize?: number; status?: string },
+  ) {
+    return this.findClassLessonsByClassId(classId, options);
+  }
+
+  async cancelClassLesson(id: string) {
+    return this.updateClassLessonStatus(id, 'cancelled');
+  }
+
+  async findStudentClassesByStudent(studentId: string) {
+    const memberships = await prisma.studentClassMember.findMany({
+      where: { studentId },
+      include: { studentClass: true },
+    });
+    return memberships.map((m) => m.studentClass);
+  }
+
+  async findPrivateCoachesByStudent(studentId: string) {
+    return prisma.privateStudent.findMany({
+      where: { studentId, isActive: true },
+    });
+  }
+
+  async findLessonsByStudent(studentId: string) {
+    const [classLessons, privateLessons] = await Promise.all([
+      prisma.classLesson.findMany({
+        where: {
+          studentClass: {
+            members: { some: { studentId } },
+          },
+        },
+        orderBy: { startTime: 'desc' },
+      }),
+      prisma.privateLessonV2.findMany({
+        where: { studentId },
+        orderBy: { startTime: 'desc' },
+      }),
+    ]);
+    return { classLessons, privateLessons };
   }
 }

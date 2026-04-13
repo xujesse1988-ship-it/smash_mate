@@ -12,6 +12,21 @@ import type {
   CoachSpecialty,
   PrivateLessonListQuery,
   EnrollmentListQuery,
+  CreateCoachApplicationInput,
+  ReviewCoachApplicationInput,
+  CoachApplicationListQuery,
+  CreateStudentClassInput,
+  UpdateStudentClassInput,
+  AddStudentToClassInput,
+  CreateClassLessonInput,
+  UpdateClassLessonInput,
+  ClassLessonListQuery,
+  CreateLessonNoteInput,
+  CreateStudentNoteInput,
+  SetStudentTagsInput,
+  AddPrivateStudentInput,
+  CreatePrivateLessonV2Input,
+  UpdatePrivateLessonV2Input,
 } from './types.js';
 
 const logger = createModuleLogger('coaching');
@@ -31,6 +46,7 @@ interface UserServiceLike {
     avatarUrl: string | null;
     isCoach: boolean;
     bio?: string | null;
+    phone?: string;
   } | null>;
   getUsersByIds(ids: string[]): Promise<
     Array<{
@@ -1393,11 +1409,20 @@ export class CoachingService {
     const now = new Date();
 
     try {
-      const [gcStarted, gcCompleted, plStarted, plCompleted] = await Promise.all([
+      const [
+        gcStarted, gcCompleted,
+        plStarted, plCompleted,
+        clStarted, clCompleted,
+        plv2Started, plv2Completed,
+      ] = await Promise.all([
         this.repository.updateGroupClassesStarted(now),
         this.repository.updateGroupClassesCompleted(now),
         this.repository.updatePrivateLessonsStarted(now),
         this.repository.updatePrivateLessonsCompleted(now),
+        this.repository.updateClassLessonsStarted(now),
+        this.repository.updateClassLessonsCompleted(now),
+        this.repository.updatePrivateLessonsV2Started(now),
+        this.repository.updatePrivateLessonsV2Completed(now),
       ]);
 
       logger.info(
@@ -1407,6 +1432,10 @@ export class CoachingService {
           gcCompleted,
           plStarted,
           plCompleted,
+          clStarted,
+          clCompleted,
+          plv2Started,
+          plv2Completed,
         },
         '课程状态自动流转完成',
       );
@@ -1426,5 +1455,274 @@ export class CoachingService {
     registerTask('coaching-status-transition', '* * * * *', async () => {
       await this.processStatusTransitions();
     });
+  }
+
+  // =========================================================================
+  // POST /api/coach-applications — Submit coach application
+  // =========================================================================
+
+  async submitCoachApplication(userId: string, input: CreateCoachApplicationInput) {
+    const { certificateUrls, description } = input;
+
+    // 1. Validate certificateUrls count (1-5)
+    if (!certificateUrls || !Array.isArray(certificateUrls) || certificateUrls.length === 0 || certificateUrls.length > 5) {
+      throw new AppError(400, 'COACHING_INVALID_CERTIFICATES', '证书图片数量必须在 1-5 张之间');
+    }
+
+    // 2. Validate each URL format (http/https)
+    for (const url of certificateUrls) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        throw new AppError(400, 'COACHING_INVALID_CERTIFICATE_URL', '证书图片 URL 格式不合法');
+      }
+    }
+
+    // 3. Validate each URL extension (.jpg/.jpeg/.png)
+    const validExtensions = ['.jpg', '.jpeg', '.png'];
+    for (const url of certificateUrls) {
+      const lowerUrl = url.toLowerCase();
+      const hasValidExtension = validExtensions.some((ext) => lowerUrl.endsWith(ext));
+      if (!hasValidExtension) {
+        throw new AppError(400, 'COACHING_INVALID_CERTIFICATE_FORMAT', '证书图片格式仅支持 JPG/PNG');
+      }
+    }
+
+    // 4. Validate description (optional, max 200 chars)
+    if (description !== undefined && description !== null && description.length > 200) {
+      throw new AppError(400, 'COACHING_INVALID_DESCRIPTION', '简要说明不能超过 200 字符');
+    }
+
+    // 5. Check user is not already a coach
+    const user = await this.userService.getUserById(userId);
+    if (user && user.isCoach) {
+      throw new AppError(409, 'COACHING_ALREADY_COACH', '用户已是教练，无需重复申请');
+    }
+
+    // 6. Check no pending application exists
+    const latestApplication = await this.repository.findLatestApplicationByUser(userId);
+    if (latestApplication && latestApplication.status === 'pending') {
+      throw new AppError(409, 'COACHING_APPLICATION_PENDING', '已有审核中的申请，请勿重复提交');
+    }
+
+    // 7. Create CoachApplication record
+    const application = await this.repository.createCoachApplication({
+      userId,
+      certificateUrls,
+      description,
+    });
+
+    logger.info(
+      { userId: userId.slice(0, 8), certificateCount: certificateUrls.length },
+      '教练申请提交',
+    );
+
+    return application;
+  }
+
+  // =========================================================================
+  // GET /api/coach-applications/me — Get my application status
+  // =========================================================================
+
+  async getMyApplicationStatus(userId: string) {
+    return this.repository.findLatestApplicationByUser(userId);
+  }
+
+  // =========================================================================
+  // POST /api/admin/coach-applications/:id/review — Review coach application
+  // =========================================================================
+
+  async reviewCoachApplication(
+    applicationId: string,
+    adminId: string,
+    input: ReviewCoachApplicationInput,
+  ) {
+    // 1. Find application
+    const application = await this.repository.findCoachApplicationById(applicationId);
+    if (!application) {
+      throw new AppError(404, 'COACHING_APPLICATION_NOT_FOUND', '教练申请不存在');
+    }
+
+    // 2. Check status is pending
+    if (application.status !== 'pending') {
+      throw new AppError(409, 'COACHING_APPLICATION_ALREADY_REVIEWED', '该申请已审核过');
+    }
+
+    // 3. Validate status value
+    if (input.status !== 'approved' && input.status !== 'rejected') {
+      throw new AppError(400, 'COACHING_INVALID_REVIEW_STATUS', '审核状态必须为 approved 或 rejected');
+    }
+
+    // 4. If rejecting, validate rejectReason
+    if (input.status === 'rejected') {
+      if (!input.rejectReason) {
+        throw new AppError(400, 'COACHING_REJECT_REASON_REQUIRED', '拒绝时必须填写原因');
+      }
+      if (input.rejectReason.length < 5) {
+        throw new AppError(400, 'COACHING_REJECT_REASON_TOO_SHORT', '拒绝原因至少 5 个字符');
+      }
+    }
+
+    const now = new Date();
+
+    if (input.status === 'approved') {
+      // 5a. Approve: update application, user, and create coach profile
+      const updatedApplication = await this.repository.updateCoachApplication(
+        applicationId,
+        {
+          status: 'approved',
+          reviewedBy: adminId,
+          reviewedAt: now,
+        },
+        { setUserIsCoach: { userId: application.userId, isCoach: true } },
+      );
+
+      // Create CoachProfile if not exists
+      const existingProfile = await this.repository.findCoachProfile(application.userId);
+      if (!existingProfile) {
+        await this.repository.createCoachProfile(application.userId);
+      }
+
+      // 6. Send notification (non-blocking)
+      try {
+        await this.notificationService.create({
+          userId: application.userId,
+          type: 'COACH_APPLICATION_APPROVED',
+          title: '教练资质审核已通过',
+          content: '恭喜！你的教练资质审核已通过，现在可以使用全部教练功能',
+          targetType: 'coach-application',
+          targetId: applicationId,
+        });
+      } catch (err) {
+        logger.error(
+          { error: (err as Error).message, applicationId },
+          '教练审核通知发送失败',
+        );
+      }
+
+      logger.info(
+        { applicationId, reviewedBy: adminId.slice(0, 8), result: 'approved' },
+        '管理员审核教练申请',
+      );
+
+      return updatedApplication;
+    } else {
+      // 5b. Reject: update application
+      const updatedApplication = await this.repository.updateCoachApplication(applicationId, {
+        status: 'rejected',
+        rejectReason: input.rejectReason,
+        reviewedBy: adminId,
+        reviewedAt: now,
+      });
+
+      // 6. Send notification (non-blocking)
+      try {
+        await this.notificationService.create({
+          userId: application.userId,
+          type: 'COACH_APPLICATION_REJECTED',
+          title: '教练资质审核未通过',
+          content: `你的教练资质审核未通过，原因：${input.rejectReason}。你可以修改后重新提交申请`,
+          targetType: 'coach-application',
+          targetId: applicationId,
+        });
+      } catch (err) {
+        logger.error(
+          { error: (err as Error).message, applicationId },
+          '教练审核通知发送失败',
+        );
+      }
+
+      logger.info(
+        { applicationId, reviewedBy: adminId.slice(0, 8), result: 'rejected' },
+        '管理员审核教练申请',
+      );
+
+      return updatedApplication;
+    }
+  }
+
+  // =========================================================================
+  // GET /api/admin/coach-applications — Get application list
+  // =========================================================================
+
+  async getApplicationList(query: CoachApplicationListQuery) {
+    const page = query.page ?? 1;
+    let pageSize = query.pageSize ?? 20;
+    if (pageSize > 100) pageSize = 100;
+
+    const result = await this.repository.findCoachApplications({
+      status: query.status,
+      page,
+      pageSize,
+    });
+
+    // Batch fetch user info
+    const userIds = result.items.map((item: { userId: string }) => item.userId);
+    const users = userIds.length > 0 ? await this.userService.getUsersByIds(userIds) : [];
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const items = result.items.map((item: {
+      id: string;
+      userId: string;
+      certificateUrls: string[];
+      description: string | null;
+      status: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }) => {
+      const user = userMap.get(item.userId);
+      return {
+        id: item.id,
+        userId: item.userId,
+        nickname: user?.nickname ?? '',
+        avatarUrl: user?.avatarUrl ?? null,
+        certificateUrls: item.certificateUrls,
+        description: item.description,
+        status: item.status,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      };
+    });
+
+    return {
+      items,
+      total: result.total,
+      page,
+      pageSize,
+    };
+  }
+
+  // =========================================================================
+  // GET /api/admin/coach-applications/:id — Get application by ID
+  // =========================================================================
+
+  async getApplicationById(applicationId: string) {
+    const application = await this.repository.findCoachApplicationById(applicationId);
+    if (!application) {
+      throw new AppError(404, 'COACHING_APPLICATION_NOT_FOUND', '教练申请不存在');
+    }
+
+    // Fetch user info (including phone for admin detail view)
+    const user = await this.userService.getUserById(application.userId);
+
+    // Mask phone number (middle 4 digits)
+    let maskedPhone: string | undefined;
+    if (user?.phone) {
+      maskedPhone = user.phone.slice(0, 3) + '****' + user.phone.slice(7);
+    }
+
+    return {
+      id: application.id,
+      userId: application.userId,
+      nickname: user?.nickname ?? '',
+      avatarUrl: user?.avatarUrl ?? null,
+      phone: maskedPhone,
+      certificateUrls: application.certificateUrls,
+      description: application.description,
+      status: application.status,
+      rejectReason: application.rejectReason,
+      reviewedBy: application.reviewedBy,
+      reviewedAt: application.reviewedAt,
+      createdAt: application.createdAt,
+      updatedAt: application.updatedAt,
+    };
   }
 }

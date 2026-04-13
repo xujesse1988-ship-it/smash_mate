@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware, AuthRequest } from '../../infra/auth.js';
+import { adminAuthMiddleware } from '../../infra/admin-auth.js';
 import { success, created } from '../../infra/response.js';
 import { CoachingService } from './service.js';
 import { CoachingRepository } from './repository.js';
@@ -254,6 +255,99 @@ export function createCoachingController(): Router {
           status: req.query.status as string | undefined,
         };
         const result = await service.getCoachPrivateLessons(req.params.id, query);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // =========================================================================
+  // Coach Application Routes (GA)
+  // =========================================================================
+
+  // POST /api/coach-applications
+  router.post(
+    '/coach-applications',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.submitCoachApplication(userId, req.body);
+        created(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // GET /api/coach-applications/me
+  router.get(
+    '/coach-applications/me',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.getMyApplicationStatus(userId);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // =========================================================================
+  // Admin Coach Application Routes (GA)
+  // =========================================================================
+
+  // GET /api/admin/coach-applications
+  router.get(
+    '/admin/coach-applications',
+    authMiddleware,
+    adminAuthMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const query = {
+          status: req.query.status as string | undefined,
+          page: req.query.page !== undefined ? Number(req.query.page) : undefined,
+          pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
+        };
+        const result = await service.getApplicationList(query);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // GET /api/admin/coach-applications/:id
+  router.get(
+    '/admin/coach-applications/:id',
+    authMiddleware,
+    adminAuthMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getApplicationById(req.params.id);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // POST /api/admin/coach-applications/:id/review
+  router.post(
+    '/admin/coach-applications/:id/review',
+    authMiddleware,
+    adminAuthMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const adminId = (req as AuthRequest).userId!;
+        const result = await service.reviewCoachApplication(
+          req.params.id,
+          adminId,
+          req.body,
+        );
         success(res, result);
       } catch (err) {
         next(err);
