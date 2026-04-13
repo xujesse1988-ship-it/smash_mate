@@ -83,6 +83,21 @@ export function createUserController(): Router {
     },
   );
 
+  // GET /api/users/search — must be before /users/:id to avoid conflict
+  router.get(
+    '/users/search',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const q = req.query.q as string;
+        const result = await service.searchUsers(q);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   // GET /api/users/:id
   router.get(
     '/users/:id',

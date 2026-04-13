@@ -344,6 +344,30 @@ export class UserService {
     }));
   }
 
+  /**
+   * Search users by nickname (fuzzy) or phone (last 4 / full match).
+   * Returns items with id, nickname, avatarUrl, phoneLast4 (no full phone for privacy).
+   */
+  async searchUsers(query: string) {
+    if (!query || query.trim().length === 0) {
+      throw new AppError(400, 'COACHING_INVALID_SEARCH_QUERY', '搜索关键词为空');
+    }
+
+    const users = await this.repo.searchUsers(query.trim());
+
+    // Limit to 20 results
+    const limited = users.slice(0, 20);
+
+    return {
+      items: limited.map((u) => ({
+        id: u.id,
+        nickname: u.nickname,
+        avatarUrl: u.avatarUrl,
+        phoneLast4: u.phone.slice(-4),
+      })),
+    };
+  }
+
   // --- Private helpers ---
 
   private async incrementFailCount(phoneLockId: string, currentFailCount: number) {

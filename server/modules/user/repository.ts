@@ -91,4 +91,35 @@ export class UserRepository {
       data,
     });
   }
+
+  /**
+   * Search users by nickname (fuzzy) or phone (last 4 digits / full match).
+   * Returns raw user records; the service layer masks phone before returning.
+   */
+  async searchUsers(query: string, limit: number = 20) {
+    // Determine if the query looks like a phone number (all digits)
+    const isDigits = /^\d+$/.test(query);
+
+    if (isDigits && query.length === 11) {
+      // Full phone number - exact match
+      const user = await prisma.user.findUnique({ where: { phone: query } });
+      return user ? [user] : [];
+    }
+
+    if (isDigits && query.length === 4) {
+      // Last 4 digits of phone
+      return prisma.user.findMany({
+        where: { phone: { endsWith: query } },
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    // Nickname fuzzy match (or digits that are neither 4 nor 11 chars)
+    return prisma.user.findMany({
+      where: { nickname: { contains: query } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
