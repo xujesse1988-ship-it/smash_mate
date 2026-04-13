@@ -4,6 +4,8 @@ import { AdminLoginPage } from './features/auth/pages/AdminLoginPage';
 import { CityManagementPage } from './features/venue-management/pages/CityManagementPage';
 import { VenueManagementPage } from './features/venue-management/pages/VenueManagementPage';
 import { UserManagementPage } from './features/user-management/pages/UserManagementPage';
+import { CoachReviewListPage } from './features/coach-review/pages/CoachReviewListPage';
+import { CoachReviewDetailPage } from './features/coach-review/pages/CoachReviewDetailPage';
 import { AdminAuthGuard } from './shared/components/AdminAuthGuard';
 import { AdminLayout } from './shared/components/AdminLayout';
 
@@ -21,6 +23,8 @@ export function AdminRoutes() {
         <Route path="/cities" element={<CityManagementPage />} />
         <Route path="/venues" element={<VenueManagementPage />} />
         <Route path="/users" element={<UserManagementPage />} />
+        <Route path="/coach-review" element={<CoachReviewListPage />} />
+        <Route path="/coach-review/:id" element={<CoachReviewDetailPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/cities" replace />} />
     </Routes>

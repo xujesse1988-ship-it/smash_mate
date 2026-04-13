@@ -100,6 +100,46 @@ const NotificationListPage = React.lazy(() =>
     default: m.NotificationListPage,
   })),
 );
+const CoachApplicationPage = React.lazy(() =>
+  import('./features/coaching/pages/CoachApplicationPage').then((m) => ({
+    default: m.CoachApplicationPage,
+  })),
+);
+const PrivateStudentListPage = React.lazy(() =>
+  import('./features/coaching/pages/PrivateStudentListPage').then((m) => ({
+    default: m.PrivateStudentListPage,
+  })),
+);
+const PrivateStudentDetailPage = React.lazy(() =>
+  import('./features/coaching/pages/PrivateStudentDetailPage').then((m) => ({
+    default: m.PrivateStudentDetailPage,
+  })),
+);
+const PrivateLessonDetailPage = React.lazy(() =>
+  import('./features/coaching/pages/PrivateLessonDetailPage').then((m) => ({
+    default: m.PrivateLessonDetailPage,
+  })),
+);
+const StudentClassListPage = React.lazy(() =>
+  import('./features/coaching/pages/StudentClassListPage').then((m) => ({
+    default: m.StudentClassListPage,
+  })),
+);
+const StudentClassDetailPage = React.lazy(() =>
+  import('./features/coaching/pages/StudentClassDetailPage').then((m) => ({
+    default: m.StudentClassDetailPage,
+  })),
+);
+const ClassLessonDetailPage = React.lazy(() =>
+  import('./features/coaching/pages/ClassLessonDetailPage').then((m) => ({
+    default: m.ClassLessonDetailPage,
+  })),
+);
+const ClassStudentProfilePage = React.lazy(() =>
+  import('./features/coaching/pages/ClassStudentProfilePage').then((m) => ({
+    default: m.ClassStudentProfilePage,
+  })),
+);
 
 const PageLoader = (
   <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 120, color: 'var(--text-2)' }}>
@@ -147,6 +187,23 @@ export function AppRoutes() {
             />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<NotificationListPage />} />
+            <Route path="/coach-apply" element={<CoachApplicationPage />} />
+            <Route path="/my-private-students" element={<PrivateStudentListPage />} />
+            <Route path="/my-private-students/:id" element={<PrivateStudentDetailPage />} />
+            <Route
+              path="/my-private-students/:id/lessons/:lessonId"
+              element={<PrivateLessonDetailPage />}
+            />
+            <Route path="/my-student-classes" element={<StudentClassListPage />} />
+            <Route path="/my-student-classes/:classId" element={<StudentClassDetailPage />} />
+            <Route
+              path="/my-student-classes/:classId/lessons/:lessonId"
+              element={<ClassLessonDetailPage />}
+            />
+            <Route
+              path="/my-student-classes/:classId/members/:studentId"
+              element={<ClassStudentProfilePage />}
+            />
           </Route>
         </Route>
 

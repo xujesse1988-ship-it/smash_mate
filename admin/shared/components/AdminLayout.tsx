@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu, Button } from 'antd';
-import { EnvironmentOutlined, ShopOutlined, TeamOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, ShopOutlined, TeamOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import { useAdminUser } from '../hooks/useAdminUser';
@@ -35,6 +35,11 @@ export function AdminLayout() {
       key: '/users',
       icon: <TeamOutlined />,
       label: '用户管理',
+    },
+    {
+      key: '/coach-review',
+      icon: <SafetyCertificateOutlined />,
+      label: '教练审核',
     },
   ];
 

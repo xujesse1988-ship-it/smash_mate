@@ -35,6 +35,16 @@ export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps)
             onClick: () => navigate('/my-courses'),
           },
           {
+            label: '我的学员班',
+            icon: <TeamOutlined />,
+            onClick: () => navigate('/my-student-classes'),
+          },
+          {
+            label: '我的私教学员',
+            icon: <TeamOutlined />,
+            onClick: () => navigate('/my-private-students'),
+          },
+          {
             label: '教练资料',
             icon: <TeamOutlined />,
             onClick: () => navigate('/profile/coach-edit'),

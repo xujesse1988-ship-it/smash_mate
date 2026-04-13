@@ -9,11 +9,11 @@
  * 来源文档:
  *   - docs/module-design/web-app-profile.md §2 SettingsPage 页面
  *   - docs/module-design/web-app-profile.md §3 Feature 私有组件
- *   - docs/module-design/web-app-profile.md §6.3 教练模式开关行为
+ *   - docs/module-design/coach-verification.md §6.6 入口变更
  *   - docs/module-design/web-app-profile.md §6.6 设置页中不可用功能的处理
  *
  * Mock 策略:
- *   - Mock hooks（useCurrentUser, useEnableCoachRole）的返回值
+ *   - Mock hooks（useCurrentUser）的返回值
  *   - Mock authStore（clearAuth 用于退出登录）
  *   - Mock react-router-dom 导航
  *   - 不关心数据获取链路，只验证页面渲染正确性和交互响应
@@ -69,16 +69,6 @@ vi.mock('@web/shared/hooks/useCurrentUser', () => ({
   useCurrentUser: () => mockCurrentUserData,
 }));
 
-// Mock useEnableCoachRole hook
-const mockEnableCoachRoleMutate = vi.fn();
-let mockEnableCoachRoleState = {
-  mutate: mockEnableCoachRoleMutate,
-  isPending: false,
-};
-
-vi.mock('@web/features/profile/hooks/useEnableCoachRole', () => ({
-  useEnableCoachRole: () => mockEnableCoachRoleState,
-}));
 
 // ---------------------------------------------------------------------------
 // Import component under test (after mocks)
@@ -109,10 +99,6 @@ describe('SettingsPage', () => {
       },
       isLoading: false,
     };
-    mockEnableCoachRoleState = {
-      mutate: mockEnableCoachRoleMutate,
-      isPending: false,
-    };
   });
 
   // =========================================================================
@@ -126,11 +112,11 @@ describe('SettingsPage', () => {
     expect(screen.getByText(/设置/)).toBeInTheDocument();
   });
 
-  // 来源: web-app-profile.md §2 — SettingsPage — 组件结构 — CoachModeSwitch
-  it('should render coach mode switch', () => {
+  // 来源: coach-verification.md §6.6 — 入口变更 — 设置页"申请成为教练"
+  it('should render coach application entry', () => {
     renderPage();
 
-    expect(screen.getByText(/教练模式/)).toBeInTheDocument();
+    expect(screen.getByText(/申请成为教练/)).toBeInTheDocument();
   });
 
   // 来源: web-app-profile.md §2 — SettingsPage — 组件结构 — SettingsLinkItem — 修改手机号
@@ -171,24 +157,22 @@ describe('SettingsPage', () => {
   });
 
   // =========================================================================
-  // 教练模式开关 — 非教练用户
+  // 教练申请入口 — 非教练用户
   // =========================================================================
 
-  // 来源: web-app-profile.md §6.3 — 教练模式开关行为 — isCoach=false 时开关关闭可操作
-  it('should show coach mode switch as off and operable for non-coach user', () => {
+  // 来源: coach-verification.md §6.6 — 入口变更 — 非教练显示"申请成为教练"
+  it('should show "申请成为教练" for non-coach user', () => {
     mockCurrentUserData = {
       data: { id: 'current-user-id', isCoach: false },
       isLoading: false,
     };
     renderPage();
 
-    const switchEl = screen.getByRole('switch');
-    expect(switchEl).not.toBeChecked();
-    expect(switchEl).not.toBeDisabled();
+    expect(screen.getByText('申请成为教练')).toBeInTheDocument();
   });
 
-  // 来源: web-app-profile.md §6.3 — 教练模式开关行为 — 开启流程 — 弹出确认弹窗
-  it('should show confirmation dialog when toggling coach mode switch on', async () => {
+  // 来源: coach-verification.md §6.6 — 入口变更 — 点击跳转到 /coach-apply
+  it('should navigate to /coach-apply when clicking coach entry', async () => {
     const user = userEvent.setup();
     mockCurrentUserData = {
       data: { id: 'current-user-id', isCoach: false },
@@ -196,43 +180,25 @@ describe('SettingsPage', () => {
     };
     renderPage();
 
-    await user.click(screen.getByRole('switch'));
+    const entry = screen.getByText('申请成为教练');
+    await user.click(entry.closest('[role="button"]') || entry);
 
-    expect(screen.getByText(/确认开启/)).toBeInTheDocument();
-  });
-
-  // 来源: web-app-profile.md §6.3 — 教练模式开关行为 — 确认后调用 API
-  it('should call enableCoachRole when user confirms enabling coach mode', async () => {
-    const user = userEvent.setup();
-    mockCurrentUserData = {
-      data: { id: 'current-user-id', isCoach: false },
-      isLoading: false,
-    };
-    renderPage();
-
-    await user.click(screen.getByRole('switch'));
-    // 点击确认按钮
-    const confirmButton = screen.getByRole('button', { name: /确认|确定/i });
-    await user.click(confirmButton);
-
-    expect(mockEnableCoachRoleMutate).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/coach-apply');
   });
 
   // =========================================================================
-  // 教练模式开关 — 教练用户
+  // 教练申请入口 — 教练用户
   // =========================================================================
 
-  // 来源: web-app-profile.md §6.3 — 教练模式开关行为 — isCoach=true 时开关开启不可操作
-  it('should show coach mode switch as on and disabled for coach user', () => {
+  // 来源: coach-verification.md §6.6 — 入口变更 — 教练显示"教练资质（已认证）"
+  it('should show "教练资质（已认证）" for coach user', () => {
     mockCurrentUserData = {
       data: { id: 'current-user-id', isCoach: true },
       isLoading: false,
     };
     renderPage();
 
-    const switchEl = screen.getByRole('switch');
-    expect(switchEl).toBeChecked();
-    expect(switchEl).toBeDisabled();
+    expect(screen.getByText('教练资质（已认证）')).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -240,8 +206,7 @@ describe('SettingsPage', () => {
   // =========================================================================
 
   // 来源: web-app-profile.md §6.6 — 修改手机号 — 一期不可用，灰色不可点击
-  it('should show change phone number as disabled', async () => {
-    const user = userEvent.setup();
+  it('should show change phone number as disabled', () => {
     renderPage();
 
     const phoneEntry = screen.getByText(/修改手机号/);
@@ -293,23 +258,4 @@ describe('SettingsPage', () => {
     });
   });
 
-  // =========================================================================
-  // 加载中状态
-  // =========================================================================
-
-  // 来源: web-app-profile.md §2 — SettingsPage — 页面状态 — isEnablingCoach
-  it('should disable coach mode switch when enabling is pending', () => {
-    mockCurrentUserData = {
-      data: { id: 'current-user-id', isCoach: false },
-      isLoading: false,
-    };
-    mockEnableCoachRoleState = {
-      mutate: mockEnableCoachRoleMutate,
-      isPending: true,
-    };
-    renderPage();
-
-    const switchEl = screen.getByRole('switch');
-    expect(switchEl).toBeDisabled();
-  });
 });

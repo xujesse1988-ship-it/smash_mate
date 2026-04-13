@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { BackButton } from '../../../shared/components/BackButton';
-import { useEnableCoachRole } from '../hooks/useEnableCoachRole';
 import { useAuthStore } from '../../../stores/auth-store';
-import { CoachModeSwitch } from '../components/coach-mode-switch';
 import { SettingsLinkItem } from '../components/settings-link-item';
 import { LogoutButton } from '../components/logout-button';
 import { ConfirmDialog } from '../components/confirm-dialog';
@@ -13,35 +11,15 @@ import { ConfirmDialog } from '../components/confirm-dialog';
 export function SettingsPage() {
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
-  const enableCoachRole = useEnableCoachRole();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showCoachConfirm, setShowCoachConfirm] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 
   const isCoach = currentUser?.isCoach ?? false;
 
-  function handleCoachSwitchClick() {
-    if (isCoach || enableCoachRole.isPending) return;
-    setShowCoachConfirm(true);
-  }
-
-  function handleConfirmEnableCoach() {
-    setShowCoachConfirm(false);
-    enableCoachRole.mutate(undefined, {
-      onSuccess: () => {
-        message.success('教练模式已开启');
-      },
-      onError: (err) => {
-        const apiError = err as Error & { code?: string };
-        if (apiError.code === 'USER_COACH_ROLE_CLOSE_NOT_SUPPORTED') {
-          message.error('当前不支持关闭教练模式');
-        } else {
-          message.error('操作失败，请重试');
-        }
-      },
-    });
+  function handleCoachEntryClick() {
+    navigate('/coach-apply');
   }
 
   function handleLogout() {
@@ -72,10 +50,9 @@ export function SettingsPage() {
             overflow: 'hidden',
           }}
         >
-          <CoachModeSwitch
-            isCoach={isCoach}
-            isPending={enableCoachRole.isPending}
-            onToggle={handleCoachSwitchClick}
+          <SettingsLinkItem
+            label={isCoach ? '教练资质（已认证）' : '申请成为教练'}
+            onClick={handleCoachEntryClick}
           />
 
           <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 20px' }} />
@@ -91,14 +68,6 @@ export function SettingsPage() {
           <LogoutButton onClick={() => setShowLogoutConfirm(true)} />
         </div>
       </div>
-
-      {/* Coach Mode Confirm Dialog */}
-      <ConfirmDialog
-        visible={showCoachConfirm}
-        message="确认开启教练模式？开启后您可以发布团课和私教课。"
-        onConfirm={handleConfirmEnableCoach}
-        onCancel={() => setShowCoachConfirm(false)}
-      />
 
       {/* Logout Confirm Dialog */}
       <ConfirmDialog
