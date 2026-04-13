@@ -449,9 +449,7 @@ export class CoachingRepository {
             endTime: l.endTime,
             status: l.status,
             createdAt: l.createdAt,
-            venue: l.venue
-              ? { id: l.venue.id, name: l.venue.name }
-              : null,
+            venue: l.venue ? { id: l.venue.id, name: l.venue.name } : null,
           },
         });
       }
@@ -675,5 +673,585 @@ export class CoachingRepository {
       data: { status: 'completed' },
     });
     return result.count;
+  }
+
+  // ===== Coaching v2: Coach Application (GA) =====
+
+  async createCoachApplication(data: {
+    userId: string;
+    certificateUrls: string[];
+    description?: string;
+  }) {
+    return prisma.coachApplication.create({
+      data: {
+        userId: data.userId,
+        certificateUrls: data.certificateUrls,
+        description: data.description ?? null,
+        status: 'pending',
+      },
+    });
+  }
+
+  async findLatestApplicationByUserId(userId: string) {
+    return prisma.coachApplication.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findApplicationById(id: string) {
+    return prisma.coachApplication.findUnique({
+      where: { id },
+    });
+  }
+
+  async findApplications(query: { status?: string; page: number; pageSize: number }) {
+    const { status, page, pageSize } = query;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = {};
+    if (status) {
+      where.status = status;
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.coachApplication.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.coachApplication.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async updateApplicationStatus(
+    id: string,
+    data: {
+      status: string;
+      rejectReason?: string;
+      reviewedBy?: string;
+      reviewedAt?: Date;
+    },
+  ) {
+    return prisma.coachApplication.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // ===== Coaching v2: Student Class (GB) =====
+
+  async createStudentClass(data: { coachId: string; name: string }) {
+    return prisma.studentClass.create({
+      data: {
+        coachId: data.coachId,
+        name: data.name,
+      },
+    });
+  }
+
+  async findStudentClassById(id: string) {
+    return prisma.studentClass.findUnique({
+      where: { id },
+      include: {
+        members: {
+          orderBy: { joinedAt: 'asc' },
+        },
+        lessons: {
+          orderBy: { startTime: 'desc' },
+        },
+      },
+    });
+  }
+
+  async findStudentClassesByCoachId(coachId: string) {
+    return prisma.studentClass.findMany({
+      where: { coachId },
+      include: {
+        members: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateStudentClass(id: string, data: { name?: string }) {
+    return prisma.studentClass.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteStudentClass(id: string) {
+    return prisma.studentClass.delete({
+      where: { id },
+    });
+  }
+
+  async addStudentToClass(data: { studentClassId: string; studentId: string }) {
+    return prisma.studentClassMember.create({
+      data: {
+        studentClassId: data.studentClassId,
+        studentId: data.studentId,
+      },
+    });
+  }
+
+  async removeStudentFromClass(studentClassId: string, studentId: string) {
+    return prisma.studentClassMember.delete({
+      where: {
+        studentClassId_studentId: {
+          studentClassId,
+          studentId,
+        },
+      },
+    });
+  }
+
+  async findClassMembers(studentClassId: string) {
+    return prisma.studentClassMember.findMany({
+      where: { studentClassId },
+      orderBy: { joinedAt: 'asc' },
+    });
+  }
+
+  async isStudentInClass(studentClassId: string, studentId: string): Promise<boolean> {
+    const member = await prisma.studentClassMember.findUnique({
+      where: {
+        studentClassId_studentId: {
+          studentClassId,
+          studentId,
+        },
+      },
+    });
+    return member !== null;
+  }
+
+  // ===== Coaching v2: Class Lesson (GB) =====
+
+  async createClassLesson(data: {
+    studentClassId: string;
+    coachId: string;
+    venueId?: string;
+    startTime: Date;
+    endTime: Date;
+    trainingContent?: string;
+  }) {
+    return prisma.classLesson.create({
+      data: {
+        studentClassId: data.studentClassId,
+        coachId: data.coachId,
+        venueId: data.venueId ?? null,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        trainingContent: data.trainingContent ?? null,
+        status: 'scheduled',
+      },
+    });
+  }
+
+  async findClassLessonById(id: string) {
+    return prisma.classLesson.findUnique({
+      where: { id },
+      include: {
+        notes: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+  }
+
+  async findClassLessonsByClassId(
+    classId: string,
+    options?: { page?: number; pageSize?: number; status?: string },
+  ) {
+    const page = options?.page ?? 1;
+    const pageSize = options?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = { studentClassId: classId };
+    if (options?.status) {
+      where.status = options.status;
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.classLesson.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { startTime: 'desc' },
+      }),
+      prisma.classLesson.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async updateClassLesson(
+    id: string,
+    data: {
+      venueId?: string;
+      startTime?: Date;
+      endTime?: Date;
+      trainingContent?: string;
+    },
+  ) {
+    return prisma.classLesson.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async updateClassLessonStatus(id: string, status: string) {
+    return prisma.classLesson.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  async updateClassLessonTrainingContent(id: string, content: string) {
+    return prisma.classLesson.update({
+      where: { id },
+      data: { trainingContent: content },
+    });
+  }
+
+  async findScheduledClassLessonsToStart(now: Date) {
+    return prisma.classLesson.findMany({
+      where: {
+        status: 'scheduled',
+        startTime: { lte: now },
+      },
+    });
+  }
+
+  async findInProgressClassLessonsToEnd(now: Date) {
+    return prisma.classLesson.findMany({
+      where: {
+        status: 'in_progress',
+        endTime: { lte: now },
+      },
+    });
+  }
+
+  // ===== Coaching v2: Private Student (GC) =====
+
+  async addPrivateStudent(data: { coachId: string; studentId: string }) {
+    return prisma.privateStudent.create({
+      data: {
+        coachId: data.coachId,
+        studentId: data.studentId,
+        isActive: true,
+      },
+    });
+  }
+
+  async findPrivateStudentById(id: string) {
+    return prisma.privateStudent.findUnique({
+      where: { id },
+      include: {
+        lessons: {
+          orderBy: { startTime: 'desc' },
+        },
+      },
+    });
+  }
+
+  async findPrivateStudentByCoachAndStudent(coachId: string, studentId: string) {
+    return prisma.privateStudent.findUnique({
+      where: {
+        coachId_studentId: {
+          coachId,
+          studentId,
+        },
+      },
+    });
+  }
+
+  async findPrivateStudentsByCoachId(coachId: string, includeInactive?: boolean) {
+    const where: Record<string, unknown> = { coachId };
+    if (!includeInactive) {
+      where.isActive = true;
+    }
+
+    return prisma.privateStudent.findMany({
+      where,
+      orderBy: { joinedAt: 'desc' },
+    });
+  }
+
+  async updatePrivateStudentActive(id: string, isActive: boolean) {
+    return prisma.privateStudent.update({
+      where: { id },
+      data: { isActive },
+    });
+  }
+
+  // ===== Coaching v2: Private Lesson V2 (GC) =====
+
+  async createPrivateLessonV2(data: {
+    privateStudentId: string;
+    coachId: string;
+    studentId: string;
+    venueId?: string;
+    startTime: Date;
+    endTime: Date;
+    trainingContent?: string;
+  }) {
+    return prisma.privateLessonV2.create({
+      data: {
+        privateStudentId: data.privateStudentId,
+        coachId: data.coachId,
+        studentId: data.studentId,
+        venueId: data.venueId ?? null,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        trainingContent: data.trainingContent ?? null,
+        status: 'scheduled',
+      },
+    });
+  }
+
+  async findPrivateLessonV2ById(id: string) {
+    return prisma.privateLessonV2.findUnique({
+      where: { id },
+      include: {
+        notes: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+  }
+
+  async findPrivateLessonsV2ByPrivateStudentId(
+    privateStudentId: string,
+    options?: { page?: number; pageSize?: number; status?: string },
+  ) {
+    const page = options?.page ?? 1;
+    const pageSize = options?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = { privateStudentId };
+    if (options?.status) {
+      where.status = options.status;
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.privateLessonV2.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { startTime: 'desc' },
+      }),
+      prisma.privateLessonV2.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async updatePrivateLessonV2(
+    id: string,
+    data: {
+      venueId?: string;
+      startTime?: Date;
+      endTime?: Date;
+      trainingContent?: string;
+    },
+  ) {
+    return prisma.privateLessonV2.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async updatePrivateLessonV2Status(id: string, status: string) {
+    return prisma.privateLessonV2.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  async updatePrivateLessonV2TrainingContent(id: string, content: string) {
+    return prisma.privateLessonV2.update({
+      where: { id },
+      data: { trainingContent: content },
+    });
+  }
+
+  async findScheduledPrivateLessonsV2ToStart(now: Date) {
+    return prisma.privateLessonV2.findMany({
+      where: {
+        status: 'scheduled',
+        startTime: { lte: now },
+      },
+    });
+  }
+
+  async findInProgressPrivateLessonsV2ToEnd(now: Date) {
+    return prisma.privateLessonV2.findMany({
+      where: {
+        status: 'in_progress',
+        endTime: { lte: now },
+      },
+    });
+  }
+
+  // ===== Coaching v2: Notes & Tags (shared) =====
+
+  async createLessonNote(data: {
+    classLessonId?: string;
+    privateLessonId?: string;
+    coachId: string;
+    content: string;
+  }) {
+    return prisma.lessonNote.create({
+      data: {
+        classLessonId: data.classLessonId ?? null,
+        privateLessonId: data.privateLessonId ?? null,
+        coachId: data.coachId,
+        content: data.content,
+      },
+    });
+  }
+
+  async findLessonNotes(query: { classLessonId?: string; privateLessonId?: string }) {
+    const where: Record<string, unknown> = {};
+    if (query.classLessonId) {
+      where.classLessonId = query.classLessonId;
+    }
+    if (query.privateLessonId) {
+      where.privateLessonId = query.privateLessonId;
+    }
+
+    return prisma.lessonNote.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createStudentNote(data: {
+    coachId: string;
+    studentId: string;
+    studentClassId?: string;
+    privateStudentId?: string;
+    content: string;
+  }) {
+    return prisma.studentNote.create({
+      data: {
+        coachId: data.coachId,
+        studentId: data.studentId,
+        studentClassId: data.studentClassId ?? null,
+        privateStudentId: data.privateStudentId ?? null,
+        content: data.content,
+      },
+    });
+  }
+
+  async findStudentNotes(query: {
+    coachId: string;
+    studentId: string;
+    studentClassId?: string;
+    privateStudentId?: string;
+  }) {
+    const where: Record<string, unknown> = {
+      coachId: query.coachId,
+      studentId: query.studentId,
+    };
+    if (query.studentClassId) {
+      where.studentClassId = query.studentClassId;
+    }
+    if (query.privateStudentId) {
+      where.privateStudentId = query.privateStudentId;
+    }
+
+    return prisma.studentNote.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async setStudentTags(
+    coachId: string,
+    studentId: string,
+    contextId: string | null,
+    contextType: 'studentClass' | 'privateStudent',
+    tags: string[],
+  ) {
+    const contextField = contextType === 'studentClass' ? 'studentClassId' : 'privateStudentId';
+
+    // Delete existing tags for this context
+    const deleteWhere: Record<string, unknown> = {
+      coachId,
+      studentId,
+      [contextField]: contextId,
+    };
+
+    await prisma.studentTag.deleteMany({ where: deleteWhere });
+
+    // Create new tags
+    if (tags.length === 0) return [];
+
+    const createData = tags.map((tag) => ({
+      coachId,
+      studentId,
+      [contextField]: contextId,
+      tag,
+    }));
+
+    await prisma.studentTag.createMany({ data: createData });
+
+    // Return the created tags
+    return prisma.studentTag.findMany({
+      where: deleteWhere,
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async findStudentTags(query: {
+    coachId: string;
+    studentId: string;
+    studentClassId?: string;
+    privateStudentId?: string;
+  }) {
+    const where: Record<string, unknown> = {
+      coachId: query.coachId,
+      studentId: query.studentId,
+    };
+    if (query.studentClassId) {
+      where.studentClassId = query.studentClassId;
+    }
+    if (query.privateStudentId) {
+      where.privateStudentId = query.privateStudentId;
+    }
+
+    return prisma.studentTag.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // ===== Coaching v2: Cross-module (for match-record) =====
+
+  async getClassLessonParticipantIds(lessonId: string): Promise<string[]> {
+    const lesson = await prisma.classLesson.findUnique({
+      where: { id: lessonId },
+      select: {
+        coachId: true,
+        studentClass: {
+          select: {
+            members: {
+              select: { studentId: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!lesson) return [];
+
+    const studentIds = lesson.studentClass.members.map((m) => m.studentId);
+    return [...new Set([lesson.coachId, ...studentIds])];
   }
 }

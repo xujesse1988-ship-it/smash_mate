@@ -33,6 +33,21 @@ model User {
   reviewsGiven         Review[]             @relation("ReviewerReviews")
   reviewsReceived      Review[]             @relation("CoachReviews")
   notifications        Notification[]
+
+  // v2 新增 relations
+  coachApplications       CoachApplication[]
+  coachStudentClasses     StudentClass[]        @relation("CoachStudentClasses")
+  studentClassMemberships StudentClassMember[]   @relation("StudentClassMemberships")
+  coachClassLessons       ClassLesson[]          @relation("CoachClassLessons")
+  coachPrivateStudents    PrivateStudent[]        @relation("CoachPrivateStudents")
+  privateStudentRelations PrivateStudent[]        @relation("PrivateStudentRelations")
+  coachPrivateLessonsV2   PrivateLessonV2[]      @relation("CoachPrivateLessonsV2")
+  studentPrivateLessonsV2 PrivateLessonV2[]      @relation("StudentPrivateLessonsV2")
+  coachLessonNotes        LessonNote[]           @relation("CoachLessonNotes")
+  coachStudentNotes       StudentNote[]          @relation("CoachStudentNotes")
+  studentNotesReceived    StudentNote[]          @relation("StudentNotesReceived")
+  coachStudentTags        StudentTag[]           @relation("CoachStudentTags")
+  studentTagsReceived     StudentTag[]           @relation("StudentTagsReceived")
 }
 
 model VerificationCode {
@@ -81,6 +96,10 @@ model Venue {
   activities Activity[]
   groupClasses GroupClass[]
   privateLessons PrivateLesson[] @relation("VenuePrivateLessons")
+
+  // v2 新增 relations
+  classLessons     ClassLesson[]     @relation("VenueClassLessons")
+  privateLessonsV2 PrivateLessonV2[] @relation("VenuePrivateLessonsV2")
 
   @@index([cityId])
   @@index([name])
@@ -311,4 +330,174 @@ model Review {
   @@unique([reviewerId, courseType, courseId])
   @@index([coachId])
   @@index([coachId, createdAt])
+}
+
+// ===== Coaching Module v2 Extensions =====
+
+model CoachApplication {
+  id              String   @id @default(uuid())
+  userId          String
+  certificateUrls String[]
+  description     String?
+  status          String   @default("pending") // pending | approved | rejected
+  rejectReason    String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([status, createdAt])
+}
+
+model StudentClass {
+  id        String   @id @default(uuid())
+  coachId   String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coach    User                  @relation("CoachStudentClasses", fields: [coachId], references: [id])
+  members  StudentClassMember[]
+  lessons  ClassLesson[]
+
+  @@index([coachId])
+}
+
+model StudentClassMember {
+  id             String   @id @default(uuid())
+  studentClassId String
+  studentId      String
+  joinedAt       DateTime @default(now())
+
+  studentClass StudentClass @relation(fields: [studentClassId], references: [id], onDelete: Cascade)
+  student      User         @relation("StudentClassMemberships", fields: [studentId], references: [id])
+
+  @@unique([studentClassId, studentId])
+  @@index([studentId])
+}
+
+model ClassLesson {
+  id              String   @id @default(uuid())
+  studentClassId  String
+  coachId         String
+  venueId         String?
+  startTime       DateTime
+  endTime         DateTime
+  trainingContent String?
+  status          String   @default("scheduled") // scheduled | in_progress | completed | cancelled
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  studentClass StudentClass @relation(fields: [studentClassId], references: [id], onDelete: Cascade)
+  coach        User         @relation("CoachClassLessons", fields: [coachId], references: [id])
+  venue        Venue?       @relation("VenueClassLessons", fields: [venueId], references: [id], onDelete: SetNull)
+  notes        LessonNote[] @relation("ClassLessonNotes")
+
+  @@index([studentClassId])
+  @@index([coachId])
+  @@index([status])
+  @@index([status, startTime])
+  @@index([status, endTime])
+  @@index([venueId])
+}
+
+model PrivateStudent {
+  id        String   @id @default(uuid())
+  coachId   String
+  studentId String
+  isActive  Boolean  @default(true)
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coach   User @relation("CoachPrivateStudents", fields: [coachId], references: [id])
+  student User @relation("PrivateStudentRelations", fields: [studentId], references: [id])
+  lessons PrivateLessonV2[]
+
+  @@unique([coachId, studentId])
+  @@index([coachId])
+  @@index([studentId])
+}
+
+model PrivateLessonV2 {
+  id               String   @id @default(uuid())
+  privateStudentId String
+  coachId          String
+  studentId        String
+  venueId          String?
+  startTime        DateTime
+  endTime          DateTime
+  trainingContent  String?
+  status           String   @default("scheduled") // scheduled | in_progress | completed | cancelled
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  privateStudent PrivateStudent @relation(fields: [privateStudentId], references: [id])
+  coach          User           @relation("CoachPrivateLessonsV2", fields: [coachId], references: [id])
+  student        User           @relation("StudentPrivateLessonsV2", fields: [studentId], references: [id])
+  venue          Venue?         @relation("VenuePrivateLessonsV2", fields: [venueId], references: [id], onDelete: SetNull)
+  notes          LessonNote[]   @relation("PrivateLessonV2Notes")
+
+  @@index([privateStudentId])
+  @@index([coachId])
+  @@index([studentId])
+  @@index([status])
+  @@index([status, startTime])
+  @@index([status, endTime])
+  @@index([venueId])
+}
+
+model LessonNote {
+  id              String   @id @default(uuid())
+  classLessonId   String?
+  privateLessonId String?
+  coachId         String
+  content         String
+  createdAt       DateTime @default(now())
+
+  classLesson   ClassLesson?   @relation("ClassLessonNotes", fields: [classLessonId], references: [id], onDelete: Cascade)
+  privateLesson PrivateLessonV2? @relation("PrivateLessonV2Notes", fields: [privateLessonId], references: [id], onDelete: Cascade)
+  coach         User             @relation("CoachLessonNotes", fields: [coachId], references: [id])
+
+  @@index([classLessonId])
+  @@index([privateLessonId])
+  @@index([coachId])
+}
+
+model StudentNote {
+  id             String   @id @default(uuid())
+  coachId        String
+  studentId      String
+  studentClassId String?
+  privateStudentId String?
+  content        String
+  createdAt      DateTime @default(now())
+
+  coach          User          @relation("CoachStudentNotes", fields: [coachId], references: [id])
+  student        User          @relation("StudentNotesReceived", fields: [studentId], references: [id])
+
+  @@index([coachId, studentId])
+  @@index([studentClassId])
+  @@index([privateStudentId])
+}
+
+model StudentTag {
+  id             String  @id @default(uuid())
+  coachId        String
+  studentId      String
+  studentClassId String?
+  privateStudentId String?
+  tag            String
+  createdAt      DateTime @default(now())
+
+  coach   User @relation("CoachStudentTags", fields: [coachId], references: [id])
+  student User @relation("StudentTagsReceived", fields: [studentId], references: [id])
+
+  @@unique([coachId, studentId, studentClassId, tag])
+  @@unique([coachId, studentId, privateStudentId, tag])
+  @@index([coachId, studentId, studentClassId])
+  @@index([coachId, studentId, privateStudentId])
 }
