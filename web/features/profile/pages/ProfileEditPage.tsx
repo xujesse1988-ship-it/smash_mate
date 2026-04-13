@@ -148,7 +148,7 @@ export function ProfileEditPage() {
   }
 
   return (
-    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Header — same style as MyActivityListPage */}
         <div
@@ -166,6 +166,7 @@ export function ProfileEditPage() {
           <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>编辑资料</h2>
         </div>
 
+        <div style={{ padding: 16 }}>
         <ProfileForm
           nickname={nickname}
           onNicknameChange={setNickname}
@@ -188,6 +189,8 @@ export function ProfileEditPage() {
           >
             {updateProfile.isPending ? '保存中...' : '保存'}
           </button>
+        </div>
+
         </div>
 
         {/* Hidden file input for avatar selection */}
