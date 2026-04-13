@@ -19,13 +19,13 @@ function CoachBriefHeader({ coachId }: { coachId: string }) {
   if (!coachData) return null;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', padding: '12px', background: '#f9f9f9', borderRadius: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', padding: '12px', background: 'var(--surface-2)', borderRadius: '8px' }}>
       <div
         style={{
           width: 40,
           height: 40,
           borderRadius: '50%',
-          background: '#e0e0e0',
+          background: 'var(--surface-3)',
           marginRight: 12,
           overflow: 'hidden',
           flexShrink: 0,
@@ -36,8 +36,8 @@ function CoachBriefHeader({ coachId }: { coachId: string }) {
         )}
       </div>
       <div>
-        <div style={{ fontWeight: 600 }}>{coachData.nickname}</div>
-        {coachData.bio && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{coachData.bio}</div>}
+        <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{coachData.nickname}</div>
+        {coachData.bio && <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{coachData.bio}</div>}
       </div>
     </div>
   );
@@ -139,7 +139,7 @@ export function PrivateLessonBookingPage() {
       </CoachBriefHeaderErrorBoundary>
 
       <div style={{ marginBottom: '16px' }}>
-        <div style={{ marginBottom: '8px', fontSize: 14, color: '#666' }}>日期范围</div>
+        <div style={{ marginBottom: '8px', fontSize: 14, color: 'var(--text-2)' }}>日期范围</div>
         <RangePicker
           value={[dayjs(startDate), dayjs(endDate)]}
           onChange={(dates) => {
@@ -156,13 +156,13 @@ export function PrivateLessonBookingPage() {
       </div>
 
       {slots.length === 0 && !isLoading && (
-        <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无可预约时间段</div>
+        <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无可预约时间段</div>
       )}
 
       {/* DayGroup: slots grouped by date */}
       {Object.entries(slotsByDate).map(([dateLabel, daySlots]) => (
         <div key={dateLabel} style={{ marginBottom: '16px' }}>
-          <div style={{ fontWeight: 600, marginBottom: '8px', color: '#333', fontSize: 14 }}>
+          <div style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--text-1)', fontSize: 14 }}>
             {dateLabel}
           </div>
           {daySlots.map((slot) => (
@@ -172,7 +172,7 @@ export function PrivateLessonBookingPage() {
               onClick={() => handleSelectSlot(slot)}
               style={{
                 padding: '12px',
-                border: selectedSlot?.id === slot.id ? '2px solid #00C853' : '1px solid #f0f0f0',
+                border: selectedSlot?.id === slot.id ? '2px solid var(--primary)' : '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
                 cursor: slot.isBooked ? 'default' : 'pointer',
@@ -187,11 +187,11 @@ export function PrivateLessonBookingPage() {
                     {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                   </span>
                   {slot.feeDescription && (
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{slot.feeDescription}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>{slot.feeDescription}</div>
                   )}
                 </div>
                 {slot.isBooked && (
-                  <span style={{ fontSize: 12, color: '#ff5252', padding: '2px 8px', background: '#ffebee', borderRadius: '4px' }}>
+                  <span style={{ fontSize: 12, color: 'var(--danger)', padding: '2px 8px', background: 'rgba(248,113,113,0.15)', borderRadius: '4px' }}>
                     已约
                   </span>
                 )}
@@ -211,7 +211,7 @@ export function PrivateLessonBookingPage() {
               onClick={() => setSelectedVenueId(venue.id)}
               style={{
                 padding: '8px 12px',
-                border: selectedVenueId === venue.id ? '2px solid #00C853' : '1px solid #f0f0f0',
+                border: selectedVenueId === venue.id ? '2px solid var(--primary)' : '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '4px',
                 cursor: 'pointer',
@@ -230,8 +230,8 @@ export function PrivateLessonBookingPage() {
           style={{
             marginTop: '16px',
             padding: '8px 24px',
-            background: '#00C853',
-            color: 'white',
+            background: 'var(--primary)',
+            color: '#052e16',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -253,13 +253,13 @@ export function PrivateLessonBookingPage() {
           justifyContent: 'center',
           zIndex: 1000,
         }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
-            <p>是否预约该时间段？</p>
+          <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '24px', width: '80%', maxWidth: '360px' }}>
+            <p style={{ color: 'var(--text-1)' }}>是否预约该时间段？</p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowBookingConfirm(false)} style={{ padding: '6px 16px', border: '1px solid #d9d9d9', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>
+              <button onClick={() => setShowBookingConfirm(false)} style={{ padding: '6px 16px', border: '1px solid var(--surface-2)', borderRadius: '6px', background: 'var(--surface-2)', color: 'var(--text-1)', cursor: 'pointer' }}>
                 取消
               </button>
-              <button onClick={handleConfirmBooking} disabled={bookMutation.isPending} style={{ padding: '6px 16px', background: '#00C853', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+              <button onClick={handleConfirmBooking} disabled={bookMutation.isPending} style={{ padding: '6px 16px', background: 'var(--primary)', color: '#052e16', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                 确定
               </button>
             </div>

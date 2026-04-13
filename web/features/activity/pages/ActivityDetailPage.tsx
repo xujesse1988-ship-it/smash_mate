@@ -36,17 +36,17 @@ function formatTime(dateStr: string) {
 function getStatusStyle(status: string) {
   switch (status) {
     case 'open':
-      return { bg: '#e8f5e9', color: '#2e7d32', border: '#c8e6c9' };
+      return { bg: 'var(--primary-dim)', color: 'var(--primary)', border: 'rgba(74,222,128,.3)' };
     case 'full':
-      return { bg: '#fff3e0', color: '#e65100', border: '#ffe0b2' };
+      return { bg: 'rgba(251,191,36,.2)', color: 'var(--warning)', border: 'rgba(251,191,36,.3)' };
     case 'in_progress':
-      return { bg: '#e3f2fd', color: '#1565c0', border: '#bbdefb' };
+      return { bg: 'rgba(96,165,250,.15)', color: 'var(--blue)', border: 'rgba(96,165,250,.3)' };
     case 'completed':
-      return { bg: '#f3e5f5', color: '#7b1fa2', border: '#e1bee7' };
+      return { bg: 'rgba(168,85,247,.15)', color: '#c084fc', border: 'rgba(168,85,247,.3)' };
     case 'cancelled':
-      return { bg: '#fce4ec', color: '#c62828', border: '#f8bbd0' };
+      return { bg: 'rgba(248,113,113,.15)', color: 'var(--danger)', border: 'rgba(248,113,113,.3)' };
     default:
-      return { bg: '#f5f5f5', color: '#999', border: '#e0e0e0' };
+      return { bg: 'var(--surface-2)', color: 'var(--text-3)', border: 'var(--surface-2)' };
   }
 }
 
@@ -91,16 +91,16 @@ export function ActivityDetailPage() {
 
   // Loading state
   if (activityQuery.isLoading) {
-    return <div style={{ textAlign: 'center', padding: 48 }}>加载中...</div>;
+    return <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-2)' }}>加载中...</div>;
   }
 
   // Error state
   if (activityQuery.error) {
     const err = activityQuery.error as { code?: string };
     if (err.code === 'ACTIVITY_NOT_FOUND') {
-      return <div style={{ textAlign: 'center', padding: 48 }}>活动不存在</div>;
+      return <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-2)' }}>活动不存在</div>;
     }
-    return <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>加载失败，请重试</div>;
+    return <div style={{ textAlign: 'center', padding: 48, color: 'var(--danger)' }}>加载失败，请重试</div>;
   }
 
   if (!activity) return null;
@@ -186,19 +186,20 @@ export function ActivityDetailPage() {
   const statusStyle = getStatusStyle(activity.status);
 
   return (
-    <div style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 80 }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: 80 }}>
       {/* Header */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           padding: '12px 16px',
-          background: '#fff',
-          borderBottom: '1px solid #f0f0f0',
+          background: 'rgba(30,41,59,.85)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--surface-2)',
         }}
       >
         <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>约球详情</h2>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-1)' }}>约球详情</h2>
       </div>
 
       {/* Main content */}
@@ -207,14 +208,14 @@ export function ActivityDetailPage() {
         {isEditMode ? (
           <div
             style={{
-              background: '#fff',
-              borderRadius: 12,
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-card)',
               padding: 16,
               marginBottom: 12,
             }}
           >
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>球馆</label>
+              <label style={{ fontSize: 13, color: 'var(--text-2)' }}>球馆</label>
               <VenueSearchInput
                 selectedVenue={editVenue}
                 onChangeSelection={(venue) => {
@@ -228,7 +229,7 @@ export function ActivityDetailPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>标题</label>
+              <label style={{ fontSize: 13, color: 'var(--text-2)' }}>标题</label>
               <input
                 type="text"
                 placeholder="活动标题"
@@ -237,11 +238,13 @@ export function ActivityDetailPage() {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 8,
                   marginTop: 4,
                   boxSizing: 'border-box',
                   fontSize: 14,
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                 }}
               />
             </div>
@@ -266,7 +269,7 @@ export function ActivityDetailPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>限定人数</label>
+              <label style={{ fontSize: 13, color: 'var(--text-2)' }}>限定人数</label>
               <input
                 type="number"
                 min={2}
@@ -281,11 +284,13 @@ export function ActivityDetailPage() {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 8,
                   marginTop: 4,
                   boxSizing: 'border-box',
                   fontSize: 14,
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                 }}
               />
             </div>
@@ -293,11 +298,11 @@ export function ActivityDetailPage() {
         ) : (
           <div
             style={{
-              background: '#fff',
-              borderRadius: 12,
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-card)',
               padding: 20,
               marginBottom: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
             }}
           >
             {/* Status + Title row */}
@@ -316,7 +321,7 @@ export function ActivityDetailPage() {
                 {STATUS_LABELS[activity.status] || activity.status}
               </span>
               {activity.title && (
-                <span style={{ fontSize: 13, color: '#666' }}>{activity.title}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{activity.title}</span>
               )}
             </div>
 
@@ -324,9 +329,9 @@ export function ActivityDetailPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>📍</span>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#222' }}>{venueName}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-1)' }}>{venueName}</div>
                 {venueAddress && (
-                  <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>{venueAddress}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{venueAddress}</div>
                 )}
               </div>
             </div>
@@ -335,8 +340,8 @@ export function ActivityDetailPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>🕐</span>
               <div>
-                <div style={{ fontSize: 14, color: '#333' }}>{formatDate(activity.startTime)}</div>
-                <div style={{ fontSize: 14, color: '#555', marginTop: 2 }}>
+                <div style={{ fontSize: 14, color: 'var(--text-1)' }}>{formatDate(activity.startTime)}</div>
+                <div style={{ fontSize: 14, color: 'var(--text-2)', marginTop: 2 }}>
                   {formatTime(activity.startTime)} - {formatTime(activity.endTime)}
                 </div>
               </div>
@@ -345,9 +350,9 @@ export function ActivityDetailPage() {
             {/* Participant count with icon */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>👥</span>
-              <div style={{ fontSize: 14, color: '#333' }}>
+              <div style={{ fontSize: 14, color: 'var(--text-1)' }}>
                 <span style={{ fontWeight: 600 }}>{activity.currentParticipants}</span>
-                <span style={{ color: '#999' }}> / {activity.maxParticipants} 人</span>
+                <span style={{ color: 'var(--text-3)' }}> / {activity.maxParticipants} 人</span>
               </div>
             </div>
           </div>
@@ -356,14 +361,14 @@ export function ActivityDetailPage() {
         {/* Participants card */}
         <div
           style={{
-            background: '#fff',
-            borderRadius: 12,
+            background: 'var(--surface)',
+            borderRadius: 'var(--radius-card)',
             padding: 20,
             marginBottom: 12,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)', marginBottom: 14 }}>
             参与者
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -378,9 +383,9 @@ export function ActivityDetailPage() {
                   cursor: 'pointer',
                   padding: '6px 8px',
                   borderRadius: 8,
-                  transition: 'background 0.15s',
+                  transition: 'background var(--transition)',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f8f8f8')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 {p.avatarUrl ? (
@@ -392,7 +397,7 @@ export function ActivityDetailPage() {
                       height: 36,
                       borderRadius: '50%',
                       objectFit: 'cover',
-                      border: '2px solid #f0f0f0',
+                      border: '2px solid var(--surface-2)',
                     }}
                   />
                 ) : (
@@ -401,21 +406,21 @@ export function ActivityDetailPage() {
                       width: 36,
                       height: 36,
                       borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #e0e0e0, #bdbdbd)',
+                      background: 'linear-gradient(135deg, var(--surface-2), var(--surface-3))',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: 14,
                       fontWeight: 600,
-                      color: '#fff',
-                      border: '2px solid #f0f0f0',
+                      color: 'var(--text-1)',
+                      border: '2px solid var(--surface-2)',
                     }}
                   >
                     {p.nickname.charAt(0)}
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>{p.nickname}</span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>{p.nickname}</span>
                 </div>
                 {p.userId === activity.creatorId && (
                   <span
@@ -425,9 +430,9 @@ export function ActivityDetailPage() {
                       fontWeight: 500,
                       padding: '2px 8px',
                       borderRadius: 10,
-                      background: '#fff3e0',
-                      color: '#e65100',
-                      border: '1px solid #ffe0b2',
+                      background: 'rgba(251,191,36,.2)',
+                      color: 'var(--warning)',
+                      border: '1px solid rgba(251,191,36,.3)',
                     }}
                   >
                     发起人
@@ -442,21 +447,21 @@ export function ActivityDetailPage() {
         {(activity.status === 'completed' || (matchRecords && matchRecords.length > 0)) && (
           <div
             style={{
-              background: '#fff',
-              borderRadius: 12,
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-card)',
               padding: 20,
               marginBottom: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)', marginBottom: 14 }}>
               战绩记录
             </div>
             {matchRecordsQuery.isLoading && (
-              <div style={{ color: '#999', textAlign: 'center', padding: 16 }}>加载战绩中...</div>
+              <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>加载战绩中...</div>
             )}
             {matchRecords && matchRecords.length === 0 && (
-              <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>暂无战绩记录</div>
+              <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>暂无战绩记录</div>
             )}
             {matchRecords &&
               matchRecords.map((record: MatchRecord) => (
@@ -477,13 +482,13 @@ export function ActivityDetailPage() {
         {activity.status === 'in_progress' && isParticipant && (
           <div
             style={{
-              background: '#e3f2fd',
-              borderRadius: 12,
+              background: 'rgba(96,165,250,.15)',
+              borderRadius: 'var(--radius-card)',
               padding: '14px 16px',
-              color: '#1565c0',
+              color: 'var(--blue)',
               textAlign: 'center',
               fontSize: 14,
-              border: '1px solid #bbdefb',
+              border: '1px solid rgba(96,165,250,.3)',
             }}
           >
             🏸 活动进行中，结束后可录入战绩
@@ -499,8 +504,9 @@ export function ActivityDetailPage() {
           left: 0,
           right: 0,
           padding: '12px 16px',
-          background: '#fff',
-          borderTop: '1px solid #f0f0f0',
+          background: 'rgba(15,23,42,.95)',
+          backdropFilter: 'blur(12px)',
+          borderTop: '1px solid var(--surface-2)',
           display: 'flex',
           gap: 8,
           justifyContent: 'center',
@@ -513,8 +519,8 @@ export function ActivityDetailPage() {
               style={{
                 flex: 1,
                 padding: '10px 0',
-                background: '#00C853',
-                color: '#fff',
+                background: 'var(--primary)',
+                color: '#052e16',
                 border: 'none',
                 borderRadius: 8,
                 cursor: 'pointer',
@@ -529,8 +535,8 @@ export function ActivityDetailPage() {
               style={{
                 flex: 1,
                 padding: '10px 0',
-                background: '#f5f5f5',
-                color: '#666',
+                background: 'var(--surface-2)',
+                color: 'var(--text-2)',
                 border: 'none',
                 borderRadius: 8,
                 cursor: 'pointer',
@@ -550,7 +556,7 @@ export function ActivityDetailPage() {
                   style={{
                     flex: 1,
                     padding: '10px 0',
-                    background: '#1890ff',
+                    background: 'var(--blue)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -566,7 +572,7 @@ export function ActivityDetailPage() {
                   style={{
                     flex: 1,
                     padding: '10px 0',
-                    background: '#ff4d4f',
+                    background: 'var(--danger)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -589,8 +595,8 @@ export function ActivityDetailPage() {
                   style={{
                     flex: 1,
                     padding: '10px 0',
-                    background: '#ff9800',
-                    color: '#fff',
+                    background: 'var(--warning)',
+                    color: '#052e16',
                     border: 'none',
                     borderRadius: 8,
                     cursor: 'pointer',
@@ -609,8 +615,8 @@ export function ActivityDetailPage() {
                 style={{
                   flex: 1,
                   padding: '10px 0',
-                  background: '#00C853',
-                  color: '#fff',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
@@ -629,8 +635,8 @@ export function ActivityDetailPage() {
                 style={{
                   flex: 1,
                   padding: '10px 0',
-                  background: '#f5f5f5',
-                  color: '#999',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-3)',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'not-allowed',
@@ -650,8 +656,8 @@ export function ActivityDetailPage() {
                 style={{
                   flex: 1,
                   padding: '10px 0',
-                  background: '#00C853',
-                  color: '#fff',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
@@ -720,7 +726,8 @@ function ConfirmDialog({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -729,22 +736,23 @@ function ConfirmDialog({
     >
       <div
         style={{
-          background: '#fff',
-          borderRadius: 12,
+          background: 'var(--surface)',
+          borderRadius: 'var(--radius-card)',
           padding: 24,
           maxWidth: 320,
           width: '90%',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
-        <div style={{ marginBottom: 16, fontSize: 14 }}>{message}</div>
+        <div style={{ marginBottom: 16, fontSize: 14, color: 'var(--text-1)' }}>{message}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={onConfirm}
             style={{
               flex: 1,
               padding: '8px 0',
-              background: '#00C853',
-              color: '#fff',
+              background: 'var(--primary)',
+              color: '#052e16',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
@@ -757,8 +765,8 @@ function ConfirmDialog({
             style={{
               flex: 1,
               padding: '8px 0',
-              background: '#f5f5f5',
-              color: '#666',
+              background: 'var(--surface-2)',
+              color: 'var(--text-2)',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
@@ -793,10 +801,10 @@ function MatchRecordCard({
     <div
       style={{
         padding: 14,
-        background: '#fafafa',
+        background: 'var(--surface-2)',
         borderRadius: 10,
         marginBottom: 10,
-        border: '1px solid #f0f0f0',
+        border: '1px solid var(--surface-3)',
       }}
     >
       <div
@@ -812,8 +820,8 @@ function MatchRecordCard({
             fontSize: 12,
             padding: '2px 8px',
             borderRadius: 8,
-            background: record.matchType === 'singles' ? '#e8f5e9' : '#e3f2fd',
-            color: record.matchType === 'singles' ? '#2e7d32' : '#1565c0',
+            background: record.matchType === 'singles' ? 'var(--primary-dim)' : 'rgba(96,165,250,.15)',
+            color: record.matchType === 'singles' ? 'var(--primary)' : 'var(--blue)',
           }}
         >
           {record.matchType === 'singles' ? '单打' : '双打'}
@@ -826,7 +834,7 @@ function MatchRecordCard({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#ff4d4f',
+              color: 'var(--danger)',
               fontSize: 13,
             }}
           >
@@ -846,7 +854,7 @@ function MatchRecordCard({
       >
         <div style={{ flex: 1, textAlign: 'center' }}>
           {sideA.map((p, i) => (
-            <div key={i} style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
+            <div key={i} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
               {p.nickname}
             </div>
           ))}
@@ -854,7 +862,7 @@ function MatchRecordCard({
         <span
           style={{
             fontSize: 12,
-            color: '#bbb',
+            color: 'var(--text-3)',
             fontWeight: 600,
             padding: '0 12px',
           }}
@@ -863,7 +871,7 @@ function MatchRecordCard({
         </span>
         <div style={{ flex: 1, textAlign: 'center' }}>
           {sideB.map((p, i) => (
-            <div key={i} style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
+            <div key={i} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
               {p.nickname}
             </div>
           ))}
@@ -878,11 +886,11 @@ function MatchRecordCard({
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: '#555',
-              background: '#fff',
+              color: 'var(--text-2)',
+              background: 'var(--surface)',
               padding: '2px 10px',
               borderRadius: 6,
-              border: '1px solid #e0e0e0',
+              border: '1px solid var(--surface-3)',
             }}
           >
             {game.scoreA}:{game.scoreB}

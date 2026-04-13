@@ -11,7 +11,6 @@ import { useUpdateGroupClass } from '../hooks/useUpdateGroupClass';
 import { useCancelGroupClass } from '../hooks/useCancelGroupClass';
 import { useSetAvailability } from '../hooks/useSetAvailability';
 import { useCancelPrivateLesson } from '../hooks/useCancelPrivateLesson';
-import { BackButton } from '../../../shared/components/BackButton';
 import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
@@ -208,7 +207,7 @@ export function MyCourseManagementPage() {
   return (
     <div style={{ padding: '16px' }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-2)', marginBottom: '16px' }}>
         <button
           onClick={() => setActiveTab('group-classes')}
           style={{
@@ -218,8 +217,9 @@ export function MyCourseManagementPage() {
             background: 'none',
             cursor: 'pointer',
             borderBottom:
-              activeTab === 'group-classes' ? '2px solid #00C853' : '2px solid transparent',
+              activeTab === 'group-classes' ? '2px solid var(--primary)' : '2px solid transparent',
             fontWeight: activeTab === 'group-classes' ? 600 : 400,
+            color: activeTab === 'group-classes' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           团课
@@ -233,8 +233,9 @@ export function MyCourseManagementPage() {
             background: 'none',
             cursor: 'pointer',
             borderBottom:
-              activeTab === 'private-schedule' ? '2px solid #00C853' : '2px solid transparent',
+              activeTab === 'private-schedule' ? '2px solid var(--primary)' : '2px solid transparent',
             fontWeight: activeTab === 'private-schedule' ? 600 : 400,
+            color: activeTab === 'private-schedule' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           私教时间
@@ -248,8 +249,9 @@ export function MyCourseManagementPage() {
             background: 'none',
             cursor: 'pointer',
             borderBottom:
-              activeTab === 'private-lessons' ? '2px solid #00C853' : '2px solid transparent',
+              activeTab === 'private-lessons' ? '2px solid var(--primary)' : '2px solid transparent',
             fontWeight: activeTab === 'private-lessons' ? 600 : 400,
+            color: activeTab === 'private-lessons' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           私教预约
@@ -267,8 +269,8 @@ export function MyCourseManagementPage() {
             style={{
               marginBottom: '16px',
               padding: '8px 16px',
-              background: '#00C853',
-              color: 'white',
+              background: 'var(--primary)',
+              color: '#052e16',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -278,7 +280,7 @@ export function MyCourseManagementPage() {
           </button>
 
           {groupClasses.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无团课</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无团课</div>
           )}
 
           {groupClasses.map((gc) => (
@@ -288,7 +290,7 @@ export function MyCourseManagementPage() {
               onClick={() => navigate(`/group-classes/${gc.id}`)}
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
                 cursor: 'pointer',
@@ -296,10 +298,10 @@ export function MyCourseManagementPage() {
             >
               <div>
                 <div style={{ fontWeight: 600 }}>{gc.title}</div>
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                   {gc.venue?.name || '地点待定'}
                 </div>
-                <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
                   {gc.currentParticipants}/{gc.maxParticipants}人 |{' '}
                   {gc.status === 'open'
                     ? '报名中'
@@ -332,9 +334,10 @@ export function MyCourseManagementPage() {
                     style={{
                       fontSize: 12,
                       padding: '4px 12px',
-                      border: '1px solid #d9d9d9',
+                      border: '1px solid var(--surface-2)',
                       borderRadius: '4px',
-                      background: 'white',
+                      background: 'var(--surface-2)',
+                      color: 'var(--text-1)',
                       cursor: 'pointer',
                     }}
                   >
@@ -349,10 +352,10 @@ export function MyCourseManagementPage() {
                     style={{
                       fontSize: 12,
                       padding: '4px 12px',
-                      border: '1px solid #ff5252',
+                      border: '1px solid var(--danger)',
                       borderRadius: '4px',
-                      background: 'white',
-                      color: '#ff5252',
+                      background: 'transparent',
+                      color: 'var(--danger)',
                       cursor: 'pointer',
                     }}
                   >
@@ -373,8 +376,8 @@ export function MyCourseManagementPage() {
             style={{
               marginBottom: '16px',
               padding: '8px 16px',
-              background: '#00C853',
-              color: 'white',
+              background: 'var(--primary)',
+              color: '#052e16',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -384,7 +387,7 @@ export function MyCourseManagementPage() {
           </button>
 
           {slots.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无时间段</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无时间段</div>
           )}
 
           {slots.map((slot) => (
@@ -392,7 +395,7 @@ export function MyCourseManagementPage() {
               key={slot.id}
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
               }}
@@ -409,7 +412,7 @@ export function MyCourseManagementPage() {
                 })}
               </div>
               {slot.feeDescription && (
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                   {slot.feeDescription}
                 </div>
               )}
@@ -420,8 +423,8 @@ export function MyCourseManagementPage() {
                   borderRadius: '4px',
                   marginTop: 4,
                   display: 'inline-block',
-                  background: slot.isBooked ? '#ffebee' : '#e8f5e9',
-                  color: slot.isBooked ? '#c62828' : '#2e7d32',
+                  background: slot.isBooked ? 'rgba(248,113,113,0.15)' : 'var(--primary-dim)',
+                  color: slot.isBooked ? 'var(--danger)' : 'var(--primary)',
                 }}
               >
                 {slot.isBooked ? '已预约' : '空闲'}
@@ -435,7 +438,7 @@ export function MyCourseManagementPage() {
       {activeTab === 'private-lessons' && (
         <div>
           {privateLessons.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无预约</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无预约</div>
           )}
 
           {privateLessons.map((lesson) => (
@@ -443,20 +446,20 @@ export function MyCourseManagementPage() {
               key={lesson.id}
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
               }}
             >
               <div style={{ fontWeight: 600 }}>{lesson.student.nickname}</div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 {new Date(lesson.slot.startTime).toLocaleString()} -{' '}
                 {new Date(lesson.slot.endTime).toLocaleTimeString()}
               </div>
               {lesson.venue && (
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{lesson.venue.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>{lesson.venue.name}</div>
               )}
-              <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
                 {lesson.status === 'scheduled'
                   ? '待上课'
                   : lesson.status === 'completed'
@@ -475,10 +478,10 @@ export function MyCourseManagementPage() {
                     marginTop: '8px',
                     fontSize: 12,
                     padding: '4px 12px',
-                    border: '1px solid #ff5252',
+                    border: '1px solid var(--danger)',
                     borderRadius: '4px',
-                    background: 'white',
-                    color: '#ff5252',
+                    background: 'transparent',
+                    color: 'var(--danger)',
                     cursor: 'pointer',
                   }}
                 >
@@ -508,7 +511,7 @@ export function MyCourseManagementPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '90%',
@@ -528,7 +531,7 @@ export function MyCourseManagementPage() {
                 style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
               />
               {formErrors.title && (
-                <div style={{ fontSize: 12, color: '#ff4d4f', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
                   {formErrors.title}
                 </div>
               )}
@@ -593,9 +596,10 @@ export function MyCourseManagementPage() {
                 onClick={() => setShowCreateClassModal(false)}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -606,8 +610,8 @@ export function MyCourseManagementPage() {
                 disabled={createGroupClassMutation.isPending}
                 style={{
                   padding: '6px 16px',
-                  background: '#00C853',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -638,7 +642,7 @@ export function MyCourseManagementPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '90%',
@@ -658,7 +662,7 @@ export function MyCourseManagementPage() {
                 style={{ width: '100%', padding: '8px', marginTop: '4px', boxSizing: 'border-box' }}
               />
               {formErrors.title && (
-                <div style={{ fontSize: 12, color: '#ff4d4f', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
                   {formErrors.title}
                 </div>
               )}
@@ -723,9 +727,10 @@ export function MyCourseManagementPage() {
                 onClick={() => setShowEditClassModal(false)}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -736,8 +741,8 @@ export function MyCourseManagementPage() {
                 disabled={updateGroupClassMutation.isPending}
                 style={{
                   padding: '6px 16px',
-                  background: '#00C853',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -768,7 +773,7 @@ export function MyCourseManagementPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '90%',
@@ -784,7 +789,7 @@ export function MyCourseManagementPage() {
                 style={{
                   marginBottom: '16px',
                   padding: '12px',
-                  border: '1px solid #f0f0f0',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '8px',
                   position: 'relative',
                 }}
@@ -799,14 +804,14 @@ export function MyCourseManagementPage() {
                       border: 'none',
                       background: 'none',
                       cursor: 'pointer',
-                      color: '#999',
+                      color: 'var(--text-3)',
                       fontSize: 16,
                     }}
                   >
                     x
                   </button>
                 )}
-                <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
                   时间段 {index + 1}
                 </div>
                 <div style={{ marginBottom: '8px' }}>
@@ -846,11 +851,11 @@ export function MyCourseManagementPage() {
               style={{
                 width: '100%',
                 padding: '8px',
-                border: '1px dashed #d9d9d9',
+                border: '1px dashed var(--surface-3)',
                 borderRadius: '8px',
-                background: 'white',
+                background: 'transparent',
                 cursor: 'pointer',
-                color: '#00C853',
+                color: 'var(--primary)',
                 marginBottom: '16px',
               }}
             >
@@ -864,9 +869,10 @@ export function MyCourseManagementPage() {
                 }}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -877,8 +883,8 @@ export function MyCourseManagementPage() {
                 disabled={setAvailabilityMutation.isPending}
                 style={{
                   padding: '6px 16px',
-                  background: '#00C853',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -909,7 +915,7 @@ export function MyCourseManagementPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '80%',
@@ -925,9 +931,10 @@ export function MyCourseManagementPage() {
                 }}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -937,8 +944,8 @@ export function MyCourseManagementPage() {
                 onClick={handleCancelGroupClass}
                 style={{
                   padding: '6px 16px',
-                  background: '#ff5252',
-                  color: 'white',
+                  background: 'var(--danger)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -969,7 +976,7 @@ export function MyCourseManagementPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '80%',
@@ -985,9 +992,10 @@ export function MyCourseManagementPage() {
                 }}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -997,8 +1005,8 @@ export function MyCourseManagementPage() {
                 onClick={handleCancelPrivateLesson}
                 style={{
                   padding: '6px 16px',
-                  background: '#ff5252',
-                  color: 'white',
+                  background: 'var(--danger)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',

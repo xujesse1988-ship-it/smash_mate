@@ -23,15 +23,15 @@ export function TopBar({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '14px 16px',
-        borderBottom: '1px solid #ececec',
-        background: '#fff',
+        borderBottom: '1px solid var(--surface-2)',
+        background: 'var(--surface)',
       }}
     >
       <div style={{ width: 88, display: 'flex', justifyContent: 'flex-start' }}>
         {showBackButton ? <BackButton onClick={onBack} /> : <span />}
       </div>
 
-      <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>{title}</span>
+      <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-1)' }}>{title}</span>
 
       <div style={{ width: 88, display: 'flex', justifyContent: 'flex-end' }}>
         {onSave ? (
@@ -44,7 +44,7 @@ export function TopBar({
               background: 'transparent',
               cursor: saveDisabled ? 'not-allowed' : 'pointer',
               fontSize: 16,
-              color: saveDisabled ? '#999' : '#111',
+              color: saveDisabled ? 'var(--text-3)' : 'var(--text-1)',
             }}
           >
             保存

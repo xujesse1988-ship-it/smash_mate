@@ -24,9 +24,10 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
         display: 'flex',
         alignItems: 'flex-start',
         padding: '12px 16px',
-        backgroundColor: isUnread ? '#F0F5FF' : '#fff',
+        backgroundColor: isUnread ? 'var(--primary-dim)' : 'var(--surface)',
         cursor: 'pointer',
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: '1px solid var(--surface-2)',
+        transition: 'background-color var(--transition)',
       }}
     >
       {/* Unread indicator dot */}
@@ -37,7 +38,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
               width: 8,
               height: 8,
               borderRadius: '50%',
-              backgroundColor: '#1677ff',
+              backgroundColor: 'var(--primary)',
             }}
           />
         )}
@@ -50,7 +51,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
             fontWeight: isUnread ? 600 : 400,
             fontSize: 14,
             marginBottom: 4,
-            color: '#333',
+            color: 'var(--text-1)',
           }}
         >
           {notification.title}
@@ -58,7 +59,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
         <div
           style={{
             fontSize: 13,
-            color: isUnread ? '#666' : '#999',
+            color: isUnread ? 'var(--text-2)' : 'var(--text-3)',
             marginBottom: 4,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -67,7 +68,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
         >
           {notification.content}
         </div>
-        <div style={{ fontSize: 12, color: '#999' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
           {formatNotificationTime(notification.createdAt)}
         </div>
       </div>

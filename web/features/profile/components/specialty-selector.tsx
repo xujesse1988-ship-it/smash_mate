@@ -18,7 +18,7 @@ interface SpecialtySelectorProps {
 export function SpecialtySelector({ specialties, onToggle, error }: SpecialtySelectorProps) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}>
-      <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
+      <label style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-1)', paddingTop: 10 }}>
         教学方向
       </label>
       <div>
@@ -31,9 +31,9 @@ export function SpecialtySelector({ specialties, onToggle, error }: SpecialtySel
               aria-pressed={specialties.includes(option.value)}
               style={{
                 background: specialties.includes(option.value)
-                  ? '#00C853'
-                  : '#f3f3f3',
-                color: specialties.includes(option.value) ? '#fff' : '#888',
+                  ? 'var(--primary)'
+                  : 'var(--surface-2)',
+                color: specialties.includes(option.value) ? '#052e16' : 'var(--text-3)',
                 border: 'none',
                 borderRadius: 18,
                 padding: '8px 16px',
@@ -48,7 +48,7 @@ export function SpecialtySelector({ specialties, onToggle, error }: SpecialtySel
           ))}
         </div>
         {error && (
-          <div style={{ marginTop: 6, color: '#ff4d4f', fontSize: 12 }}>{error}</div>
+          <div style={{ marginTop: 6, color: 'var(--danger)', fontSize: 12 }}>{error}</div>
         )}
       </div>
     </div>

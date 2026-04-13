@@ -1,15 +1,17 @@
 import React from 'react';
 import type { ActivityListItem } from '../api/activity-api';
 import { STATUS_LABELS } from '../constants';
+import { StatusBadge } from '../../../shared/components/StatusBadge';
 
-function getStatusStyle(status: string, variant: 'list' | 'my') {
-  if (status === 'open') {
-    return { background: '#e6f7ff', color: '#1890ff' };
-  }
-  if (variant === 'my' && status === 'completed') {
-    return { background: '#f6ffed', color: '#52c41a' };
-  }
-  return { background: '#f5f5f5', color: '#999' };
+type BadgeVariant = 'green' | 'gray' | 'blue' | 'red' | 'yellow' | 'purple';
+
+function getStatusVariant(status: string, variant: 'list' | 'my'): BadgeVariant {
+  if (status === 'open') return 'green';
+  if (variant === 'my' && status === 'completed') return 'blue';
+  if (status === 'in_progress') return 'blue';
+  if (status === 'cancelled') return 'red';
+  if (status === 'full') return 'yellow';
+  return 'gray';
 }
 
 export function ActivityCard({
@@ -38,43 +40,41 @@ export function ActivityCard({
       ? activity.venue !== null
       : activity.title !== null && activity.venue !== null;
 
-  const statusStyle = getStatusStyle(activity.status, variant);
+  const isOpen = activity.status === 'open';
+  const badgeVariant = getStatusVariant(activity.status, variant);
 
   return (
     <div
       onClick={onClick}
+      className={`dark-card${isOpen ? ' dark-card-accent' : ''}`}
       style={{
-        padding: 16,
-        borderBottom: '1px solid #f0f0f0',
+        marginBottom: 10,
         cursor: 'pointer',
+        opacity: activity.status === 'full' || activity.status === 'cancelled' ? 0.8 : 1,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>{displayTitle}</h3>
-        <span
-          style={{
-            fontSize: 12,
-            padding: '2px 8px',
-            borderRadius: 4,
-            background: statusStyle.background,
-            color: statusStyle.color,
-          }}
-        >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.3 }}>{displayTitle}</div>
+        <StatusBadge variant={badgeVariant}>
           {STATUS_LABELS[activity.status] || activity.status}
-        </span>
+        </StatusBadge>
       </div>
       {showVenueSeparately && (
-        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+        <div className="info-row" style={{ marginTop: 8 }}>
+          <span className="icon">📍</span>
           {activity.venue!.name}
         </div>
       )}
-      <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>{timeStr}</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-        <span style={{ fontSize: 13, color: '#666' }}>
+      <div className="info-row" style={showVenueSeparately ? {} : { marginTop: 8 }}>
+        <span className="icon">🕐</span>
+        {timeStr}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-2)' }}>
           {activity.currentParticipants}/{activity.maxParticipants} 人
         </span>
         {variant === 'list' && activity.distance != null && (
-          <span style={{ fontSize: 13, color: '#999' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
             距你 {activity.distance} km
           </span>
         )}

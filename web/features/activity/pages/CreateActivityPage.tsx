@@ -76,12 +76,12 @@ export function CreateActivityPage() {
       {/* Header with back button */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
         <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 8px', marginRight: 8 }} />
-        <h2 style={{ margin: 0, fontSize: 18 }}>发起约球</h2>
+        <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-1)' }}>发起约球</h2>
       </div>
 
       {/* Venue search input */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>球馆</label>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: 14, color: 'var(--text-2)' }}>球馆</label>
         <VenueSearchInput
           selectedVenue={selectedVenue}
           onChangeSelection={(venue) => {
@@ -103,14 +103,14 @@ export function CreateActivityPage() {
 
       {/* Title input */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>活动标题（可选）</label>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: 14, color: 'var(--text-2)' }}>活动标题（可选）</label>
         <Input
           placeholder="输入活动标题"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         {formErrors.title && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{formErrors.title}</div>
+          <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>{formErrors.title}</div>
         )}
       </div>
 
@@ -152,7 +152,7 @@ export function CreateActivityPage() {
 
       {/* Participant count */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>限定人数</label>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: 14, color: 'var(--text-2)' }}>限定人数</label>
         <input
           type="number"
           min={2}
@@ -165,13 +165,15 @@ export function CreateActivityPage() {
           style={{
             width: '100%',
             padding: '4px 8px',
-            border: '1px solid #d9d9d9',
+            border: '1px solid var(--surface-2)',
             borderRadius: 4,
             fontSize: 14,
+            background: 'var(--surface)',
+            color: 'var(--text-1)',
           }}
         />
         {formErrors.maxParticipants && (
-          <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
+          <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
             {formErrors.maxParticipants}
           </div>
         )}
@@ -184,8 +186,8 @@ export function CreateActivityPage() {
         style={{
           width: '100%',
           padding: '12px 0',
-          background: createActivityMutation.isPending ? '#ccc' : '#00C853',
-          color: '#fff',
+          background: createActivityMutation.isPending ? 'var(--surface-3)' : 'var(--primary)',
+          color: createActivityMutation.isPending ? 'var(--text-3)' : '#052e16',
           border: 'none',
           borderRadius: 8,
           fontSize: 16,

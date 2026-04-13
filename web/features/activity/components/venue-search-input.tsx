@@ -170,13 +170,13 @@ export function VenueSearchInput({
         textAlign: 'left',
         padding: '10px 12px',
         border: 'none',
-        borderTop: '1px solid #f5f5f5',
-        background: 'white',
+        borderTop: '1px solid var(--surface-2)',
+        background: 'var(--surface)',
         cursor: 'pointer',
       }}
     >
-      <div style={{ fontSize: 14, color: '#222' }}>{item.name}</div>
-      <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+      <div style={{ fontSize: 14, color: 'var(--text-1)' }}>{item.name}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
         {item.address || '地址待补充'}
       </div>
     </button>
@@ -199,31 +199,33 @@ export function VenueSearchInput({
         style={{
           width: '100%',
           padding: '8px 12px',
-          border: error ? '1px solid #ff4d4f' : '1px solid #d9d9d9',
+          border: error ? '1px solid var(--danger)' : '1px solid var(--surface-2)',
           borderRadius: 8,
           boxSizing: 'border-box',
+          background: 'var(--surface)',
+          color: 'var(--text-1)',
         }}
       />
 
       {selectedVenue && (
-        <div style={{ fontSize: 12, color: '#666', marginTop: 6 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 6 }}>
           已选: {selectedVenue.name}
           {selectedVenue.address ? ` · ${selectedVenue.address}` : ''}
         </div>
       )}
 
       {!selectedVenue && helperText && (
-        <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>{helperText}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>{helperText}</div>
       )}
 
       {showDropdown && (
         <div
           style={{
             marginTop: 8,
-            border: '1px solid #f0f0f0',
+            border: '1px solid var(--surface-2)',
             borderRadius: 8,
             overflow: 'hidden',
-            background: '#fff',
+            background: 'var(--surface)',
             maxHeight: 300,
             overflowY: 'auto'
           }}
@@ -231,17 +233,17 @@ export function VenueSearchInput({
           {showSearchResults && (
             <>
               {isLoading && (
-                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>搜索中...</div>
+                <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-3)' }}>搜索中...</div>
               )}
 
               {!isLoading && searchError && (
-                <div style={{ padding: '10px 12px', fontSize: 12, color: '#ff4d4f' }}>
+                <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--danger)' }}>
                   {searchError}
                 </div>
               )}
 
               {!isLoading && !searchError && items.length === 0 && (
-                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>未找到匹配球馆</div>
+                <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-3)' }}>未找到匹配球馆</div>
               )}
 
               {!isLoading && !searchError && items.map(renderVenueItem)}
@@ -251,12 +253,12 @@ export function VenueSearchInput({
           {showRecommendations && (
             <div style={{ padding: '8px 0' }}>
               {isLoadingRecommendations && (
-                <div style={{ padding: '4px 12px', fontSize: 12, color: '#999' }}>加载推荐...</div>
+                <div style={{ padding: '4px 12px', fontSize: 12, color: 'var(--text-3)' }}>加载推荐...</div>
               )}
 
               {!isLoadingRecommendations && recentVenues.length > 0 && (
                 <>
-                  <div style={{ fontSize: 12, fontWeight: 'bold', color: '#666', padding: '8px 12px 4px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 'bold', color: 'var(--text-2)', padding: '8px 12px 4px' }}>
                     曾经去过
                   </div>
                   {recentVenues.map(renderVenueItem)}
@@ -265,7 +267,7 @@ export function VenueSearchInput({
 
               {!isLoadingRecommendations && closestVenues.length > 0 && (
                 <>
-                  <div style={{ fontSize: 12, fontWeight: 'bold', color: '#666', padding: '8px 12px 4px', marginTop: recentVenues.length > 0 ? 8 : 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 'bold', color: 'var(--text-2)', padding: '8px 12px 4px', marginTop: recentVenues.length > 0 ? 8 : 0 }}>
                     离你最近
                   </div>
                   {closestVenues
@@ -275,14 +277,14 @@ export function VenueSearchInput({
               )}
 
               {!isLoadingRecommendations && recentVenues.length === 0 && closestVenues.length === 0 && (
-                <div style={{ padding: '10px 12px', fontSize: 12, color: '#999' }}>请输入球馆名称搜索</div>
+                <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-3)' }}>请输入球馆名称搜索</div>
               )}
             </div>
           )}
         </div>
       )}
 
-      {error && <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{error}</div>}
     </div>
   );
 }

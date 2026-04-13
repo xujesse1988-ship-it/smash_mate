@@ -73,12 +73,28 @@ export function LoginPage() {
   const submitButtonText = activeTab === 'login' ? '登录' : '注册';
 
   return (
-    <div style={{ maxWidth: 400, margin: '0 auto', padding: '48px 24px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <h1>羽约</h1>
+    <div style={{ maxWidth: 400, margin: '0 auto', padding: '0 24px', minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Brand Hero */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 0 32px' }}>
+        <div style={{ fontSize: 56, marginBottom: 4 }}>🏸</div>
+        <h1 className="gradient-text" style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1, margin: '0 0 6px 0' }}>
+          羽约
+        </h1>
+        <div style={{ fontSize: 13, color: 'var(--text-3)', letterSpacing: 2 }}>
+          找球友 · 约场地 · 练技术
+        </div>
       </div>
 
-      <div role="tablist" style={{ display: 'flex', marginBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
+      {/* Tab switcher */}
+      <div
+        style={{
+          display: 'flex',
+          background: 'var(--surface-2)',
+          borderRadius: 10,
+          padding: 3,
+          marginBottom: 24,
+        }}
+      >
         <button
           role="tab"
           aria-selected={activeTab === 'login'}
@@ -87,11 +103,13 @@ export function LoginPage() {
             flex: 1,
             padding: '8px 16px',
             border: 'none',
-            background: 'none',
+            borderRadius: 8,
             cursor: 'pointer',
-            borderBottom: activeTab === 'login' ? '2px solid #00C853' : '2px solid transparent',
+            fontSize: 13,
             fontWeight: activeTab === 'login' ? 600 : 400,
-            color: activeTab === 'login' ? '#00C853' : '#666',
+            background: activeTab === 'login' ? 'var(--surface)' : 'transparent',
+            color: activeTab === 'login' ? 'var(--text-1)' : 'var(--text-2)',
+            transition: 'var(--transition)',
           }}
         >
           登录
@@ -104,52 +122,59 @@ export function LoginPage() {
             flex: 1,
             padding: '8px 16px',
             border: 'none',
-            background: 'none',
+            borderRadius: 8,
             cursor: 'pointer',
-            borderBottom: activeTab === 'register' ? '2px solid #00C853' : '2px solid transparent',
+            fontSize: 13,
             fontWeight: activeTab === 'register' ? 600 : 400,
-            color: activeTab === 'register' ? '#00C853' : '#666',
+            background: activeTab === 'register' ? 'var(--surface)' : 'transparent',
+            color: activeTab === 'register' ? 'var(--text-1)' : 'var(--text-2)',
+            transition: 'var(--transition)',
           }}
         >
           注册
         </button>
       </div>
 
+      {/* Form */}
       <div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 8 }}>手机号</div>
         <div>
           <Input
-            placeholder="手机号"
+            placeholder="请输入手机号"
             value={phone}
             onChange={(e) => {
               setPhone(e.target.value);
               if (phoneError) setPhoneError(null);
             }}
             maxLength={11}
+            status={phoneError ? 'error' : undefined}
           />
           {phoneError && (
-            <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
+            <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
               {phoneError}
             </div>
           )}
         </div>
 
         <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 8 }}>验证码</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Input
-              placeholder="验证码"
+              placeholder="6 位验证码"
               value={code}
               onChange={(e) => {
                 setCode(e.target.value);
                 if (codeError) setCodeError(null);
               }}
               maxLength={6}
+              status={codeError ? 'error' : undefined}
             />
-            <Button disabled={sendCodeDisabled} onClick={handleSendCode}>
+            <Button disabled={sendCodeDisabled} onClick={handleSendCode} style={{ whiteSpace: 'nowrap' }}>
               {sendCodeButtonText}
             </Button>
           </div>
           {codeError && (
-            <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
+            <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
               {codeError}
             </div>
           )}
@@ -168,11 +193,21 @@ export function LoginPage() {
           block
           disabled={loginMutation.isPending}
           onClick={handleSubmit}
-          style={{ marginTop: 16 }}
+          style={{
+            marginTop: 24,
+            height: 48,
+            fontSize: 16,
+            fontWeight: 600,
+            borderRadius: 12,
+          }}
           autoInsertSpace={false}
         >
           {submitButtonText}
         </Button>
+
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', marginTop: 16 }}>
+          继续即表示同意 <span style={{ color: 'var(--primary)' }}>用户协议</span> 与 <span style={{ color: 'var(--primary)' }}>隐私政策</span>
+        </div>
       </div>
     </div>
   );

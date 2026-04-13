@@ -148,7 +148,7 @@ export function ProfileEditPage() {
   }
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         <TopBar
           title="编辑资料"

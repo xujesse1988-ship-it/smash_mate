@@ -14,9 +14,10 @@ import { BackButton } from './BackButton';
 interface TopBarProps {
   title: string;
   showBackBtn?: boolean;
+  showLogo?: boolean;
 }
 
-export function TopBar({ title, showBackBtn }: TopBarProps) {
+export function TopBar({ title, showBackBtn, showLogo }: TopBarProps) {
   const navigate = useNavigate();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
@@ -27,18 +28,30 @@ export function TopBar({ title, showBackBtn }: TopBarProps) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '12px 16px',
-        borderBottom: '1px solid #f0f0f0',
-        background: '#fff',
+        padding: '14px 18px',
+        borderBottom: '1px solid var(--surface-2)',
+        background: 'rgba(15,23,42,.95)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 5,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {showBackBtn && <BackButton onClick={() => navigate(-1)} style={{ marginRight: 12, padding: 0 }} />}
-        <span style={{ fontSize: 18, fontWeight: 600 }}>{title}</span>
+        {showLogo ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 22 }}>🏸</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-1)' }}>羽约</span>
+          </div>
+        ) : (
+          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>{title}</span>
+        )}
       </div>
       <Badge count={unreadCount} size="small" offset={[-2, 2]}>
         <BellOutlined
-          style={{ fontSize: 20, cursor: 'pointer' }}
+          style={{ fontSize: 20, cursor: 'pointer', color: 'var(--text-2)' }}
           onClick={() => navigate('/notifications')}
           aria-label="通知"
         />

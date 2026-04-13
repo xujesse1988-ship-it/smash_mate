@@ -129,7 +129,7 @@ export function DateTimePicker({
   return (
     <div ref={containerRef} style={{ position: 'relative', ...style }}>
       {label && (
-        <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>{label}</div>
       )}
 
       {/* Display input */}
@@ -138,12 +138,12 @@ export function DateTimePicker({
         style={{
           width: '100%',
           padding: '10px 12px',
-          border: `1px solid ${error ? '#ff4d4f' : isOpen ? '#00C853' : '#e0e0e0'}`,
+          border: `1px solid ${error ? 'var(--danger)' : isOpen ? 'var(--primary)' : 'var(--surface-2)'}`,
           borderRadius: 10,
           fontSize: 14,
-          color: displayText ? '#333' : '#bbb',
+          color: displayText ? 'var(--text-1)' : 'var(--text-3)',
           cursor: 'pointer',
-          background: '#fff',
+          background: 'var(--surface)',
           boxSizing: 'border-box',
           transition: 'border-color 0.2s',
           display: 'flex',
@@ -152,11 +152,11 @@ export function DateTimePicker({
         }}
       >
         <span>{displayText || placeholder}</span>
-        <span style={{ fontSize: 12, color: '#bbb' }}>📅</span>
+        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>📅</span>
       </div>
 
       {error && (
-        <div style={{ fontSize: 12, color: '#ff4d4f', marginTop: 4 }}>{error}</div>
+        <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>{error}</div>
       )}
 
       {/* Dropdown picker */}
@@ -168,17 +168,17 @@ export function DateTimePicker({
             left: 0,
             right: 0,
             marginTop: 4,
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 14,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
             zIndex: 1000,
             overflow: 'hidden',
-            border: '1px solid #f0f0f0',
+            border: '1px solid var(--surface-2)',
           }}
         >
           {/* Date selector — horizontal scroll */}
           <div style={{ padding: '14px 0 10px 0' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#555', paddingLeft: 16, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', paddingLeft: 16, marginBottom: 10 }}>
               选择日期
             </div>
             <div
@@ -204,9 +204,9 @@ export function DateTimePicker({
                       textAlign: 'center',
                       borderRadius: 10,
                       cursor: 'pointer',
-                      background: isSelected ? '#00C853' : isToday ? '#f0faf4' : '#fafafa',
-                      color: isSelected ? '#fff' : '#333',
-                      border: isSelected ? '1px solid #00C853' : isToday ? '1px solid #c8e6c9' : '1px solid #f0f0f0',
+                      background: isSelected ? 'var(--primary)' : isToday ? 'var(--primary-dim)' : 'var(--surface-2)',
+                      color: isSelected ? '#052e16' : 'var(--text-1)',
+                      border: isSelected ? '1px solid var(--primary)' : isToday ? '1px solid rgba(74,222,128,.3)' : '1px solid var(--surface-2)',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -226,24 +226,24 @@ export function DateTimePicker({
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: '#f0f0f0', margin: '0 16px' }} />
+          <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 16px' }} />
 
           {/* Time selector — hour and minute columns */}
           <div style={{ padding: '12px 16px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 10 }}>
               选择时间
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               {/* Hour column */}
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: '#999', textAlign: 'center', marginBottom: 6 }}>时</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', marginBottom: 6 }}>时</div>
                 <div
                   style={{
                     height: 160,
                     overflowY: 'auto',
                     borderRadius: 10,
-                    background: '#fafafa',
-                    border: '1px solid #f0f0f0',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--surface-2)',
                     scrollbarWidth: 'thin',
                   }}
                 >
@@ -256,8 +256,8 @@ export function DateTimePicker({
                         textAlign: 'center',
                         fontSize: 15,
                         fontWeight: selectedHour === i ? 600 : 400,
-                        color: selectedHour === i ? '#fff' : '#555',
-                        background: selectedHour === i ? '#00C853' : 'transparent',
+                        color: selectedHour === i ? '#052e16' : 'var(--text-2)',
+                        background: selectedHour === i ? 'var(--primary)' : 'transparent',
                         borderRadius: 6,
                         margin: '2px 4px',
                         cursor: 'pointer',
@@ -271,20 +271,20 @@ export function DateTimePicker({
               </div>
 
               {/* Separator */}
-              <div style={{ display: 'flex', alignItems: 'center', fontSize: 20, color: '#ccc', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', fontSize: 20, color: 'var(--text-3)', fontWeight: 700 }}>
                 :
               </div>
 
               {/* Minute column */}
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: '#999', textAlign: 'center', marginBottom: 6 }}>分</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', marginBottom: 6 }}>分</div>
                 <div
                   style={{
                     height: 160,
                     overflowY: 'auto',
                     borderRadius: 10,
-                    background: '#fafafa',
-                    border: '1px solid #f0f0f0',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--surface-2)',
                     scrollbarWidth: 'thin',
                   }}
                 >
@@ -297,8 +297,8 @@ export function DateTimePicker({
                         textAlign: 'center',
                         fontSize: 15,
                         fontWeight: selectedMinute === m ? 600 : 400,
-                        color: selectedMinute === m ? '#fff' : '#555',
-                        background: selectedMinute === m ? '#00C853' : 'transparent',
+                        color: selectedMinute === m ? '#052e16' : 'var(--text-2)',
+                        background: selectedMinute === m ? 'var(--primary)' : 'transparent',
                         borderRadius: 6,
                         margin: '2px 4px',
                         cursor: 'pointer',
@@ -321,8 +321,8 @@ export function DateTimePicker({
               style={{
                 width: '100%',
                 padding: '10px 0',
-                background: selectedDate ? '#00C853' : '#e0e0e0',
-                color: selectedDate ? '#fff' : '#999',
+                background: selectedDate ? 'var(--primary)' : 'var(--surface-2)',
+                color: selectedDate ? '#052e16' : 'var(--text-3)',
                 border: 'none',
                 borderRadius: 10,
                 fontSize: 15,

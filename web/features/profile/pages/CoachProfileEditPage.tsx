@@ -110,7 +110,7 @@ export function CoachProfileEditPage() {
   }
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         <TopBar
           title="教练资料"
@@ -122,8 +122,8 @@ export function CoachProfileEditPage() {
         <div
           style={{
             padding: '24px 20px 28px',
-            background: '#fff',
-            border: '1px solid #ececec',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
             display: 'grid',
             gap: 18,

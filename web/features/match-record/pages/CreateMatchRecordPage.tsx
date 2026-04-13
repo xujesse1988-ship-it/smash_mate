@@ -80,14 +80,14 @@ export function CreateMatchRecordPage() {
 
   if (!sourceType || !sourceId) {
     return (
-      <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
             <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
-            <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>录入战绩</span>
+            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-1)' }}>录入战绩</span>
           </div>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 18, textAlign: 'center', border: '1px solid #ececec' }}>
-            <p style={{ color: '#666' }}>请从活动或课程详情页进入战绩录入</p>
+          <div style={{ background: 'var(--surface)', padding: 24, borderRadius: 18, textAlign: 'center', border: '1px solid var(--surface-2)' }}>
+            <p style={{ color: 'var(--text-2)' }}>请从活动或课程详情页进入战绩录入</p>
           </div>
         </div>
       </div>
@@ -300,9 +300,9 @@ function CreateMatchRecordForm({
     return (
       <div key={key} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: '#444' }}>{side}方队员 {index + 1}</span>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)' }}>{side}方队员 {index + 1}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 13, color: '#888' }}>非平台用户</span>
+            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>非平台用户</span>
             <Switch
               size="small"
               checked={player.isGuest}
@@ -322,7 +322,7 @@ function CreateMatchRecordForm({
             placeholder="输入昵称"
             value={player.guestName}
             onChange={(e) => updatePlayer(side, index, { guestName: e.target.value })}
-            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d9d9d9', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--surface-2)', borderRadius: 8, fontSize: 15, boxSizing: 'border-box' }}
           />
         ) : (
           <Select
@@ -341,16 +341,16 @@ function CreateMatchRecordForm({
   };
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto', paddingBottom: 40 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
           <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>录入战绩</span>
+          <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-1)' }}>录入战绩</span>
         </div>
 
         {/* Match Type and Players Card */}
-        <div style={{ background: '#fff', padding: '24px 20px', borderRadius: 18, border: '1px solid #ececec', marginBottom: 16 }}>
+        <div style={{ background: 'var(--surface)', padding: '24px 20px', borderRadius: 18, border: '1px solid var(--surface-2)', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
             <Radio.Group
               value={matchType}
@@ -365,28 +365,28 @@ function CreateMatchRecordForm({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
-              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: '#111' }}>A 方队伍</h4>
+              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-1)' }}>A 方队伍</h4>
               {sideA.map((p, i) => renderPlayerSelector('A', i, p))}
             </div>
-            <div style={{ height: 1, background: '#f0f0f0' }} />
+            <div style={{ height: 1, background: 'var(--surface-2)' }} />
             <div>
-              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: '#111' }}>B 方队伍</h4>
+              <h4 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-1)' }}>B 方队伍</h4>
               {sideB.map((p, i) => renderPlayerSelector('B', i, p))}
             </div>
           </div>
 
-          {formErrors.players && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.players}</div>}
-          {formErrors.guestName && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.guestName}</div>}
-          {formErrors.duplicate && <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>{formErrors.duplicate}</div>}
+          {formErrors.players && <div style={{ color: 'var(--danger)', marginTop: 8, fontSize: 13 }}>{formErrors.players}</div>}
+          {formErrors.guestName && <div style={{ color: 'var(--danger)', marginTop: 8, fontSize: 13 }}>{formErrors.guestName}</div>}
+          {formErrors.duplicate && <div style={{ color: 'var(--danger)', marginTop: 8, fontSize: 13 }}>{formErrors.duplicate}</div>}
         </div>
 
         {/* Scores Card */}
-        <div style={{ background: '#fff', padding: '24px 20px', borderRadius: 18, border: '1px solid #ececec', marginBottom: 24 }}>
-          <h4 style={{ margin: '0 0 16px', fontSize: 16, color: '#111' }}>比赛比分</h4>
+        <div style={{ background: 'var(--surface)', padding: '24px 20px', borderRadius: 18, border: '1px solid var(--surface-2)', marginBottom: 24 }}>
+          <h4 style={{ margin: '0 0 16px', fontSize: 16, color: 'var(--text-1)' }}>比赛比分</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {games.map((g, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f9f9f9', borderRadius: 12 }}>
-                <span style={{ fontSize: 15, fontWeight: 500, color: '#444' }}>第 {i + 1} 局</span>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-2)' }}>第 {i + 1} 局</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <InputNumber
                     min={0}
@@ -396,7 +396,7 @@ function CreateMatchRecordForm({
                     placeholder="0"
                     style={{ width: 64, height: 40, fontSize: 16, textAlign: 'center' }}
                   />
-                  <span style={{ fontSize: 18, fontWeight: 600, color: '#999' }}>:</span>
+                  <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-3)' }}>:</span>
                   <InputNumber
                     min={0}
                     max={30}
@@ -409,7 +409,7 @@ function CreateMatchRecordForm({
                     <button
                       type="button"
                       onClick={() => removeGame(i)}
-                      style={{ background: 'none', border: 'none', color: '#ff4d4f', fontSize: 14, cursor: 'pointer', padding: '0 4px' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 14, cursor: 'pointer', padding: '0 4px' }}
                     >
                       删除
                     </button>
@@ -421,14 +421,14 @@ function CreateMatchRecordForm({
           <button
             type="button"
             onClick={addGame}
-            style={{ width: '100%', marginTop: 16, padding: '12px', background: '#fff', border: '1px dashed #d9d9d9', borderRadius: 12, color: '#111', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
+            style={{ width: '100%', marginTop: 16, padding: '12px', background: 'var(--surface)', border: '1px dashed var(--surface-3)', borderRadius: 12, color: 'var(--text-1)', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
           >
             + 添加一局
           </button>
-          {formErrors.games && <div style={{ color: '#ff4d4f', marginTop: 12, fontSize: 13 }}>{formErrors.games}</div>}
+          {formErrors.games && <div style={{ color: 'var(--danger)', marginTop: 12, fontSize: 13 }}>{formErrors.games}</div>}
         </div>
 
-        {apiErrorMessage && <div style={{ color: '#ff4d4f', marginBottom: 16, textAlign: 'center', fontSize: 14 }}>{apiErrorMessage}</div>}
+        {apiErrorMessage && <div style={{ color: 'var(--danger)', marginBottom: 16, textAlign: 'center', fontSize: 14 }}>{apiErrorMessage}</div>}
 
         <button
           type="button"
@@ -437,8 +437,8 @@ function CreateMatchRecordForm({
           style={{
             width: '100%',
             padding: '14px',
-            background: '#111',
-            color: '#fff',
+            background: 'var(--primary)',
+            color: '#052e16',
             border: 'none',
             borderRadius: 999,
             fontSize: 16,

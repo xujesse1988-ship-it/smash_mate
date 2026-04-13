@@ -85,6 +85,7 @@ export function AppLayout() {
   const showBackBtnInTopBar =
     location.pathname === '/my-courses' ||
     /^\/coaches\/[^/]+\/private-lessons$/.test(location.pathname);
+  const showLogo = location.pathname === '/activities';
 
   return (
     <div
@@ -92,9 +93,11 @@ export function AppLayout() {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--text-1)',
       }}
     >
-      {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} />}
+      {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} showLogo={showLogo} />}
       <div style={{ flex: 1, overflow: 'auto' }}>
         <Outlet />
       </div>

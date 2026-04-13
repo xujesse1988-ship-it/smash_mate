@@ -16,7 +16,7 @@ const baseButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
   fontSize: 16,
   lineHeight: 1.2,
-  color: '#111',
+  color: 'var(--text-2)',
 };
 
 export function BackButton({ onClick, style }: BackButtonProps) {

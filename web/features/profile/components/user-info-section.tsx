@@ -32,7 +32,7 @@ export function UserInfoSection({
             height: 72,
             borderRadius: '50%',
             objectFit: 'cover',
-            border: '1px solid #e5e5e5',
+            border: '1px solid var(--surface-2)',
             flexShrink: 0,
           }}
         />
@@ -44,20 +44,20 @@ export function UserInfoSection({
             width: 72,
             height: 72,
             borderRadius: '50%',
-            background: '#f0f0f0',
-            border: '1px solid #e5e5e5',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--surface-2)',
             flexShrink: 0,
           }}
         />
       )}
 
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, color: '#111' }}>
+        <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, color: 'var(--text-1)' }}>
           {nickname}
         </div>
-        {phone && <div style={{ marginTop: 6, fontSize: 16, color: '#444' }}>{phone}</div>}
+        {phone && <div style={{ marginTop: 6, fontSize: 16, color: 'var(--text-2)' }}>{phone}</div>}
         {showBio && bio && (
-          <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, color: '#666' }}>{bio}</div>
+          <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, color: 'var(--text-2)' }}>{bio}</div>
         )}
       </div>
     </div>

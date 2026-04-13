@@ -55,20 +55,20 @@ export function SettingsPage() {
   }
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 24px' }}>
           <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>设置</span>
+          <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-1)' }}>设置</span>
         </div>
 
         {/* Settings List Card */}
         <div
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 18,
-            border: '1px solid #ececec',
+            border: '1px solid var(--surface-2)',
             overflow: 'hidden',
           }}
         >
@@ -78,11 +78,11 @@ export function SettingsPage() {
             onToggle={handleCoachSwitchClick}
           />
 
-          <div style={{ height: 1, background: '#f0f0f0', margin: '0 20px' }} />
+          <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 20px' }} />
 
           <SettingsLinkItem label="修改手机号" onClick={handlePhoneClick} disabled />
 
-          <div style={{ height: 1, background: '#f0f0f0', margin: '0 20px' }} />
+          <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 20px' }} />
 
           <SettingsLinkItem label="关于我们" onClick={() => setShowAbout(true)} />
         </div>
@@ -118,28 +118,30 @@ export function SettingsPage() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
+            backdropFilter: 'blur(8px)',
           }}
         >
           <div
             style={{
-              background: '#fff',
+              background: 'var(--surface)',
               borderRadius: 24,
               padding: '32px 24px',
               width: '80%',
               maxWidth: 320,
               textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
             }}
           >
             <div
               style={{
                 width: 64,
                 height: 64,
-                background: '#00C853',
+                background: 'var(--primary)',
                 borderRadius: 16,
                 margin: '0 auto 16px',
                 display: 'flex',
@@ -152,19 +154,19 @@ export function SettingsPage() {
             >
               S
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: 20 }}>羽约 SmashMate</h3>
-            <p style={{ margin: '0 0 24px', color: '#666', fontSize: 14 }}>版本 v1.0.0</p>
+            <h3 style={{ margin: '0 0 8px', fontSize: 20, color: 'var(--text-1)' }}>羽约 SmashMate</h3>
+            <p style={{ margin: '0 0 24px', color: 'var(--text-2)', fontSize: 14 }}>版本 v1.0.0</p>
             <button
               onClick={() => setShowAbout(false)}
               style={{
                 width: '100%',
                 padding: '12px',
-                background: '#f5f5f5',
+                background: 'var(--surface-2)',
                 border: 'none',
                 borderRadius: 999,
                 fontSize: 16,
                 fontWeight: 500,
-                color: '#111',
+                color: 'var(--text-1)',
                 cursor: 'pointer',
               }}
             >

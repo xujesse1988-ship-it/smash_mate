@@ -13,10 +13,10 @@ export function MatchStatsCard({ stats, error }: MatchStatsCardProps) {
         style={{
           marginTop: 20,
           padding: '16px 18px',
-          background: '#fff',
-          border: '1px solid #e8e8e8',
+          background: 'var(--surface)',
+          border: '1px solid var(--surface-2)',
           borderRadius: 14,
-          color: '#999',
+          color: 'var(--text-3)',
           fontSize: 14,
         }}
       >
@@ -35,8 +35,8 @@ export function MatchStatsCard({ stats, error }: MatchStatsCardProps) {
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
         marginTop: 20,
-        background: '#fff',
-        border: '1px solid #d9d9d9',
+        background: 'var(--surface)',
+        border: '1px solid var(--surface-2)',
         borderRadius: 14,
         overflow: 'hidden',
       }}
@@ -51,11 +51,11 @@ export function MatchStatsCard({ stats, error }: MatchStatsCardProps) {
           style={{
             padding: '14px 8px',
             textAlign: 'center',
-            borderRight: index < 2 ? '1px solid #d9d9d9' : 'none',
+            borderRight: index < 2 ? '1px solid var(--surface-2)' : 'none',
           }}
         >
-          <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>{item.label}</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#111', lineHeight: 1 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 8 }}>{item.label}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>
             {item.value}
           </div>
         </div>

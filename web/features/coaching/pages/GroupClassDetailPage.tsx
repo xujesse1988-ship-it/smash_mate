@@ -29,17 +29,17 @@ function formatTime(dateStr: string) {
 function getStatusStyle(status: string) {
   switch (status) {
     case 'open':
-      return { bg: '#e8f5e9', color: '#2e7d32', border: '#c8e6c9', label: '报名中' };
+      return { bg: 'var(--primary-dim)', color: 'var(--primary)', border: 'rgba(74,222,128,0.25)', label: '报名中' };
     case 'full':
-      return { bg: '#fff3e0', color: '#e65100', border: '#ffe0b2', label: '已满员' };
+      return { bg: 'rgba(251,191,36,0.15)', color: 'var(--warning)', border: 'rgba(251,191,36,0.25)', label: '已满员' };
     case 'in_progress':
-      return { bg: '#e3f2fd', color: '#1565c0', border: '#bbdefb', label: '进行中' };
+      return { bg: 'rgba(96,165,250,0.15)', color: 'var(--blue)', border: 'rgba(96,165,250,0.25)', label: '进行中' };
     case 'completed':
-      return { bg: '#f3e5f5', color: '#7b1fa2', border: '#e1bee7', label: '已结束' };
+      return { bg: 'rgba(168,85,247,0.15)', color: '#a855f7', border: 'rgba(168,85,247,0.25)', label: '已结束' };
     case 'cancelled':
-      return { bg: '#fce4ec', color: '#c62828', border: '#f8bbd0', label: '已取消' };
+      return { bg: 'rgba(248,113,113,0.15)', color: 'var(--danger)', border: 'rgba(248,113,113,0.25)', label: '已取消' };
     default:
-      return { bg: '#f5f5f5', color: '#999', border: '#e0e0e0', label: status };
+      return { bg: 'var(--surface-2)', color: 'var(--text-3)', border: 'var(--surface-3)', label: status };
   }
 }
 
@@ -90,19 +90,20 @@ export function GroupClassDetailPage() {
   };
 
   return (
-    <div style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 80 }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: 80 }}>
       {/* Header */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           padding: '12px 16px',
-          background: '#fff',
-          borderBottom: '1px solid #f0f0f0',
+          background: 'rgba(15,23,42,.95)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--surface-2)',
         }}
       >
         <BackButton onClick={() => navigate(-1)} style={{ padding: '4px 0', marginRight: 12 }} />
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>团课详情</h2>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-1)' }}>团课详情</h2>
       </div>
 
       {/* Main content */}
@@ -110,11 +111,11 @@ export function GroupClassDetailPage() {
         {/* Course info card */}
         <div
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 12,
             padding: 20,
             marginBottom: 12,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
           }}
         >
           {/* Status + Title */}
@@ -134,7 +135,7 @@ export function GroupClassDetailPage() {
                 {statusStyle.label}
               </span>
             </div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#111' }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-1)' }}>
               {groupClass.title}
             </h2>
           </div>
@@ -148,10 +149,10 @@ export function GroupClassDetailPage() {
               gap: 10,
               marginBottom: 18,
               padding: '10px 12px',
-              background: '#fafafa',
+              background: 'var(--surface-2)',
               borderRadius: 10,
               cursor: 'pointer',
-              border: '1px solid #f0f0f0',
+              border: '1px solid var(--surface-3)',
             }}
           >
             {groupClass.coach.avatarUrl ? (
@@ -163,7 +164,7 @@ export function GroupClassDetailPage() {
                   height: 40,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: '2px solid #e8f5e9',
+                  border: '2px solid var(--primary-dim)',
                 }}
               />
             ) : (
@@ -172,26 +173,26 @@ export function GroupClassDetailPage() {
                   width: 40,
                   height: 40,
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #66bb6a, #43a047)',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 16,
                   fontWeight: 600,
-                  color: '#fff',
-                  border: '2px solid #e8f5e9',
+                  color: '#052e16',
+                  border: '2px solid var(--primary-dim)',
                 }}
               >
                 {groupClass.coach.nickname.charAt(0)}
               </div>
             )}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#333' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)' }}>
                 {groupClass.coach.nickname}
               </div>
-              <div style={{ fontSize: 12, color: '#999' }}>教练</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>教练</div>
             </div>
-            <span style={{ fontSize: 14, color: '#bbb' }}>›</span>
+            <span style={{ fontSize: 14, color: 'var(--text-3)' }}>›</span>
           </div>
 
           {/* Venue */}
@@ -199,11 +200,11 @@ export function GroupClassDetailPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>📍</span>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 500, color: '#222' }}>
+                <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-1)' }}>
                   {groupClass.venue.name}
                 </div>
                 {groupClass.venue.address && (
-                  <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>
                     {groupClass.venue.address}
                   </div>
                 )}
@@ -215,8 +216,8 @@ export function GroupClassDetailPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>🕐</span>
             <div>
-              <div style={{ fontSize: 14, color: '#333' }}>{formatDate(groupClass.startTime)}</div>
-              <div style={{ fontSize: 14, color: '#555', marginTop: 2 }}>
+              <div style={{ fontSize: 14, color: 'var(--text-1)' }}>{formatDate(groupClass.startTime)}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-2)', marginTop: 2 }}>
                 {formatTime(groupClass.startTime)} - {formatTime(groupClass.endTime)}
               </div>
             </div>
@@ -232,9 +233,9 @@ export function GroupClassDetailPage() {
             }}
           >
             <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>👥</span>
-            <div style={{ fontSize: 14, color: '#333' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-1)' }}>
               <span style={{ fontWeight: 600 }}>{groupClass.currentParticipants}</span>
-              <span style={{ color: '#999' }}> / {groupClass.maxParticipants} 人</span>
+              <span style={{ color: 'var(--text-3)' }}> / {groupClass.maxParticipants} 人</span>
             </div>
           </div>
 
@@ -242,7 +243,7 @@ export function GroupClassDetailPage() {
           {groupClass.feeDescription && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 18, lineHeight: '22px', flexShrink: 0 }}>💰</span>
-              <div style={{ fontSize: 14, color: '#333' }}>{groupClass.feeDescription}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-1)' }}>{groupClass.feeDescription}</div>
             </div>
           )}
         </div>
@@ -250,19 +251,19 @@ export function GroupClassDetailPage() {
         {/* Enrollment list card */}
         <div
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 12,
             padding: 20,
             marginBottom: 12,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)', marginBottom: 14 }}>
             报名学员 ({groupClass.enrollments.length})
           </div>
 
           {groupClass.enrollments.length === 0 ? (
-            <div style={{ color: '#999', textAlign: 'center', padding: 20, fontSize: 14 }}>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 20, fontSize: 14 }}>
               暂无学员报名
             </div>
           ) : (
@@ -280,7 +281,7 @@ export function GroupClassDetailPage() {
                     cursor: 'pointer',
                     transition: 'background 0.15s',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f8f8f8')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   {enrollment.avatarUrl ? (
@@ -292,7 +293,7 @@ export function GroupClassDetailPage() {
                         height: 36,
                         borderRadius: '50%',
                         objectFit: 'cover',
-                        border: '2px solid #f0f0f0',
+                        border: '2px solid var(--surface-2)',
                       }}
                     />
                   ) : (
@@ -301,25 +302,25 @@ export function GroupClassDetailPage() {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #e0e0e0, #bdbdbd)',
+                        background: 'linear-gradient(135deg, var(--surface-2), var(--surface-3))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 14,
                         fontWeight: 600,
-                        color: '#fff',
-                        border: '2px solid #f0f0f0',
+                        color: 'var(--text-1)',
+                        border: '2px solid var(--surface-2)',
                       }}
                     >
                       {enrollment.nickname.charAt(0)}
                     </div>
                   )}
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
                       {enrollment.nickname}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, color: '#bbb' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
                     {new Date(enrollment.enrolledAt).toLocaleDateString('zh-CN', {
                       month: '2-digit',
                       day: '2-digit',
@@ -336,13 +337,13 @@ export function GroupClassDetailPage() {
         {groupClass.status === 'in_progress' && (
           <div
             style={{
-              background: '#e3f2fd',
+              background: 'rgba(96,165,250,0.15)',
               borderRadius: 12,
               padding: '14px 16px',
-              color: '#1565c0',
+              color: 'var(--blue)',
               textAlign: 'center',
               fontSize: 14,
-              border: '1px solid #bbdefb',
+              border: '1px solid rgba(96,165,250,0.25)',
               marginBottom: 12,
             }}
           >
@@ -354,11 +355,11 @@ export function GroupClassDetailPage() {
         {groupClass.status === 'completed' && (
           <div
             style={{
-              background: '#fff',
+              background: 'var(--surface)',
               borderRadius: 12,
               padding: 20,
               marginBottom: 12,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
             }}
           >
             <div
@@ -369,15 +370,15 @@ export function GroupClassDetailPage() {
                 marginBottom: matchRecordsData?.items?.length ? 14 : 0,
               }}
             >
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#222' }}>战绩记录</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)' }}>战绩记录</div>
               <button
                 onClick={() =>
                   navigate(`/match-records/create?sourceType=group-class&sourceId=${groupClassId}`)
                 }
                 style={{
                   padding: '5px 14px',
-                  background: '#00C853',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
@@ -390,7 +391,7 @@ export function GroupClassDetailPage() {
             </div>
 
             {matchRecordsData?.items && matchRecordsData.items.length === 0 && (
-              <div style={{ color: '#999', textAlign: 'center', padding: 20, fontSize: 14 }}>
+              <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 20, fontSize: 14 }}>
                 暂无战绩记录
               </div>
             )}
@@ -400,10 +401,10 @@ export function GroupClassDetailPage() {
                 key={record.id}
                 style={{
                   padding: 14,
-                  background: '#fafafa',
+                  background: 'var(--surface-2)',
                   borderRadius: 10,
                   marginBottom: 10,
-                  border: '1px solid #f0f0f0',
+                  border: '1px solid var(--surface-3)',
                 }}
               >
                 <div
@@ -419,11 +420,11 @@ export function GroupClassDetailPage() {
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: '#555',
-                        background: '#fff',
+                        color: 'var(--text-2)',
+                        background: 'var(--surface)',
                         padding: '2px 10px',
                         borderRadius: 6,
-                        border: '1px solid #e0e0e0',
+                        border: '1px solid var(--surface-3)',
                       }}
                     >
                       {g.scoreA}:{g.scoreB}
@@ -439,7 +440,7 @@ export function GroupClassDetailPage() {
                       }}
                       style={{
                         fontSize: 12,
-                        color: '#ff4d4f',
+                        color: 'var(--danger)',
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
@@ -457,13 +458,13 @@ export function GroupClassDetailPage() {
         {groupClass.status === 'cancelled' && (
           <div
             style={{
-              background: '#fce4ec',
+              background: 'rgba(248,113,113,0.15)',
               borderRadius: 12,
               padding: '14px 16px',
-              color: '#c62828',
+              color: 'var(--danger)',
               textAlign: 'center',
               fontSize: 14,
-              border: '1px solid #f8bbd0',
+              border: '1px solid rgba(248,113,113,0.25)',
               marginBottom: 12,
             }}
           >
@@ -481,8 +482,9 @@ export function GroupClassDetailPage() {
             left: 0,
             right: 0,
             padding: '12px 16px',
-            background: '#fff',
-            borderTop: '1px solid #f0f0f0',
+            background: 'rgba(15,23,42,.95)',
+            backdropFilter: 'blur(12px)',
+            borderTop: '1px solid var(--surface-2)',
             display: 'flex',
             gap: 8,
             justifyContent: 'center',
@@ -495,8 +497,8 @@ export function GroupClassDetailPage() {
               style={{
                 flex: 1,
                 padding: '12px 0',
-                background: '#00C853',
-                color: '#fff',
+                background: 'var(--primary)',
+                color: '#052e16',
                 border: 'none',
                 borderRadius: 10,
                 cursor: 'pointer',
@@ -515,7 +517,7 @@ export function GroupClassDetailPage() {
               style={{
                 flex: 1,
                 padding: '12px 0',
-                background: '#ff5252',
+                background: 'var(--danger)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 10,
@@ -534,8 +536,8 @@ export function GroupClassDetailPage() {
               style={{
                 flex: 1,
                 padding: '12px 0',
-                background: '#f5f5f5',
-                color: '#999',
+                background: 'var(--surface-2)',
+                color: 'var(--text-3)',
                 border: 'none',
                 borderRadius: 10,
                 fontSize: 16,
@@ -565,22 +567,23 @@ export function GroupClassDetailPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: 12,
               padding: 24,
               width: '80%',
               maxWidth: 360,
             }}
           >
-            <p style={{ marginTop: 0, fontSize: 15 }}>是否取消报名？</p>
+            <p style={{ marginTop: 0, fontSize: 15, color: 'var(--text-1)' }}>是否取消报名？</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowCancelEnrollConfirm(false)}
                 style={{
                   padding: '8px 20px',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 8,
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                   fontSize: 14,
                 }}
@@ -591,8 +594,8 @@ export function GroupClassDetailPage() {
                 onClick={handleCancelEnrollment}
                 style={{
                   padding: '8px 20px',
-                  background: '#ff5252',
-                  color: 'white',
+                  background: 'var(--danger)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
@@ -625,14 +628,14 @@ export function GroupClassDetailPage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: 12,
               padding: 24,
               width: '80%',
               maxWidth: 360,
             }}
           >
-            <p style={{ marginTop: 0, fontSize: 15 }}>确定删除战绩？</p>
+            <p style={{ marginTop: 0, fontSize: 15, color: 'var(--text-1)' }}>确定删除战绩？</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => {
@@ -641,9 +644,10 @@ export function GroupClassDetailPage() {
                 }}
                 style={{
                   padding: '8px 20px',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 8,
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                   fontSize: 14,
                 }}
@@ -654,8 +658,8 @@ export function GroupClassDetailPage() {
                 onClick={handleDeleteRecord}
                 style={{
                   padding: '8px 20px',
-                  background: '#ff5252',
-                  color: 'white',
+                  background: 'var(--danger)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',

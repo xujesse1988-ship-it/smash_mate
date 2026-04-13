@@ -14,6 +14,7 @@ export function MarkAllReadButton({ onClick, isPending }: MarkAllReadButtonProps
       onClick={onClick}
       disabled={isPending}
       loading={isPending}
+      style={{ color: 'var(--primary)' }}
     >
       全部已读
     </Button>

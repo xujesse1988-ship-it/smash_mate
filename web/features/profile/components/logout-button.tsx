@@ -11,10 +11,10 @@ export function LogoutButton({ onClick }: LogoutButtonProps) {
       onClick={onClick}
       style={{
         padding: '18px 20px',
-        background: '#fff',
-        border: '1px solid #ececec',
+        background: 'var(--surface)',
+        border: '1px solid var(--surface-2)',
         borderRadius: 18,
-        color: '#ff4d4f',
+        color: 'var(--danger)',
         fontSize: 16,
         fontWeight: 600,
         textAlign: 'center',

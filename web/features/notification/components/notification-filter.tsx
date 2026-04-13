@@ -23,11 +23,12 @@ export function NotificationFilter({ value, onChange }: NotificationFilterProps)
           style={{
             padding: '6px 16px',
             border: 'none',
-            borderBottom: value === tab.key ? '2px solid #1677ff' : '2px solid transparent',
+            borderBottom: value === tab.key ? '2px solid var(--primary)' : '2px solid transparent',
             background: 'none',
             cursor: 'pointer',
             fontWeight: value === tab.key ? 600 : 400,
-            color: value === tab.key ? '#1677ff' : '#666',
+            color: value === tab.key ? 'var(--primary)' : 'var(--text-3)',
+            transition: 'color var(--transition), border-color var(--transition)',
             fontSize: 14,
           }}
         >

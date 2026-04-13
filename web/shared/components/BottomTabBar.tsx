@@ -45,11 +45,11 @@ export function BottomTabBar() {
     <div
       style={{
         display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        borderTop: '1px solid #f0f0f0',
-        background: '#fff',
-        padding: '6px 0',
+        background: 'rgba(15,23,42,.95)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderTop: '1px solid var(--surface-2)',
+        padding: '10px 0 16px',
       }}
     >
       {tabs.map((tab) => {
@@ -59,17 +59,31 @@ export function BottomTabBar() {
             key={tab.key}
             onClick={() => navigate(tab.path)}
             style={{
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              gap: 4,
               cursor: 'pointer',
-              color: isActive ? '#00C853' : '#999',
-              fontSize: 12,
-              flex: 1,
+              color: isActive ? 'var(--primary)' : 'var(--text-3)',
+              fontSize: 11,
+              fontWeight: 500,
+              padding: '4px 0',
+              transition: 'var(--transition)',
             }}
           >
-            <span style={{ fontSize: 22 }}>{tab.icon}</span>
+            <span style={{ fontSize: 22, lineHeight: 1 }}>{tab.icon}</span>
             <span>{tab.label}</span>
+            <div
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                background: 'var(--primary)',
+                marginTop: 2,
+                opacity: isActive ? 1 : 0,
+              }}
+            />
           </div>
         );
       })}

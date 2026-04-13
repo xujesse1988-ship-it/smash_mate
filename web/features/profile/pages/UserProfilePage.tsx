@@ -51,7 +51,7 @@ export function UserProfilePage() {
   }
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {!isOwnProfile && (
           <BackButton onClick={() => navigate(-1)} style={{ marginBottom: 12, padding: '6px 0' }} />
@@ -60,10 +60,10 @@ export function UserProfilePage() {
         <section
           style={{
             padding: 20,
-            background: '#fff',
-            border: '1px solid #e8e8e8',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
-            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
           }}
         >
           <UserInfoSection
@@ -83,15 +83,15 @@ export function UserProfilePage() {
             style={{
               marginTop: 16,
               padding: '16px 18px',
-              background: '#fff',
-              border: '1px solid #e8e8e8',
+              background: 'var(--surface)',
+              border: '1px solid var(--surface-2)',
               borderRadius: 16,
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8 }}>
               个人简介
             </div>
-            <div style={{ fontSize: 15, lineHeight: 1.7, color: '#222' }}>{userInfo.bio}</div>
+            <div style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--text-1)' }}>{userInfo.bio}</div>
           </section>
         ) : null}
       </div>

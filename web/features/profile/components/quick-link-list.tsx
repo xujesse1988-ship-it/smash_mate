@@ -69,8 +69,8 @@ export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps)
       style={{
         marginTop: 16,
         padding: '0 16px',
-        background: '#fff',
-        border: '1px solid #e8e8e8',
+        background: 'var(--surface)',
+        border: '1px solid var(--surface-2)',
         borderRadius: 16,
       }}
     >

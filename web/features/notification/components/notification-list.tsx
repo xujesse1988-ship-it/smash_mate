@@ -38,7 +38,7 @@ export function NotificationList({
       )}
 
       {!hasNextPage && notifications.length > 0 && (
-        <div style={{ textAlign: 'center', padding: 16, color: '#999', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-3)', fontSize: 13 }}>
           没有更多了
         </div>
       )}

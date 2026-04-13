@@ -5,7 +5,7 @@ import { BackButton } from '../../../shared/components/BackButton';
 import { useMyActivities } from '../hooks/useMyActivities';
 import { useInfiniteScroll } from '../../../shared/hooks/useInfiniteScroll';
 import { ActivityCard } from '../components/ActivityCard';
-import { STATUS_LABELS } from '../constants';
+import { Chip } from '../../../shared/components/Chip';
 
 // ---------------------------------------------------------------------------
 // MyActivityListPage
@@ -15,7 +15,6 @@ export function MyActivityListPage() {
   const navigate = useNavigate();
   const currentUserId = useAuthStore((state) => state.userId);
   const [status, setStatus] = useState<string | null>(null);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   const activitiesQuery = useMyActivities({
     userId: currentUserId || '',
@@ -34,7 +33,7 @@ export function MyActivityListPage() {
   });
 
   const statusOptions = [
-    { value: null, label: '全部状态' },
+    { value: null, label: '全部' },
     { value: 'open', label: '报名中' },
     { value: 'full', label: '已满员' },
     { value: 'in_progress', label: '进行中' },
@@ -49,92 +48,75 @@ export function MyActivityListPage() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '12px 16px',
-          borderBottom: '1px solid #f0f0f0',
+          padding: '14px 18px',
+          borderBottom: '1px solid var(--surface-2)',
+          background: 'rgba(15,23,42,.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}
       >
         <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
-        <h2 style={{ margin: 0, fontSize: 18 }}>我的活动</h2>
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>我的活动</h2>
       </div>
 
-      {/* Status filter */}
-      <div style={{ padding: '8px 16px', position: 'relative' }}>
-        <button
-          onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-          style={{
-            fontSize: 13,
-            padding: '2px 8px',
-            border: '1px solid #ddd',
-            borderRadius: 4,
-            background: '#fff',
-            cursor: 'pointer',
-          }}
-        >
-          状态{status ? `: ${STATUS_LABELS[status]}` : ''}
-        </button>
-        {showStatusDropdown && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 36,
-              left: 16,
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 8,
-              padding: 8,
-              zIndex: 10,
-            }}
+      {/* Status filter chips */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          padding: '10px 14px',
+          overflowX: 'auto',
+          borderBottom: '1px solid var(--surface-2)',
+        }}
+      >
+        {statusOptions.map((opt) => (
+          <Chip
+            key={opt.value ?? 'all'}
+            active={status === opt.value}
+            onClick={() => setStatus(opt.value)}
           >
-            {statusOptions.map((opt) => (
-              <div
-                key={opt.value ?? 'all'}
-                onClick={() => {
-                  setStatus(opt.value);
-                  setShowStatusDropdown(false);
-                }}
-                style={{ padding: '4px 16px', cursor: 'pointer' }}
-              >
-                {opt.label}
-              </div>
-            ))}
+            {opt.label}
+          </Chip>
+        ))}
+      </div>
+
+      {/* Content area */}
+      <div style={{ padding: '10px 14px 0' }}>
+        {/* Loading state */}
+        {activitiesQuery.isLoading && (
+          <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-2)' }}>加载中...</div>
+        )}
+
+        {/* Error state */}
+        {activitiesQuery.error && (
+          <div style={{ textAlign: 'center', padding: 48, color: 'var(--danger)' }}>加载失败，请重试</div>
+        )}
+
+        {/* Empty state */}
+        {!activitiesQuery.isLoading &&
+          !activitiesQuery.error &&
+          activitiesQuery.data &&
+          allActivities.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-3)' }}>暂无活动</div>
+          )}
+
+        {/* Activity list */}
+        {allActivities.map((activity) => (
+          <ActivityCard
+            key={activity.id}
+            activity={activity}
+            variant="my"
+            onClick={() => navigate(`/activities/${activity.id}`)}
+          />
+        ))}
+
+        {/* Infinite scroll sentinel */}
+        {activitiesQuery.hasNextPage && (
+          <div ref={sentinelRef} style={{ textAlign: 'center', padding: 16, color: 'var(--text-3)' }}>
+            {activitiesQuery.isFetchingNextPage ? '加载更多...' : ''}
           </div>
         )}
       </div>
-
-      {/* Loading state */}
-      {activitiesQuery.isLoading && (
-        <div style={{ textAlign: 'center', padding: 48 }}>加载中...</div>
-      )}
-
-      {/* Error state */}
-      {activitiesQuery.error && (
-        <div style={{ textAlign: 'center', padding: 48, color: 'red' }}>加载失败，请重试</div>
-      )}
-
-      {/* Empty state */}
-      {!activitiesQuery.isLoading &&
-        !activitiesQuery.error &&
-        activitiesQuery.data &&
-        allActivities.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>暂无活动</div>
-        )}
-
-      {/* Activity list */}
-      {allActivities.map((activity) => (
-        <ActivityCard
-          key={activity.id}
-          activity={activity}
-          variant="my"
-          onClick={() => navigate(`/activities/${activity.id}`)}
-        />
-      ))}
-
-      {/* Infinite scroll sentinel */}
-      {activitiesQuery.hasNextPage && (
-        <div ref={sentinelRef} style={{ textAlign: 'center', padding: 16 }}>
-          {activitiesQuery.isFetchingNextPage ? '加载更多...' : ''}
-        </div>
-      )}
     </div>
   );
 }

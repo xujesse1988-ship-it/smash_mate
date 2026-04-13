@@ -27,8 +27,8 @@ export function ProfileForm({
     <div
       style={{
         padding: '24px 20px 28px',
-        background: '#fff',
-        border: '1px solid #ececec',
+        background: 'var(--surface)',
+        border: '1px solid var(--surface-2)',
         borderRadius: 18,
       }}
     >
@@ -43,8 +43,8 @@ export function ProfileForm({
                 height: 168,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '2px solid #d9d9d9',
-                background: '#f3f3f3',
+                border: '2px solid var(--surface-2)',
+                background: 'var(--surface-2)',
               }}
             />
           ) : (
@@ -53,8 +53,8 @@ export function ProfileForm({
                 width: 168,
                 height: 168,
                 borderRadius: '50%',
-                border: '2px solid #d9d9d9',
-                background: '#f3f3f3',
+                border: '2px solid var(--surface-2)',
+                background: 'var(--surface-2)',
               }}
             />
           )}
@@ -71,7 +71,7 @@ export function ProfileForm({
               width: 42,
               height: 42,
               borderRadius: 12,
-              background: avatarUploading ? '#666' : '#111',
+              background: avatarUploading ? 'var(--surface-3)' : 'var(--surface-3)',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -113,7 +113,7 @@ export function ProfileForm({
           textAlign: 'center',
           marginTop: -8,
           marginBottom: 20,
-          color: '#666',
+          color: 'var(--text-2)',
           fontSize: 13,
         }}
       >
@@ -124,7 +124,7 @@ export function ProfileForm({
         <div
           style={{
             marginBottom: 18,
-            color: '#ff4d4f',
+            color: 'var(--danger)',
             fontSize: 12,
             textAlign: 'center',
           }}
@@ -137,7 +137,7 @@ export function ProfileForm({
         <div
           style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
         >
-          <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
+          <label style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-1)', paddingTop: 10 }}>
             昵称
           </label>
           <input
@@ -146,14 +146,16 @@ export function ProfileForm({
             style={{
               width: '100%',
               padding: '10px 12px',
-              border: errors.nickname ? '1px solid #ff4d4f' : '1px solid #cfcfcf',
+              border: errors.nickname ? '1px solid var(--danger)' : '1px solid var(--surface-3)',
               borderRadius: 0,
               boxSizing: 'border-box',
               fontSize: 16,
+              background: 'var(--surface-2)',
+              color: 'var(--text-1)',
             }}
           />
           {errors.nickname && (
-            <div style={{ gridColumn: '2 / 3', marginTop: 6, color: '#ff4d4f', fontSize: 12 }}>
+            <div style={{ gridColumn: '2 / 3', marginTop: 6, color: 'var(--danger)', fontSize: 12 }}>
               {errors.nickname}
             </div>
           )}
@@ -162,7 +164,7 @@ export function ProfileForm({
         <div
           style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
         >
-          <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
+          <label style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-1)', paddingTop: 10 }}>
             简介
           </label>
           <div>
@@ -174,17 +176,19 @@ export function ProfileForm({
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                border: errors.bio ? '1px solid #ff4d4f' : '1px solid #cfcfcf',
+                border: errors.bio ? '1px solid var(--danger)' : '1px solid var(--surface-3)',
                 borderRadius: 0,
                 boxSizing: 'border-box',
                 fontSize: 16,
                 lineHeight: 1.5,
                 resize: 'vertical',
                 minHeight: 160,
+                background: 'var(--surface-2)',
+                color: 'var(--text-1)',
               }}
             />
             {errors.bio && (
-              <div style={{ marginTop: 6, color: '#ff4d4f', fontSize: 12 }}>{errors.bio}</div>
+              <div style={{ marginTop: 6, color: 'var(--danger)', fontSize: 12 }}>{errors.bio}</div>
             )}
           </div>
         </div>
@@ -192,15 +196,15 @@ export function ProfileForm({
         <div
           style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'start', gap: 16 }}
         >
-          <label style={{ fontSize: 16, fontWeight: 500, color: '#111', paddingTop: 10 }}>
+          <label style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-1)', paddingTop: 10 }}>
             手机号
           </label>
           <div
             style={{
               padding: '10px 12px',
-              border: '1px solid #cfcfcf',
-              background: '#f3f3f3',
-              color: '#888',
+              border: '1px solid var(--surface-3)',
+              background: 'var(--surface-2)',
+              color: 'var(--text-3)',
               fontSize: 16,
               lineHeight: 1.5,
               boxSizing: 'border-box',

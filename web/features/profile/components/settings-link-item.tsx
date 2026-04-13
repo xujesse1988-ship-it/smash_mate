@@ -18,15 +18,15 @@ export function SettingsLinkItem({ label, onClick, disabled = false }: SettingsL
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '18px 20px',
-        color: disabled ? '#999' : '#111',
+        color: disabled ? 'var(--text-3)' : 'var(--text-1)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         fontSize: 16,
         fontWeight: 500,
-        background: '#fff',
+        background: 'var(--surface)',
       }}
     >
       <span>{label}</span>
-      <RightOutlined style={{ color: '#ccc', fontSize: 14 }} />
+      <RightOutlined style={{ color: 'var(--text-3)', fontSize: 14 }} />
     </div>
   );
 }

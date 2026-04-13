@@ -64,13 +64,14 @@ export function NotificationListPage() {
         alignItems: 'center',
         gap: 12,
         padding: '12px 16px',
-        borderBottom: '1px solid #f0f0f0',
-        background: '#fff',
+        borderBottom: '1px solid var(--surface-2)',
+        background: 'rgba(15,23,42,.95)',
+        backdropFilter: 'blur(12px)',
         margin: '-16px -16px 16px',
       }}
     >
       <BackButton onClick={() => navigate(-1)} />
-      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>通知</h2>
+      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-1)' }}>通知</h2>
     </div>
   );
 
@@ -111,7 +112,7 @@ export function NotificationListPage() {
         >
           <NotificationFilter value={filterStatus} onChange={handleFilterChange} />
         </div>
-        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>加载失败，请重试</div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-3)' }}>加载失败，请重试</div>
       </div>
     );
   }
@@ -138,7 +139,7 @@ export function NotificationListPage() {
 
       {/* Notification list or empty state */}
       {notifications.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#999' }}>暂无通知</div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-3)' }}>暂无通知</div>
       ) : (
         <NotificationList
           notifications={notifications}

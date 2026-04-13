@@ -92,19 +92,20 @@ export function CoachProfilePage() {
               width: 64,
               height: 64,
               borderRadius: '50%',
-              background: '#e0e0e0',
+              background: 'var(--surface-2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 24,
+              color: 'var(--text-1)',
             }}
           >
             {coach.nickname.charAt(0)}
           </div>
         )}
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 18, fontWeight: 600 }}>{coach.nickname}</div>
-          {coach.bio && <div style={{ color: '#666', marginTop: 4 }}>{coach.bio}</div>}
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-1)' }}>{coach.nickname}</div>
+          {coach.bio && <div style={{ color: 'var(--text-2)', marginTop: 4 }}>{coach.bio}</div>}
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: 4 }}>
             {coach.specialties.map((s) => (
               <span
@@ -113,8 +114,8 @@ export function CoachProfilePage() {
                   fontSize: 11,
                   padding: '1px 6px',
                   borderRadius: '4px',
-                  background: '#e8f5e9',
-                  color: '#2e7d32',
+                  background: 'var(--primary-dim)',
+                  color: 'var(--primary)',
                 }}
               >
                 {SPECIALTY_MAP[s] || s}
@@ -129,22 +130,22 @@ export function CoachProfilePage() {
         <div>
           {rating ? (
             rating.averageRating !== null ? (
-              <span style={{ fontWeight: 600, color: '#ff9800' }}>
+              <span style={{ fontWeight: 600, color: 'var(--warning)' }}>
                 {rating.averageRating}{' '}
-                <span style={{ fontSize: 12, color: '#999' }}>({rating.totalCount}条)</span>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>({rating.totalCount}条)</span>
               </span>
             ) : (
-              <span style={{ color: '#999' }}>暂无评价</span>
+              <span style={{ color: 'var(--text-3)' }}>暂无评价</span>
             )
           ) : null}
         </div>
         <div>
-          <span style={{ color: '#666' }}>{coach.studentCount} 名学员</span>
+          <span style={{ color: 'var(--text-2)' }}>{coach.studentCount} 名学员</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-2)', marginBottom: '16px' }}>
         <button
           onClick={() => setActiveTab('courses')}
           style={{
@@ -153,8 +154,9 @@ export function CoachProfilePage() {
             border: 'none',
             background: 'none',
             cursor: 'pointer',
-            borderBottom: activeTab === 'courses' ? '2px solid #00C853' : '2px solid transparent',
+            borderBottom: activeTab === 'courses' ? '2px solid var(--primary)' : '2px solid transparent',
             fontWeight: activeTab === 'courses' ? 600 : 400,
+            color: activeTab === 'courses' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           课程
@@ -167,8 +169,9 @@ export function CoachProfilePage() {
             border: 'none',
             background: 'none',
             cursor: 'pointer',
-            borderBottom: activeTab === 'reviews' ? '2px solid #00C853' : '2px solid transparent',
+            borderBottom: activeTab === 'reviews' ? '2px solid var(--primary)' : '2px solid transparent',
             fontWeight: activeTab === 'reviews' ? 600 : 400,
+            color: activeTab === 'reviews' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           评价
@@ -180,7 +183,7 @@ export function CoachProfilePage() {
         <div>
           {/* Group Classes */}
           {coach.groupClasses.length === 0 && coach.privateLessonSlots.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无课程</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无课程</div>
           )}
           {coach.groupClasses.map((gc) => (
             <div
@@ -189,27 +192,27 @@ export function CoachProfilePage() {
               onClick={() => navigate(`/group-classes/${gc.id}`)}
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
                 cursor: 'pointer',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ fontWeight: 600 }}>{gc.title}</div>
+                <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{gc.title}</div>
                 <span
                   style={{
                     fontSize: 10,
                     padding: '1px 6px',
                     borderRadius: '4px',
-                    background: '#e3f2fd',
-                    color: '#1565c0',
+                    background: 'rgba(96,165,250,0.15)',
+                    color: 'var(--blue)',
                   }}
                 >
                   团课
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 {new Date(gc.startTime).toLocaleDateString('zh-CN', {
                   month: '2-digit',
                   day: '2-digit',
@@ -227,7 +230,7 @@ export function CoachProfilePage() {
                   hour12: false,
                 })}
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 {gc.venue?.name || '地点待定'}
               </div>
               <div
@@ -248,16 +251,16 @@ export function CoachProfilePage() {
                     borderRadius: '4px',
                     background:
                       gc.status === 'open'
-                        ? '#e8f5e9'
+                        ? 'var(--primary-dim)'
                         : gc.status === 'completed'
-                          ? '#e3f2fd'
-                          : '#f5f5f5',
+                          ? 'rgba(96,165,250,0.15)'
+                          : 'var(--surface-2)',
                     color:
                       gc.status === 'open'
-                        ? '#2e7d32'
+                        ? 'var(--primary)'
                         : gc.status === 'completed'
-                          ? '#1565c0'
-                          : '#999',
+                          ? 'var(--blue)'
+                          : 'var(--text-3)',
                   }}
                 >
                   {gc.status === 'open'
@@ -279,22 +282,22 @@ export function CoachProfilePage() {
             <div
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginTop: '16px',
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>私教</div>
+              <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--text-1)' }}>私教</div>
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
-                <span>{coach.privateLessonSlots.length} 个可预约时间段</span>
+                <span style={{ color: 'var(--text-2)' }}>{coach.privateLessonSlots.length} 个可预约时间段</span>
                 <button
                   onClick={() => navigate(`/coaches/${coachId}/private-lessons`)}
                   style={{
                     padding: '4px 12px',
-                    background: '#00C853',
-                    color: 'white',
+                    background: 'var(--primary)',
+                    color: '#052e16',
                     border: 'none',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -316,8 +319,8 @@ export function CoachProfilePage() {
               onClick={() => setShowReviewModal(true)}
               style={{
                 padding: '6px 16px',
-                background: '#00C853',
-                color: 'white',
+                background: 'var(--primary)',
+                color: '#052e16',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -329,26 +332,26 @@ export function CoachProfilePage() {
           )}
 
           {allReviews.length === 0 && (
-            <div style={{ color: '#999', textAlign: 'center', padding: '24px' }}>暂无评价</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无评价</div>
           )}
           {allReviews.map((review) => (
             <div
               key={review.id}
               style={{
                 padding: '12px',
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--surface-2)',
                 borderRadius: '8px',
                 marginBottom: '8px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontWeight: 600 }}>{review.reviewer.nickname}</span>
-                <span style={{ color: '#ff9800' }}>{'★'.repeat(review.rating)}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-1)' }}>{review.reviewer.nickname}</span>
+                <span style={{ color: 'var(--warning)' }}>{'★'.repeat(review.rating)}</span>
               </div>
               {review.comment && (
-                <div style={{ marginTop: 4, color: '#333' }}>{review.comment}</div>
+                <div style={{ marginTop: 4, color: 'var(--text-1)' }}>{review.comment}</div>
               )}
-              <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
                 {new Date(review.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -374,16 +377,16 @@ export function CoachProfilePage() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--surface)',
               borderRadius: '12px',
               padding: '24px',
               width: '90%',
               maxWidth: '400px',
             }}
           >
-            <h3>提交评价</h3>
+            <h3 style={{ color: 'var(--text-1)' }}>提交评价</h3>
             <div style={{ marginBottom: '12px' }}>
-              <label>选择课程</label>
+              <label style={{ color: 'var(--text-2)' }}>选择课程</label>
               <select
                 value={`${selectedCourseType}:${selectedCourseId}`}
                 onChange={(e) => {
@@ -391,7 +394,7 @@ export function CoachProfilePage() {
                   setSelectedCourseType(type);
                   setSelectedCourseId(id);
                 }}
-                style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+                style={{ width: '100%', padding: '8px', marginTop: '4px', background: 'var(--surface-2)', color: 'var(--text-1)', border: '1px solid var(--surface-3)' }}
               >
                 <option value=":">请选择</option>
                 {completedClasses.map((gc) => (
@@ -402,7 +405,7 @@ export function CoachProfilePage() {
               </select>
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>评分</label>
+              <label style={{ color: 'var(--text-2)' }}>评分</label>
               <div style={{ marginTop: '4px' }}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span
@@ -411,7 +414,7 @@ export function CoachProfilePage() {
                     style={{
                       cursor: 'pointer',
                       fontSize: 24,
-                      color: star <= reviewRating ? '#ff9800' : '#e0e0e0',
+                      color: star <= reviewRating ? 'var(--warning)' : 'var(--surface-2)',
                     }}
                   >
                     ★
@@ -420,12 +423,12 @@ export function CoachProfilePage() {
               </div>
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <label>评价内容（可选）</label>
+              <label style={{ color: 'var(--text-2)' }}>评价内容（可选）</label>
               <textarea
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 maxLength={500}
-                style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '80px' }}
+                style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '80px', background: 'var(--surface-2)', color: 'var(--text-1)', border: '1px solid var(--surface-3)' }}
               />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -433,9 +436,10 @@ export function CoachProfilePage() {
                 onClick={() => setShowReviewModal(false)}
                 style={{
                   padding: '6px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: '6px',
-                  background: 'white',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
                   cursor: 'pointer',
                 }}
               >
@@ -446,8 +450,8 @@ export function CoachProfilePage() {
                 disabled={submitReview.isPending}
                 style={{
                   padding: '6px 16px',
-                  background: '#00C853',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: '#052e16',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',

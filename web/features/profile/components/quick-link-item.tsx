@@ -21,17 +21,17 @@ export function QuickLinkItem({ label, onClick, icon, showDivider = true }: Quic
         gap: 12,
         padding: '16px 0',
         border: 'none',
-        borderBottom: showDivider ? '1px solid #e8e8e8' : 'none',
+        borderBottom: showDivider ? '1px solid var(--surface-2)' : 'none',
         background: 'transparent',
         cursor: 'pointer',
         textAlign: 'left',
       }}
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-        <span style={{ fontSize: 20, color: '#222', lineHeight: 1 }}>{icon}</span>
-        <span style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{label}</span>
+        <span style={{ fontSize: 20, color: 'var(--text-1)', lineHeight: 1 }}>{icon}</span>
+        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-1)' }}>{label}</span>
       </span>
-      <RightOutlined style={{ fontSize: 16, color: '#666', flexShrink: 0 }} />
+      <RightOutlined style={{ fontSize: 16, color: 'var(--text-2)', flexShrink: 0 }} />
     </button>
   );
 }

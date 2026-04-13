@@ -102,7 +102,7 @@ const NotificationListPage = React.lazy(() =>
 );
 
 const PageLoader = (
-  <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 120 }}>
+  <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 120, color: 'var(--text-2)' }}>
     <Spin size="large" />
   </div>
 );

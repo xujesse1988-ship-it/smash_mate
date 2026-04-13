@@ -54,7 +54,7 @@ export function MyEnrollmentListPage() {
   }, [data, statusFilter]);
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         <div
           style={{
@@ -62,23 +62,23 @@ export function MyEnrollmentListPage() {
             alignItems: 'center',
             paddingBottom: 12,
             marginBottom: 16,
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid var(--surface-2)',
           }}
         >
           <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
-          <h2 style={{ margin: 0, fontSize: 18 }}>我的课程</h2>
+          <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-1)' }}>我的课程</h2>
         </div>
 
         <section
           style={{
             padding: 18,
-            background: '#fff',
-            border: '1px solid #e8e8e8',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
-            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 12 }}>
             筛选课程
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -88,10 +88,10 @@ export function MyEnrollmentListPage() {
                 onClick={() => setTypeFilter(f.value)}
                 style={{
                   padding: '6px 14px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 999,
-                  background: typeFilter === f.value ? '#111' : '#fff',
-                  color: typeFilter === f.value ? '#fff' : '#333',
+                  background: typeFilter === f.value ? 'var(--text-1)' : 'var(--surface)',
+                  color: typeFilter === f.value ? 'var(--bg)' : 'var(--text-1)',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -108,10 +108,10 @@ export function MyEnrollmentListPage() {
                 onClick={() => setStatusFilter(f.value)}
                 style={{
                   padding: '6px 14px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 999,
-                  background: statusFilter === f.value ? '#111' : '#fff',
-                  color: statusFilter === f.value ? '#fff' : '#333',
+                  background: statusFilter === f.value ? 'var(--text-1)' : 'var(--surface)',
+                  color: statusFilter === f.value ? 'var(--bg)' : 'var(--text-1)',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -126,21 +126,21 @@ export function MyEnrollmentListPage() {
           style={{
             marginTop: 16,
             padding: 18,
-            background: '#fff',
-            border: '1px solid #e8e8e8',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
           }}
         >
           {isLoading && (
-            <div style={{ color: '#666', textAlign: 'center', padding: 24 }}>加载中...</div>
+            <div style={{ color: 'var(--text-2)', textAlign: 'center', padding: 24 }}>加载中...</div>
           )}
 
           {error && (
-            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
           )}
 
           {!isLoading && !error && allItems.length === 0 && data && (
-            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>暂无报名记录</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>暂无报名记录</div>
           )}
 
           {allItems.map((item) => {
@@ -161,11 +161,11 @@ export function MyEnrollmentListPage() {
                 }}
                 style={{
                   padding: '16px 14px',
-                  border: '1px solid #ececec',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 14,
                   marginBottom: 10,
                   cursor: 'pointer',
-                  background: '#fcfcfc',
+                  background: 'var(--surface-2)',
                 }}
               >
                 <div
@@ -179,10 +179,10 @@ export function MyEnrollmentListPage() {
                   <div>
                     {isGroupClass && gc ? (
                       <>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
                           {gc.title}
                         </div>
-                        <div style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
                           {new Date(gc.startTime).toLocaleString('zh-CN', {
                             month: '2-digit',
                             day: '2-digit',
@@ -195,19 +195,19 @@ export function MyEnrollmentListPage() {
                             minute: '2-digit',
                           })}
                         </div>
-                        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
                           教练：{gc.coachNickname}
                         </div>
                         {gc.venue && (
-                          <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
                             {gc.venue.name}
                           </div>
                         )}
                       </>
                     ) : pl ? (
                       <>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>私教课</div>
-                        <div style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>私教课</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
                           {new Date(pl.startTime).toLocaleString('zh-CN', {
                             month: '2-digit',
                             day: '2-digit',
@@ -220,11 +220,11 @@ export function MyEnrollmentListPage() {
                             minute: '2-digit',
                           })}
                         </div>
-                        <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
                           教练：{pl.coachNickname}
                         </div>
                         {pl.venue && (
-                          <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
                             {pl.venue.name}
                           </div>
                         )}
@@ -240,15 +240,15 @@ export function MyEnrollmentListPage() {
                       whiteSpace: 'nowrap',
                       background: (() => {
                         const status = isGroupClass ? gc?.status : pl?.status;
-                        if (status === 'completed') return '#e8f1ff';
-                        if (status === 'cancelled') return '#fff1f0';
-                        return '#edf7ee';
+                        if (status === 'completed') return 'rgba(96,165,250,0.15)';
+                        if (status === 'cancelled') return 'rgba(248,113,113,0.15)';
+                        return 'var(--primary-dim)';
                       })(),
                       color: (() => {
                         const status = isGroupClass ? gc?.status : pl?.status;
-                        if (status === 'completed') return '#1565c0';
-                        if (status === 'cancelled') return '#c62828';
-                        return '#2e7d32';
+                        if (status === 'completed') return 'var(--blue)';
+                        if (status === 'cancelled') return 'var(--danger)';
+                        return 'var(--primary)';
                       })(),
                     }}
                   >
@@ -267,9 +267,10 @@ export function MyEnrollmentListPage() {
                 disabled={isFetchingNextPage}
                 style={{
                   padding: '8px 16px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 999,
-                  background: '#fff',
+                  background: 'var(--surface)',
+                  color: 'var(--text-1)',
                   cursor: isFetchingNextPage ? 'not-allowed' : 'pointer',
                 }}
               >

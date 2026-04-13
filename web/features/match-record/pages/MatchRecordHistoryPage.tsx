@@ -49,8 +49,8 @@ function StatsCard({ stats }: { stats: MatchStatsData }) {
       data-testid="match-stats-card"
       style={{
         padding: 16,
-        background: '#fff',
-        border: '1px solid #e8e8e8',
+        background: 'var(--surface)',
+        border: '1px solid var(--surface-2)',
         borderRadius: 16,
       }}
     >
@@ -62,8 +62,8 @@ function StatsCard({ stats }: { stats: MatchStatsData }) {
           { label: '平局', value: stats.draws },
         ].map((item) => (
           <div key={item.label} style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>{item.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{item.value}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 6 }}>{item.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-1)' }}>{item.value}</div>
           </div>
         ))}
       </div>
@@ -71,13 +71,13 @@ function StatsCard({ stats }: { stats: MatchStatsData }) {
         style={{
           marginTop: 14,
           paddingTop: 12,
-          borderTop: '1px solid #f0f0f0',
+          borderTop: '1px solid var(--surface-2)',
           textAlign: 'center',
           fontSize: 14,
-          color: '#666',
+          color: 'var(--text-2)',
         }}
       >
-        胜率 <span style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>{stats.winRate}%</span>
+        胜率 <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-1)' }}>{stats.winRate}%</span>
       </div>
     </div>
   );
@@ -117,7 +117,7 @@ export function MatchRecordHistoryPage() {
   };
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: '100%' }}>
+    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         <div
           style={{
@@ -125,7 +125,7 @@ export function MatchRecordHistoryPage() {
             alignItems: 'center',
             paddingBottom: 12,
             marginBottom: 16,
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid var(--surface-2)',
           }}
         >
           <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
@@ -139,13 +139,13 @@ export function MatchRecordHistoryPage() {
         <section
           style={{
             padding: 18,
-            background: '#fff',
-            border: '1px solid #e8e8e8',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
-            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#666', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 12 }}>
             筛选战绩
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -155,10 +155,10 @@ export function MatchRecordHistoryPage() {
                 onClick={() => setSourceTypeFilter(tab.value)}
                 style={{
                   padding: '6px 14px',
-                  border: '1px solid #d9d9d9',
+                  border: '1px solid var(--surface-2)',
                   borderRadius: 999,
-                  background: sourceTypeFilter === tab.value ? '#111' : '#fff',
-                  color: sourceTypeFilter === tab.value ? '#fff' : '#333',
+                  background: sourceTypeFilter === tab.value ? 'var(--text-1)' : 'var(--surface)',
+                  color: sourceTypeFilter === tab.value ? 'var(--bg)' : 'var(--text-1)',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -173,17 +173,17 @@ export function MatchRecordHistoryPage() {
           style={{
             marginTop: 16,
             padding: 18,
-            background: '#fff',
-            border: '1px solid #e8e8e8',
+            background: 'var(--surface)',
+            border: '1px solid var(--surface-2)',
             borderRadius: 18,
           }}
         >
           {recordsQuery.isLoading ? (
-            <div style={{ color: '#666', textAlign: 'center', padding: 24 }}>加载中...</div>
+            <div style={{ color: 'var(--text-2)', textAlign: 'center', padding: 24 }}>加载中...</div>
           ) : recordsQuery.error ? (
-            <div style={{ color: '#999', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
           ) : records.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 32, color: '#999' }}>暂无战绩记录</div>
+            <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-3)' }}>暂无战绩记录</div>
           ) : (
             <div>
               {records.map((record: MatchRecord) => {
@@ -200,11 +200,11 @@ export function MatchRecordHistoryPage() {
                   <div
                     key={r.id}
                     style={{
-                      border: '1px solid #ececec',
+                      border: '1px solid var(--surface-2)',
                       borderRadius: 14,
                       padding: 14,
                       marginBottom: 10,
-                      background: '#fcfcfc',
+                      background: 'var(--surface-2)',
                     }}
                   >
                     <div
@@ -217,18 +217,18 @@ export function MatchRecordHistoryPage() {
                         flexWrap: 'wrap',
                       }}
                     >
-                      <span style={{ color: '#888', fontSize: 12 }}>{dateStr}</span>
+                      <span style={{ color: 'var(--text-3)', fontSize: 12 }}>{dateStr}</span>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <Tag>{MATCH_TYPE_LABELS[r.matchType] ?? r.matchType}</Tag>
                         <Tag color={resultConfig.color}>{resultConfig.label}</Tag>
                       </div>
                     </div>
-                    <div style={{ marginBottom: 6, fontSize: 15, fontWeight: 600, color: '#111' }}>
+                    <div style={{ marginBottom: 6, fontSize: 15, fontWeight: 600, color: 'var(--text-1)' }}>
                       <span>{r.players.sideA.map((p) => p.nickname).join(' & ')}</span>
-                      <span style={{ margin: '0 8px', color: '#999', fontWeight: 400 }}>vs</span>
+                      <span style={{ margin: '0 8px', color: 'var(--text-3)', fontWeight: 400 }}>vs</span>
                       <span>{r.players.sideB.map((p) => p.nickname).join(' & ')}</span>
                     </div>
-                    <div style={{ fontSize: 13, color: '#666' }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
                       {r.games.map((g) => `${g.scoreA}:${g.scoreB}`).join('  ')}
                     </div>
                   </div>
