@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Input, Button, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../../stores/auth-store';
 import { useSendCode } from '../hooks/useSendCode';
 import { useLogin } from '../hooks/useLogin';
-import { useRedirectUrl } from '../hooks/useRedirectUrl';
 
 const PHONE_REGEX = /^1\d{10}$/;
 const CODE_REGEX = /^\d{6}$/;
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
-  const redirectUrl = useRedirectUrl();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [phone, setPhone] = useState('');
@@ -24,13 +18,6 @@ export function LoginPage() {
 
   const sendCodeHook = useSendCode();
   const loginMutation = useLogin(activeTab === 'register');
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate(redirectUrl, { replace: true });
-    }
-  }, [isLoggedIn, navigate, redirectUrl]);
 
   const validatePhone = (): boolean => {
     if (!PHONE_REGEX.test(phone)) {

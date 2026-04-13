@@ -9,6 +9,8 @@
  * Design reference: docs/module-design/web-app.md §6 "API Client 配置"
  */
 
+import { useAuthStore } from '../../stores/auth-store';
+
 export interface ApiError {
   code: string;
   message: string;
@@ -64,6 +66,15 @@ export async function handleResponse<T>(response: Response): Promise<T> {
     const error = body.error as ApiError;
     const err = new Error(error.message) as Error & { code: string };
     err.code = error.code;
+
+    // 401: token 过期或无效 → 清除认证状态，重定向到登录页
+    if (response.status === 401) {
+      useAuthStore.getState().clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
     throw err;
   }
 
