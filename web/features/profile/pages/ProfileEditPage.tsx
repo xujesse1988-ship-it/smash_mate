@@ -4,7 +4,7 @@ import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
 import { uploadAvatar } from '../api/profile-api';
-import { TopBar } from '../components/top-bar';
+import { BackButton } from '../../../shared/components/BackButton';
 import { ProfileForm } from '../components/profile-form';
 import { ConfirmDialog } from '../components/confirm-dialog';
 
@@ -150,12 +150,21 @@ export function ProfileEditPage() {
   return (
     <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
-        <TopBar
-          title="编辑资料"
-          onBack={handleBack}
-          onSave={handleSave}
-          saveDisabled={updateProfile.isPending}
-        />
+        {/* Header — same style as MyActivityListPage */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '14px 18px',
+            borderBottom: '1px solid var(--surface-2)',
+            background: 'rgba(15,23,42,.95)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
+          <BackButton onClick={handleBack} style={{ marginRight: 8 }} />
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>编辑资料</h2>
+        </div>
 
         <ProfileForm
           nickname={nickname}
@@ -168,6 +177,18 @@ export function ProfileEditPage() {
           errors={errors}
           phone={currentUser.phone}
         />
+
+        {/* Save button */}
+        <div style={{ padding: '24px 0', display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={handleSave}
+            disabled={updateProfile.isPending}
+            className="btn-dark btn-primary btn-lg"
+            style={{ minWidth: 200 }}
+          >
+            {updateProfile.isPending ? '保存中...' : '保存'}
+          </button>
+        </div>
 
         {/* Hidden file input for avatar selection */}
         <input
