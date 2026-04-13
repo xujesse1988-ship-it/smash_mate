@@ -12,7 +12,12 @@ import type {
 
 const logger = createModuleLogger('match-record');
 
-const VALID_SOURCE_TYPES: SourceType[] = ['activity', 'group-class', 'private-lesson'];
+const VALID_SOURCE_TYPES: SourceType[] = [
+  'activity',
+  'group-class',
+  'private-lesson',
+  'private_lesson_v2',
+];
 const VALID_MATCH_TYPES = ['singles', 'doubles'];
 
 interface ActivityServiceDep {
@@ -30,6 +35,13 @@ interface CoachingServiceDep {
   } | null>;
   getPrivateLessonById(id: string): Promise<{
     id: string;
+    status: string;
+  } | null>;
+  getPrivateLessonV2ById?(id: string): Promise<{
+    id: string;
+    privateStudentId: string;
+    coachId: string;
+    studentId: string;
     status: string;
   } | null>;
   getParticipantIds(classId: string, type: 'group-class' | 'private-lesson'): Promise<string[]>;
@@ -213,13 +225,16 @@ export class MatchRecordService {
     }
 
     // 11. Verify all userId players are participants (§6.4 step 6)
-    for (const player of allPlayers) {
-      if (player.userId && !participantIds.includes(player.userId)) {
-        throw new AppError(
-          403,
-          'MATCH_RECORD_PLAYER_NOT_PARTICIPANT',
-          '指定的平台用户选手不是该活动/课程的参与者',
-        );
+    // For private_lesson_v2, opponents can be any platform user (PRD GC rule 12)
+    if (input.sourceType !== 'private_lesson_v2') {
+      for (const player of allPlayers) {
+        if (player.userId && !participantIds.includes(player.userId)) {
+          throw new AppError(
+            403,
+            'MATCH_RECORD_PLAYER_NOT_PARTICIPANT',
+            '指定的平台用户选手不是该活动/课程的参与者',
+          );
+        }
       }
     }
 
@@ -349,6 +364,24 @@ export class MatchRecordService {
   // =========================================================================
 
   private async verifySource(sourceType: SourceType, sourceId: string) {
+    // Handle v2 lesson types with more nuanced status checks
+    if (sourceType === 'private_lesson_v2') {
+      const lesson = this.coachingService.getPrivateLessonV2ById
+        ? await this.coachingService.getPrivateLessonV2ById(sourceId)
+        : null;
+      if (!lesson) {
+        throw new AppError(404, 'MATCH_RECORD_SOURCE_NOT_FOUND', '来源课程不存在');
+      }
+      if (lesson.status === 'cancelled') {
+        throw new AppError(409, 'MATCH_RECORD_LESSON_CANCELLED', '课程已取消，不可录入战绩');
+      }
+      if (lesson.status === 'scheduled') {
+        throw new AppError(409, 'MATCH_RECORD_LESSON_NOT_STARTED', '课程尚未开始，不可录入战绩');
+      }
+      // in_progress and completed are valid
+      return;
+    }
+
     let source: { id: string; status: string } | null = null;
 
     if (sourceType === 'activity') {
@@ -376,6 +409,13 @@ export class MatchRecordService {
       return this.activityService.getParticipantIds(sourceId);
     } else if (sourceType === 'group-class') {
       return this.coachingService.getParticipantIds(sourceId, 'group-class');
+    } else if (sourceType === 'private_lesson_v2') {
+      // For private_lesson_v2, the participants are the coach and student
+      const lesson = this.coachingService.getPrivateLessonV2ById
+        ? await this.coachingService.getPrivateLessonV2ById(sourceId)
+        : null;
+      if (!lesson) return [];
+      return [lesson.coachId, lesson.studentId];
     } else {
       return this.coachingService.getParticipantIds(sourceId, 'private-lesson');
     }

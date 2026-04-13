@@ -1,4 +1,4 @@
-export type SourceType = 'activity' | 'group-class' | 'private-lesson';
+export type SourceType = 'activity' | 'group-class' | 'private-lesson' | 'private_lesson_v2';
 export type MatchType = 'singles' | 'doubles';
 export type MatchResult = 'A_WIN' | 'B_WIN' | 'DRAW';
 export type UserResult = 'WIN' | 'LOSE' | 'DRAW';
