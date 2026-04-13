@@ -22,9 +22,11 @@ export function TopBar({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '14px 16px',
+        padding: '14px 18px',
         borderBottom: '1px solid var(--surface-2)',
-        background: 'var(--surface)',
+        background: 'rgba(15,23,42,.95)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}
     >
       <div style={{ width: 88, display: 'flex', justifyContent: 'flex-start' }}>
