@@ -16,6 +16,7 @@ const VALID_SOURCE_TYPES: SourceType[] = [
   'activity',
   'group-class',
   'private-lesson',
+  'class_lesson',
   'private_lesson_v2',
 ];
 const VALID_MATCH_TYPES = ['singles', 'doubles'];
@@ -37,6 +38,13 @@ interface CoachingServiceDep {
     id: string;
     status: string;
   } | null>;
+  getClassLessonByIdForCrossModule?(id: string): Promise<{
+    id: string;
+    studentClassId: string;
+    coachId: string;
+    status: string;
+  } | null>;
+  getClassLessonParticipantIds?(lessonId: string): Promise<string[]>;
   getPrivateLessonV2ById?(id: string): Promise<{
     id: string;
     privateStudentId: string;
@@ -365,6 +373,23 @@ export class MatchRecordService {
 
   private async verifySource(sourceType: SourceType, sourceId: string) {
     // Handle v2 lesson types with more nuanced status checks
+    if (sourceType === 'class_lesson') {
+      const lesson = this.coachingService.getClassLessonByIdForCrossModule
+        ? await this.coachingService.getClassLessonByIdForCrossModule(sourceId)
+        : null;
+      if (!lesson) {
+        throw new AppError(404, 'MATCH_RECORD_SOURCE_NOT_FOUND', '来源课程不存在');
+      }
+      if (lesson.status === 'cancelled') {
+        throw new AppError(409, 'MATCH_RECORD_LESSON_CANCELLED', '课程已取消，不可录入战绩');
+      }
+      if (lesson.status === 'scheduled') {
+        throw new AppError(409, 'MATCH_RECORD_LESSON_NOT_STARTED', '课程尚未开始，不可录入战绩');
+      }
+      // in_progress and completed are valid
+      return;
+    }
+
     if (sourceType === 'private_lesson_v2') {
       const lesson = this.coachingService.getPrivateLessonV2ById
         ? await this.coachingService.getPrivateLessonV2ById(sourceId)
@@ -409,6 +434,12 @@ export class MatchRecordService {
       return this.activityService.getParticipantIds(sourceId);
     } else if (sourceType === 'group-class') {
       return this.coachingService.getParticipantIds(sourceId, 'group-class');
+    } else if (sourceType === 'class_lesson') {
+      // For class_lesson, get the class lesson's participant IDs (coach + class members)
+      if (this.coachingService.getClassLessonParticipantIds) {
+        return this.coachingService.getClassLessonParticipantIds(sourceId);
+      }
+      return [];
     } else if (sourceType === 'private_lesson_v2') {
       // For private_lesson_v2, the participants are the coach and student
       const lesson = this.coachingService.getPrivateLessonV2ById

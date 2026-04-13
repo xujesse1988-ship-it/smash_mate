@@ -114,6 +114,34 @@ export function createMatchRecordController(): Router {
     },
   );
 
+  // GET /api/class-lessons/:id/match-records
+  router.get(
+    '/class-lessons/:id/match-records',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getSourceMatchRecords('class_lesson', req.params.id, {});
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // GET /api/private-lessons-v2/:id/match-records
+  router.get(
+    '/private-lessons-v2/:id/match-records',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await service.getSourceMatchRecords('private_lesson_v2', req.params.id, {});
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   // GET /api/users/:id/match-records
   router.get(
     '/users/:id/match-records',
@@ -127,6 +155,8 @@ export function createMatchRecordController(): Router {
             | 'activity'
             | 'group-class'
             | 'private-lesson'
+            | 'class_lesson'
+            | 'private_lesson_v2'
             | undefined,
         };
         const result = await service.getUserMatchRecords(req.params.id, query);

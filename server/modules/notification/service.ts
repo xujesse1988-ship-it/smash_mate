@@ -19,6 +19,18 @@ const VALID_NOTIFICATION_TYPES: NotificationType[] = [
   'PRIVATE_LESSON_CANCELLED_BY_STUDENT',
   'PRIVATE_LESSON_CANCELLED_BY_COACH',
   'REVIEW_RECEIVED',
+  'COACH_APPLICATION_APPROVED',
+  'COACH_APPLICATION_REJECTED',
+  'STUDENT_CLASS_ADDED',
+  'STUDENT_CLASS_REMOVED',
+  'CLASS_LESSON_CREATED',
+  'CLASS_LESSON_UPDATED',
+  'CLASS_LESSON_CANCELLED',
+  'PRIVATE_STUDENT_ADDED',
+  'PRIVATE_STUDENT_REMOVED',
+  'PRIVATE_LESSON_V2_CREATED',
+  'PRIVATE_LESSON_V2_UPDATED',
+  'PRIVATE_LESSON_V2_CANCELLED',
 ];
 
 const VALID_TARGET_TYPES: TargetType[] = [
@@ -26,6 +38,11 @@ const VALID_TARGET_TYPES: TargetType[] = [
   'group-class',
   'private-lesson',
   'coach-profile',
+  'student-class',
+  'class-lesson',
+  'private-student',
+  'private-lesson-v2',
+  'coach-application',
 ];
 
 export class NotificationService {
