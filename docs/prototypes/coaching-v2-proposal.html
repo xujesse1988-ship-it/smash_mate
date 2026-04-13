@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>羽约 SmashMate — 教练功能增强 UI 原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===================== TOKENS ===================== */
+    :root {
+      --bg:           #0F172A;
+      --surface:      #1E293B;
+      --surface-2:    #334155;
+      --surface-3:    #475569;
+      --primary:      #4ADE80;
+      --primary-dim:  rgba(74,222,128,.15);
+      --primary-dark: #16a34a;
+      --text-1:       #F1F5F9;
+      --text-2:       #94A3B8;
+      --text-3:       #64748B;
+      --warning:      #FBBF24;
+      --danger:       #F87171;
+      --blue:         #60A5FA;
+      --radius-card:  14px;
+      --radius-chip:  999px;
+      --transition:   .18s ease;
+    }
+
+    /* ===================== RESET ===================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background: #060D1F;
+      color: var(--text-1);
+      min-height: 100vh;
+    }
+
+    /* ===================== OUTER LAYOUT ===================== */
+    .page-header { text-align: center; padding: 56px 24px 32px; }
+    .page-header h1 {
+      font-size: 38px; font-weight: 700; letter-spacing: -1px;
+      background: linear-gradient(135deg, #4ADE80 0%, #22D3EE 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-header p { color: var(--text-2); margin-top: 10px; font-size: 15px; }
+
+    /* TAB NAV */
+    .tab-nav {
+      display: flex; gap: 8px; justify-content: center;
+      flex-wrap: wrap; padding: 0 24px 32px;
+    }
+    .tab-btn {
+      padding: 8px 20px; border-radius: var(--radius-chip);
+      border: 1.5px solid var(--surface-2); background: var(--surface);
+      color: var(--text-2); cursor: pointer; font-size: 14px; font-weight: 500;
+      transition: var(--transition);
+    }
+    .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .tab-btn.active {
+      background: var(--primary); border-color: var(--primary);
+      color: #0F172A; font-weight: 700;
+    }
+
+    /* SECTION */
+    .section { display: none; padding: 0 24px 80px; }
+    .section.visible { display: block; }
+    .section-title { font-size: 22px; font-weight: 700; color: var(--text-1); margin-bottom: 8px; }
+    .section-desc { font-size: 14px; color: var(--text-2); margin-bottom: 32px; line-height: 1.6; }
+
+    /* PHONE FRAME */
+    .phones-row { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+    .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .phone-label { font-size: 13px; color: var(--text-2); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; }
+    .phone {
+      width: 340px; background: var(--bg); border-radius: 36px;
+      border: 2px solid var(--surface-2); overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+      position: relative;
+    }
+    .phone::before {
+      content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      width: 80px; height: 5px; background: var(--surface-2); border-radius: 99px; z-index: 10;
+    }
+    .phone-inner { padding-top: 28px; min-height: 680px; display: flex; flex-direction: column; }
+
+    /* ===================== SHARED UI ATOMS ===================== */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; background: rgba(15,23,42,.95);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--surface-2);
+      position: sticky; top: 0; z-index: 5;
+    }
+    .top-bar .title { font-size: 17px; font-weight: 600; color: var(--text-1); }
+    .top-bar .back-btn { color: var(--text-2); font-size: 20px; line-height: 1; cursor: pointer; }
+    .top-bar .right-actions { display: flex; align-items: center; gap: 14px; }
+
+    .bottom-tab {
+      display: flex; background: rgba(15,23,42,.95); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--surface-2); padding: 10px 0 16px; margin-top: auto;
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 4px; cursor: pointer; padding: 4px 0;
+      color: var(--text-3); font-size: 11px; font-weight: 500; transition: var(--transition);
+    }
+    .tab-item.active { color: var(--primary); }
+    .tab-item .tab-icon { font-size: 22px; line-height: 1; }
+    .tab-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); margin-top: 2px; opacity: 0; }
+    .tab-item.active .tab-dot { opacity: 1; }
+
+    .chip {
+      padding: 5px 13px; border-radius: var(--radius-chip); cursor: pointer;
+      font-size: 12px; font-weight: 500; transition: var(--transition);
+      border: 1.5px solid var(--surface-2); background: var(--surface);
+      color: var(--text-2); white-space: nowrap;
+    }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #0F172A; font-weight: 700; }
+
+    .badge {
+      display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge.green { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(74,222,128,.3); }
+    .badge.gray { background: rgba(100,116,139,.15); color: var(--text-3); border: 1px solid rgba(100,116,139,.3); }
+    .badge.blue { background: rgba(96,165,250,.15); color: var(--blue); border: 1px solid rgba(96,165,250,.3); }
+    .badge.red { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+    .badge.yellow { background: rgba(251,191,36,.2); color: var(--warning); border: 1px solid rgba(251,191,36,.3); }
+
+    .card {
+      background: var(--surface); border-radius: var(--radius-card);
+      padding: 14px 16px; cursor: pointer;
+      border: 1px solid var(--surface-2); transition: var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .card:hover { border-color: var(--primary); transform: translateY(-1px); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: var(--transition); border: none; gap: 6px;
+    }
+    .btn.primary { background: var(--primary); color: #052e16; }
+    .btn.outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn.full { width: 100%; }
+    .btn.lg { padding: 14px 24px; font-size: 16px; border-radius: 12px; }
+    .btn.sm { padding: 6px 14px; font-size: 12px; }
+    .btn.danger { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+
+    .scroll-inner { overflow-y: auto; flex: 1; padding: 0 14px; }
+    .scroll-inner::-webkit-scrollbar { width: 0; }
+
+    .sep { height: 1px; background: var(--surface-2); margin: 12px 0; }
+
+    .info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-2); padding: 5px 0; }
+    .info-row .icon { font-size: 15px; width: 20px; text-align: center; }
+
+    .avatar {
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: var(--text-1);
+      border: 2px solid var(--surface-2); overflow: hidden; flex-shrink: 0;
+    }
+    .avatar.grad-ring {
+      border: 2px solid transparent;
+      background: linear-gradient(var(--surface), var(--surface)) padding-box,
+                  linear-gradient(135deg, var(--primary), #22d3ee) border-box;
+    }
+
+    .input-field {
+      background: var(--surface); border: 1.5px solid var(--surface-2);
+      border-radius: 10px; padding: 12px 14px; color: var(--text-1);
+      font-size: 14px; width: 100%; outline: none; transition: var(--transition);
+    }
+    .input-field::placeholder { color: var(--text-3); }
+    .input-field:focus { border-color: var(--primary); }
+
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+    .tag.green { background: rgba(74,222,128,.12); color: #86efac; }
+    .tag.blue { background: rgba(96,165,250,.12); color: #93c5fd; }
+
+    .sec-hdr { font-size: 14px; font-weight: 600; color: var(--text-1); margin: 12px 0 8px; }
+
+    /* Upload area */
+    .upload-area {
+      border: 2px dashed var(--surface-2); border-radius: 12px;
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: var(--transition);
+    }
+    .upload-area:hover { border-color: var(--primary); }
+
+    /* Upload thumbnail */
+    .upload-thumb {
+      width: 64px; height: 64px; border-radius: 8px;
+      background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+      font-size: 24px; position: relative;
+    }
+    .upload-thumb .remove {
+      position: absolute; top: -6px; right: -6px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--danger); color: #fff; font-size: 10px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+
+    /* Note item */
+    .note-item {
+      background: var(--surface-2); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+    }
+    .note-item .note-time { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+    .note-item .note-text { font-size: 13px; color: var(--text-1); line-height: 1.5; }
+
+    /* Stat block */
+    .stats-row { display: flex; text-align: center; }
+    .stat-item { flex: 1; padding: 10px 0; }
+    .stat-item + .stat-item { border-left: 1px solid var(--surface-2); }
+    .stat-val { font-size: 20px; font-weight: 700; color: var(--text-1); }
+    .stat-lbl { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+    /* Status pill (审核状态) */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    }
+    .status-pill.pending { background: rgba(251,191,36,.15); color: var(--warning); border: 1px solid rgba(251,191,36,.3); }
+    .status-pill.approved { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(74,222,128,.3); }
+    .status-pill.rejected { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+
+    /* Textarea style */
+    .textarea-field {
+      background: var(--surface); border: 1.5px solid var(--surface-2);
+      border-radius: 10px; padding: 12px 14px; color: var(--text-1);
+      font-size: 13px; width: 100%; outline: none; resize: vertical;
+      min-height: 80px; font-family: inherit; transition: var(--transition);
+    }
+    .textarea-field:focus { border-color: var(--primary); }
+
+    /* Menu item */
+    .menu-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; cursor: pointer; border-radius: 10px; transition: var(--transition);
+    }
+    .menu-item:hover { background: var(--surface-2); }
+
+    /* FAB */
+    .fab {
+      position: absolute; bottom: 76px; right: 16px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: var(--primary); color: #052e16;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 300; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(74,222,128,.4); border: none;
+    }
+
+    /* Admin table style */
+    .admin-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; background: var(--surface); border-radius: 10px;
+      border: 1px solid var(--surface-2); margin-bottom: 8px; cursor: pointer;
+      transition: var(--transition);
+    }
+    .admin-row:hover { border-color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>🏸 教练功能增强</h1>
+  <p>Coaching v2 · 审核 · 学员班 · 固定私教 · UI 原型</p>
+</div>
+
+<!-- NAV TABS -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showSection('apply')">📋 教练申请</button>
+  <button class="tab-btn" onclick="showSection('admin-review')">🔍 管理员审核</button>
+  <button class="tab-btn" onclick="showSection('class-list')">👥 学员班列表</button>
+  <button class="tab-btn" onclick="showSection('class-detail')">📖 学员班详情</button>
+  <button class="tab-btn" onclick="showSection('lesson-detail')">📝 课程详情</button>
+  <button class="tab-btn" onclick="showSection('student-profile')">🎯 学员档案</button>
+  <button class="tab-btn" onclick="showSection('private-list')">🏅 私教学员</button>
+  <button class="tab-btn" onclick="showSection('private-detail')">📋 私教详情</button>
+</div>
+
+<!-- ==================== SECTION: COACH APPLICATION ==================== -->
+<div id="sec-apply" class="section visible">
+  <p class="section-title">教练申请页</p>
+  <p class="section-desc">用户上传证书/奖状图片，填写说明后提交审核。展示审核中、已通过、已拒绝三种状态。</p>
+  <div class="phones-row">
+    <!-- Apply form -->
+    <div class="phone-wrap">
+      <div class="phone-label">提交申请</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">申请成为教练</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:16px;">
+            <!-- Upload section -->
+            <div class="sec-hdr">上传证书/奖状</div>
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">至少 1 张，最多 5 张（JPG/PNG，单张不超过 5MB）</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <div class="upload-thumb">📄<div class="remove">×</div></div>
+              <div class="upload-thumb">🏆<div class="remove">×</div></div>
+              <div class="upload-area" style="width:64px;height:64px;padding:0;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-3);">+</div>
+            </div>
+
+            <div class="sec-hdr">补充说明</div>
+            <textarea class="textarea-field" placeholder="简要描述你的教练资历（选填，最多200字）" style="margin-bottom:20px;">国家一级运动员，2018年市级羽毛球单打冠军</textarea>
+
+            <button class="btn primary full lg">提交申请</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending state -->
+    <div class="phone-wrap">
+      <div class="phone-label">审核中状态</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">教练资质</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:40px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+            <div class="status-pill pending" style="margin-bottom:12px;">审核中</div>
+            <div style="font-size:14px;color:var(--text-2);text-align:center;line-height:1.6;margin-bottom:24px;">
+              你的教练资质正在审核中<br/>通常 1-3 个工作日内完成
+            </div>
+            <div class="card" style="width:100%;cursor:default;">
+              <div class="sec-hdr" style="margin-top:0;">提交的证书</div>
+              <div style="display:flex;gap:10px;margin-top:8px;">
+                <div class="upload-thumb" style="cursor:default;">📄</div>
+                <div class="upload-thumb" style="cursor:default;">🏆</div>
+              </div>
+              <div style="margin-top:10px;font-size:12px;color:var(--text-3);">提交时间：2026-04-13 14:30</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rejected state -->
+    <div class="phone-wrap">
+      <div class="phone-label">审核拒绝</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">教练资质</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:40px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:48px;margin-bottom:16px;">❌</div>
+            <div class="status-pill rejected" style="margin-bottom:12px;">审核未通过</div>
+            <div class="card" style="width:100%;cursor:default;margin-bottom:16px;">
+              <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">拒绝原因</div>
+              <div style="font-size:14px;color:var(--danger);line-height:1.5;">上传的证书图片模糊，无法辨认姓名和证书类型，请重新上传清晰照片</div>
+            </div>
+            <button class="btn primary full lg">重新提交申请</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: ADMIN REVIEW ==================== -->
+<div id="sec-admin-review" class="section">
+  <p class="section-title">管理员审核（Admin 后台）</p>
+  <p class="section-desc">管理员在后台查看待审核教练列表，点击进入详情查看证书图片，通过或拒绝。</p>
+  <div class="phones-row">
+    <!-- Review list -->
+    <div class="phone-wrap">
+      <div class="phone-label">审核列表</div>
+      <div class="phone" style="width:400px;">
+        <div class="phone-inner" style="min-height:600px;">
+          <div class="top-bar">
+            <span class="title">教练审核</span>
+            <div style="display:flex;gap:8px;">
+              <span class="chip active" style="padding:3px 10px;font-size:11px;">待审核 3</span>
+              <span class="chip" style="padding:3px 10px;font-size:11px;">已通过</span>
+              <span class="chip" style="padding:3px 10px;font-size:11px;">已拒绝</span>
+            </div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <div class="admin-row">
+              <div class="avatar" style="width:40px;height:40px;background:var(--primary);font-size:14px;">张</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;">张文舞</div>
+                <div style="font-size:12px;color:var(--text-3);">提交于 2026-04-13 · 2 张证书</div>
+              </div>
+              <span class="badge yellow">待审核</span>
+            </div>
+            <div class="admin-row">
+              <div class="avatar" style="width:40px;height:40px;background:var(--blue);font-size:14px;">李</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;">李佑赫</div>
+                <div style="font-size:12px;color:var(--text-3);">提交于 2026-04-12 · 1 张证书</div>
+              </div>
+              <span class="badge yellow">待审核</span>
+            </div>
+            <div class="admin-row">
+              <div class="avatar" style="width:40px;height:40px;background:#F472B6;font-size:14px;">陈</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;">陈敏佳</div>
+                <div style="font-size:12px;color:var(--text-3);">提交于 2026-04-12 · 3 张证书</div>
+              </div>
+              <span class="badge yellow">待审核</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review detail -->
+    <div class="phone-wrap">
+      <div class="phone-label">审核详情</div>
+      <div class="phone" style="width:400px;">
+        <div class="phone-inner" style="min-height:600px;">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">审核详情</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Applicant info -->
+            <div class="card" style="margin-bottom:12px;cursor:default;">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <div class="avatar grad-ring" style="width:52px;height:52px;font-size:18px;background:var(--surface-2);">张</div>
+                <div>
+                  <div style="font-size:16px;font-weight:700;">张文舞</div>
+                  <div style="font-size:12px;color:var(--text-3);">138****1234 · 注册于 2026-03-15</div>
+                </div>
+              </div>
+              <div style="font-size:13px;color:var(--text-2);line-height:1.5;">国家一级运动员，2018年市级羽毛球单打冠军</div>
+            </div>
+
+            <!-- Certificates -->
+            <div class="sec-hdr">上传的证书（2张）</div>
+            <div style="display:flex;gap:10px;margin-bottom:16px;">
+              <div style="width:120px;height:90px;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px;">📄</div>
+              <div style="width:120px;height:90px;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px;">🏆</div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;margin-top:20px;">
+              <button class="btn primary" style="flex:1;">通过</button>
+              <button class="btn danger" style="flex:1;">拒绝</button>
+            </div>
+
+            <!-- Reject reason (shown when clicking reject) -->
+            <div style="margin-top:16px;">
+              <div style="font-size:12px;color:var(--text-3);margin-bottom:6px;">拒绝原因（拒绝时必填）</div>
+              <textarea class="textarea-field" placeholder="请填写拒绝原因（至少5个字符）" style="min-height:60px;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: CLASS LIST ==================== -->
+<div id="sec-class-list" class="section">
+  <p class="section-title">学员班列表</p>
+  <p class="section-desc">教练查看和管理自己创建的学员班。点击进入班级详情，右下角 FAB 创建新班级。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">学员班列表</div>
+      <div class="phone" style="position:relative;">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">我的学员班</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Class card 1 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:var(--text-1);">周末进阶班</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:4px;">创建于 2026-04-01</div>
+                </div>
+                <span class="badge green">进行中</span>
+              </div>
+              <div class="sep"></div>
+              <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">6</div><div class="stat-lbl">学员</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">12</div><div class="stat-lbl">课程</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">8</div><div class="stat-lbl">战绩</div></div>
+              </div>
+            </div>
+
+            <!-- Class card 2 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:var(--text-1);">少儿启蒙班</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:4px;">创建于 2026-03-20</div>
+                </div>
+                <span class="badge green">进行中</span>
+              </div>
+              <div class="sep"></div>
+              <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">4</div><div class="stat-lbl">学员</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">8</div><div class="stat-lbl">课程</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">3</div><div class="stat-lbl">战绩</div></div>
+              </div>
+            </div>
+
+            <!-- Class card 3 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:var(--text-1);">成人双打特训</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:4px;">创建于 2026-04-10</div>
+                </div>
+                <span class="badge blue">新建</span>
+              </div>
+              <div class="sep"></div>
+              <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">2</div><div class="stat-lbl">学员</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">0</div><div class="stat-lbl">课程</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">0</div><div class="stat-lbl">战绩</div></div>
+              </div>
+            </div>
+          </div>
+          <button class="fab">+</button>
+          <div class="bottom-tab">
+            <div class="tab-item"><span class="tab-icon">🏸</span><span>约球</span><div class="tab-dot"></div></div>
+            <div class="tab-item"><span class="tab-icon">👨‍🏫</span><span>找教练</span><div class="tab-dot"></div></div>
+            <div class="tab-item active"><span class="tab-icon">👤</span><span>我的</span><div class="tab-dot"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: CLASS DETAIL ==================== -->
+<div id="sec-class-detail" class="section">
+  <p class="section-title">学员班详情</p>
+  <p class="section-desc">班级内的学员管理和课程管理。两个 Tab 切换：学员列表和课程列表。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">学员列表 Tab</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">周末进阶班</span>
+            </div>
+            <div class="right-actions">
+              <span style="font-size:14px;color:var(--text-2);cursor:pointer;">⚙️</span>
+            </div>
+          </div>
+          <!-- Tabs -->
+          <div style="display:flex;border-bottom:1px solid var(--surface-2);">
+            <div style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);">学员 (6)</div>
+            <div style="flex:1;text-align:center;padding:10px;font-size:14px;color:var(--text-3);">课程 (12)</div>
+          </div>
+          <div class="scroll-inner" style="padding-top:10px;">
+            <!-- Add student button -->
+            <div style="margin-bottom:10px;">
+              <button class="btn outline full sm">+ 添加学员</button>
+            </div>
+            <!-- Student list -->
+            <div class="card" style="margin-bottom:8px;padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar" style="width:36px;height:36px;background:#4ADE80;font-size:12px;">李</div>
+                <div style="flex:1;">
+                  <div style="font-size:14px;font-weight:600;">李威</div>
+                  <div style="display:flex;gap:4px;margin-top:3px;">
+                    <span class="tag green">进攻型</span>
+                    <span class="tag blue">右手</span>
+                  </div>
+                </div>
+                <span style="font-size:12px;color:var(--text-3);">3 条笔记</span>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar" style="width:36px;height:36px;background:#60A5FA;font-size:12px;">陈</div>
+                <div style="flex:1;">
+                  <div style="font-size:14px;font-weight:600;">陈玲</div>
+                  <div style="display:flex;gap:4px;margin-top:3px;">
+                    <span class="tag green">防守型</span>
+                    <span class="tag blue">左手</span>
+                    <span class="tag green">步法好</span>
+                  </div>
+                </div>
+                <span style="font-size:12px;color:var(--text-3);">5 条笔记</span>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar" style="width:36px;height:36px;background:#F472B6;font-size:12px;">王</div>
+                <div style="flex:1;">
+                  <div style="font-size:14px;font-weight:600;">王波</div>
+                  <div style="display:flex;gap:4px;margin-top:3px;">
+                    <span class="tag blue">新手</span>
+                  </div>
+                </div>
+                <span style="font-size:12px;color:var(--text-3);">1 条笔记</span>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar" style="width:36px;height:36px;background:var(--warning);font-size:12px;">赵</div>
+                <div style="flex:1;"><div style="font-size:14px;font-weight:600;">赵明</div></div>
+                <span style="font-size:12px;color:var(--text-3);">0 条笔记</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone-label">课程列表 Tab</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">周末进阶班</span>
+            </div>
+            <div class="right-actions">
+              <span style="font-size:14px;color:var(--text-2);cursor:pointer;">⚙️</span>
+            </div>
+          </div>
+          <!-- Tabs -->
+          <div style="display:flex;border-bottom:1px solid var(--surface-2);">
+            <div style="flex:1;text-align:center;padding:10px;font-size:14px;color:var(--text-3);">学员 (6)</div>
+            <div style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);">课程 (12)</div>
+          </div>
+          <div class="scroll-inner" style="padding-top:10px;">
+            <div style="margin-bottom:10px;">
+              <button class="btn outline full sm">+ 创建课程</button>
+            </div>
+            <!-- Lesson cards -->
+            <div class="card" style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="font-size:14px;font-weight:600;">第12节课</div>
+                <span class="badge green">未开始</span>
+              </div>
+              <div class="info-row" style="margin-top:6px;"><span class="icon">📅</span>04-19 周六 14:00-16:00</div>
+              <div class="info-row"><span class="icon">📍</span>朝阳体育馆</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:6px;">训练内容：双打配合走位 + 网前扑球技术</div>
+            </div>
+            <div class="card" style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="font-size:14px;font-weight:600;">第11节课</div>
+                <span class="badge blue">已结束</span>
+              </div>
+              <div class="info-row" style="margin-top:6px;"><span class="icon">📅</span>04-12 周六 14:00-16:00</div>
+              <div class="info-row"><span class="icon">📍</span>朝阳体育馆</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:6px;">训练内容：高远球练习 + 步法训练</div>
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <span style="font-size:11px;color:var(--text-3);">📝 2 条笔记</span>
+                <span style="font-size:11px;color:var(--text-3);">🏆 3 条战绩</span>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="font-size:14px;font-weight:600;">第10节课</div>
+                <span class="badge blue">已结束</span>
+              </div>
+              <div class="info-row" style="margin-top:6px;"><span class="icon">📅</span>04-05 周六 14:00-16:00</div>
+              <div class="info-row"><span class="icon">📍</span>朝阳体育馆</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:6px;">训练内容：发球变化 + 接发球练习</div>
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <span style="font-size:11px;color:var(--text-3);">📝 1 条笔记</span>
+                <span style="font-size:11px;color:var(--text-3);">🏆 2 条战绩</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: LESSON DETAIL ==================== -->
+<div id="sec-lesson-detail" class="section">
+  <p class="section-title">课程详情</p>
+  <p class="section-desc">单节课的详细信息：训练内容（可编辑）、笔记列表（追加模式）、战绩记录。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">课程详情</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">第11节课</span>
+            </div>
+            <div class="right-actions">
+              <span class="badge blue">已结束</span>
+            </div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Info card -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div class="info-row"><span class="icon">📅</span>2026-04-12 周六 14:00 – 16:00</div>
+              <div class="info-row"><span class="icon">📍</span>朝阳体育馆 B2馆</div>
+              <div class="info-row"><span class="icon">👥</span>周末进阶班 · 6 名学员</div>
+            </div>
+
+            <!-- Training content -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="sec-hdr" style="margin:0;">训练内容</div>
+                <span style="font-size:12px;color:var(--primary);cursor:pointer;">编辑</span>
+              </div>
+              <div style="font-size:13px;color:var(--text-2);line-height:1.6;">高远球练习：每人200个正手高远球，重点纠正击球点和发力时机。步法训练：米字步法10组×3轮，要求脚步到位后再出手。</div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="sec-hdr" style="margin:0;">课程笔记</div>
+                <span style="font-size:11px;color:var(--text-3);">仅自己可见</span>
+              </div>
+              <!-- Add note -->
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <input class="input-field" placeholder="写一条笔记..." style="flex:1;padding:8px 12px;font-size:12px;" />
+                <button class="btn primary sm">添加</button>
+              </div>
+              <!-- Note list -->
+              <div class="note-item">
+                <div class="note-time">今天 16:30</div>
+                <div class="note-text">李威高远球进步明显，击球点把握更好了。陈玲步法还需加强，米字步第三轮明显体力不支。</div>
+              </div>
+              <div class="note-item">
+                <div class="note-time">今天 15:00</div>
+                <div class="note-text">王波今天状态不错，发球练习命中率提升了。</div>
+              </div>
+            </div>
+
+            <!-- Match records -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="sec-hdr" style="margin:0;">战绩记录</div>
+                <button class="btn outline sm">+ 录入战绩</button>
+              </div>
+              <!-- Record 1 -->
+              <div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">
+                  <span style="font-size:13px;font-weight:600;">李威</span>
+                  <span style="font-size:11px;color:var(--text-3);">VS</span>
+                  <span style="font-size:13px;font-weight:600;">陈玲</span>
+                </div>
+                <div style="display:flex;justify-content:center;gap:6px;">
+                  <span style="padding:2px 8px;background:var(--surface);border-radius:4px;font-size:12px;">21:18</span>
+                  <span style="padding:2px 8px;background:var(--surface);border-radius:4px;font-size:12px;">21:15</span>
+                </div>
+              </div>
+              <!-- Record 2 -->
+              <div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">
+                  <span style="font-size:13px;font-weight:600;">王波</span>
+                  <span style="font-size:11px;color:var(--text-3);">VS</span>
+                  <span style="font-size:13px;font-weight:600;">赵明</span>
+                </div>
+                <div style="display:flex;justify-content:center;gap:6px;">
+                  <span style="padding:2px 8px;background:var(--surface);border-radius:4px;font-size:12px;">21:19</span>
+                  <span style="padding:2px 8px;background:var(--surface);border-radius:4px;font-size:12px;">18:21</span>
+                  <span style="padding:2px 8px;background:var(--surface);border-radius:4px;font-size:12px;">21:16</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: STUDENT PROFILE ==================== -->
+<div id="sec-student-profile" class="section">
+  <p class="section-title">学员档案</p>
+  <p class="section-desc">教练查看某个学员的完整档案：标签、笔记列表、战绩汇总。标签和笔记仅教练可见。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">学员档案</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">学员档案</span>
+            </div>
+            <div class="right-actions">
+              <button class="btn danger sm" style="font-size:11px;padding:4px 10px;">移除学员</button>
+            </div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Student header -->
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+              <div class="avatar grad-ring" style="width:56px;height:56px;font-size:20px;background:var(--surface-2);">李</div>
+              <div>
+                <div style="font-size:18px;font-weight:700;">李威</div>
+                <div style="font-size:12px;color:var(--text-3);">周末进阶班</div>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="sec-hdr" style="margin:0;">标签</div>
+                <span style="font-size:11px;color:var(--text-3);">仅自己可见</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                <span class="tag green">进攻型</span>
+                <span class="tag blue">右手</span>
+                <span class="tag green">高远球好</span>
+                <span class="tag blue">需加强步法</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <input class="input-field" placeholder="输入标签..." style="flex:1;padding:6px 10px;font-size:12px;" />
+                <button class="btn primary sm" style="font-size:11px;">添加</button>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="card" style="cursor:default;margin-bottom:12px;padding:8px;">
+              <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" style="font-size:18px;color:var(--primary);">8</div><div class="stat-lbl">胜</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:18px;color:var(--danger);">3</div><div class="stat-lbl">负</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:18px;">73%</div><div class="stat-lbl">胜率</div></div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card" style="cursor:default;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="sec-hdr" style="margin:0;">教练笔记</div>
+                <span style="font-size:11px;color:var(--text-3);">仅自己可见</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <input class="input-field" placeholder="写一条笔记..." style="flex:1;padding:8px 12px;font-size:12px;" />
+                <button class="btn primary sm">添加</button>
+              </div>
+              <div class="note-item">
+                <div class="note-time">04-12 16:30</div>
+                <div class="note-text">高远球进步明显，击球点把握更好了。下次重点练习网前搓球。</div>
+              </div>
+              <div class="note-item">
+                <div class="note-time">04-05 16:00</div>
+                <div class="note-text">发球稳定性提升，但接发球判断慢了一拍，需要更多实战练习。</div>
+              </div>
+              <div class="note-item">
+                <div class="note-time">03-29 15:30</div>
+                <div class="note-text">步法有改善，但体能在后半段下降明显，建议增加体能训练。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: PRIVATE LIST ==================== -->
+<div id="sec-private-list" class="section">
+  <p class="section-title">固定私教学员列表</p>
+  <p class="section-desc">教练查看和管理固定私教学员。每个学员卡片展示最近课程和标签概览。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">私教学员列表</div>
+      <div class="phone" style="position:relative;">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">我的私教学员</span>
+            </div>
+            <div></div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Student card 1 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div class="avatar grad-ring" style="width:48px;height:48px;font-size:16px;background:var(--surface-2);">周</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:15px;font-weight:700;margin-bottom:3px;">周小明</div>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+                    <span class="tag green">进攻型</span>
+                    <span class="tag blue">单打</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);">最近课程：04-11 · 已上 8 节课</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-size:12px;color:var(--text-2);">5 条笔记</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:2px;">3 条战绩</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Student card 2 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div class="avatar grad-ring" style="width:48px;height:48px;font-size:16px;background:var(--surface-2);">孙</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:15px;font-weight:700;margin-bottom:3px;">孙丽华</div>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+                    <span class="tag blue">双打</span>
+                    <span class="tag green">防守型</span>
+                    <span class="tag blue">左手</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);">最近课程：04-09 · 已上 12 节课</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-size:12px;color:var(--text-2);">8 条笔记</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:2px;">6 条战绩</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Student card 3 -->
+            <div class="card" style="margin-bottom:10px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div class="avatar grad-ring" style="width:48px;height:48px;font-size:16px;background:var(--surface-2);">吴</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:15px;font-weight:700;margin-bottom:3px;">吴强</div>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+                    <span class="tag blue">新手</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);">最近课程：04-13 · 已上 2 节课</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-size:12px;color:var(--text-2);">1 条笔记</div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:2px;">0 条战绩</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="fab">+</button>
+          <div class="bottom-tab">
+            <div class="tab-item"><span class="tab-icon">🏸</span><span>约球</span><div class="tab-dot"></div></div>
+            <div class="tab-item"><span class="tab-icon">👨‍🏫</span><span>找教练</span><div class="tab-dot"></div></div>
+            <div class="tab-item active"><span class="tab-icon">👤</span><span>我的</span><div class="tab-dot"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION: PRIVATE DETAIL ==================== -->
+<div id="sec-private-detail" class="section">
+  <p class="section-title">私教学员详情</p>
+  <p class="section-desc">单个私教学员的完整管理页面：课程历史、笔记、标签、战绩。支持创建新课程和录入战绩（对手可为任意用户）。</p>
+  <div class="phones-row">
+    <div class="phone-wrap">
+      <div class="phone-label">私教学员详情</div>
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="top-bar">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="back-btn">‹</span>
+              <span class="title">周小明</span>
+            </div>
+            <div class="right-actions">
+              <button class="btn danger sm" style="font-size:11px;padding:4px 10px;">移除</button>
+            </div>
+          </div>
+          <div class="scroll-inner" style="padding-top:12px;">
+            <!-- Student header -->
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+              <div class="avatar grad-ring" style="width:52px;height:52px;font-size:18px;background:var(--surface-2);">周</div>
+              <div style="flex:1;">
+                <div style="font-size:17px;font-weight:700;">周小明</div>
+                <div style="display:flex;gap:4px;margin-top:4px;">
+                  <span class="tag green">进攻型</span>
+                  <span class="tag blue">单打</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="card" style="cursor:default;margin-bottom:12px;padding:8px;">
+              <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">8</div><div class="stat-lbl">已上课</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">5</div><div class="stat-lbl">笔记</div></div>
+                <div class="stat-item"><div class="stat-val" style="font-size:16px;">3</div><div class="stat-lbl">战绩</div></div>
+              </div>
+            </div>
+
+            <!-- Upcoming lesson -->
+            <div class="sec-hdr">下节课</div>
+            <div class="card" style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="font-size:14px;font-weight:600;">第9节课</div>
+                <span class="badge green">未开始</span>
+              </div>
+              <div class="info-row" style="margin-top:6px;"><span class="icon">📅</span>04-18 周五 18:00-19:00</div>
+              <div class="info-row"><span class="icon">📍</span>海淀体育中心</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:6px;">训练内容：杀球力量训练 + 网前技术</div>
+            </div>
+
+            <!-- Quick actions -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <button class="btn outline sm" style="flex:1;">+ 创建课程</button>
+              <button class="btn outline sm" style="flex:1;">+ 写笔记</button>
+              <button class="btn outline sm" style="flex:1;">+ 录入战绩</button>
+            </div>
+
+            <!-- Recent notes -->
+            <div class="sec-hdr">最近笔记</div>
+            <div class="note-item">
+              <div class="note-time">04-11 19:15</div>
+              <div class="note-text">杀球角度改善了，但落点控制还需练习。下次重点练直线杀球。</div>
+            </div>
+            <div class="note-item">
+              <div class="note-time">04-04 19:00</div>
+              <div class="note-text">网前搓球手感不错，可以开始练习勾对角。</div>
+            </div>
+
+            <!-- Recent lessons -->
+            <div class="sec-hdr">历史课程</div>
+            <div class="card" style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;">第8节课</div>
+                  <div style="font-size:12px;color:var(--text-3);">04-11 周五 18:00-19:00</div>
+                </div>
+                <span class="badge blue">已结束</span>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;">第7节课</div>
+                  <div style="font-size:12px;color:var(--text-3);">04-04 周五 18:00-19:00</div>
+                </div>
+                <span class="badge blue">已结束</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('visible');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+</body>
+</html>
