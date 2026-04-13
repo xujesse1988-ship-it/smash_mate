@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware, AuthRequest } from '../../infra/auth.js';
+import { adminAuthMiddleware } from '../../infra/admin-auth.js';
 import { success } from '../../infra/response.js';
 import { UserService } from './service.js';
 import { UserRepository } from './repository.js';
@@ -96,10 +97,11 @@ export function createUserController(): Router {
     },
   );
 
-  // GET /api/users
+  // GET /api/users — 管理员专用，手机号已脱敏
   router.get(
     '/users',
     authMiddleware,
+    adminAuthMiddleware,
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const result = await service.getAllUsers();
@@ -114,6 +116,7 @@ export function createUserController(): Router {
   router.get(
     '/admin/users',
     authMiddleware,
+    adminAuthMiddleware,
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const result = await service.getAllUsersForAdmin();
