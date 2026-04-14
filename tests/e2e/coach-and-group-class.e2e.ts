@@ -44,9 +44,9 @@ test.describe('Coach and Group Class', () => {
       const bioInput = page.locator('textarea');
       await bioInput.fill('专注羽毛球教学10年，擅长单打和步法训练');
 
-      // Click specialty tags to select them
-      const singlesTag = page.getByText('单打');
-      const footworkTag = page.getByText('步法');
+      // Click specialty tags to select them (use getByRole to avoid matching textarea text)
+      const singlesTag = page.getByRole('button', { name: '单打' });
+      const footworkTag = page.getByRole('button', { name: '步法' });
 
       // Click to select specialties
       if (await singlesTag.isVisible()) {
@@ -56,11 +56,13 @@ test.describe('Coach and Group Class', () => {
         await footworkTag.click();
       }
 
-      // Click save
+      // Click save and wait for API response
+      const saveResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/api/coaches/me') && resp.request().method() === 'PUT',
+      );
       await page.getByText('保存').click();
-
-      // Should show success message
-      await expect(page.getByText('保存成功')).toBeVisible({ timeout: 5000 });
+      const resp = await saveResponse;
+      expect(resp.status()).toBe(200);
     });
 
     test('coach publishes a group class', async ({ page }) => {
@@ -133,8 +135,8 @@ test.describe('Coach and Group Class', () => {
 
       // Should see the specialty filter chips
       await expect(page.getByText('全部')).toBeVisible();
-      await expect(page.getByText('单打')).toBeVisible();
-      await expect(page.getByText('双打')).toBeVisible();
+      await expect(page.getByText('单打').first()).toBeVisible();
+      await expect(page.getByText('双打').first()).toBeVisible();
 
       // Wait for coach list to load
       await page.waitForTimeout(1000);
@@ -165,7 +167,7 @@ test.describe('Coach and Group Class', () => {
       await expect(page.getByText('课程')).toBeVisible();
 
       // Should see the "评价" tab
-      await expect(page.getByText('评价')).toBeVisible();
+      await expect(page.getByRole('button', { name: '评价' })).toBeVisible();
 
       // Should see at least the student count
       await expect(page.getByText(/名学员/)).toBeVisible();

@@ -45,11 +45,13 @@ test.describe('Notification flow', () => {
     await page.goto('/activities');
     await page.waitForLoadState('networkidle');
 
-    // Click on the first activity
-    const activityCard = page.locator('[style*="cursor: pointer"]').first();
+    // Click on the first activity card (filter to activity cards, not nav elements)
+    const activityCard = page.locator('div[style*="cursor: pointer"]').filter({
+      has: page.locator('text=/\\d+.*人/'),
+    }).first();
     await activityCard.waitFor({ state: 'visible', timeout: 10000 });
     await activityCard.click();
-    await page.waitForURL(/\/activities\//, { timeout: 5000 });
+    await page.waitForURL(/\/activities\/(?!create)/, { timeout: 5000 });
 
     // Join the activity
     const joinButton = page.getByRole('button', { name: '加入活动' });

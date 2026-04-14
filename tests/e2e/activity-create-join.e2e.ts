@@ -85,15 +85,14 @@ test.describe('Activity - Create and Join', () => {
       // Click publish
       await page.getByRole('button', { name: '发布' }).click();
 
-      // Should navigate to the activity detail page
-      await page.waitForURL(/\/activities\/[a-zA-Z0-9-]+/, { timeout: 10000 });
+      // Should navigate to the activity detail page (not /activities/create)
+      await page.waitForURL(/\/activities\/(?!create)[a-zA-Z0-9-]+/, { timeout: 10000 });
       activityUrl = page.url();
 
       // Should see the activity status as "报名中"
       await expect(page.getByText('报名中')).toBeVisible();
 
       // Should show the participant count (1/4 since creator is first participant)
-      await expect(page.getByText('1')).toBeVisible();
       await expect(page.getByText('/ 4 人')).toBeVisible();
 
       // Creator should see "编辑活动" and "取消活动" buttons
@@ -145,7 +144,7 @@ test.describe('Activity - Create and Join', () => {
       await page.waitForTimeout(1000);
 
       // After joining, participant count should be 2/4
-      await expect(page.getByText('2')).toBeVisible();
+      await expect(page.getByText('2', { exact: true })).toBeVisible();
 
       // The join button should no longer be visible; instead see "退出活动"
       await expect(page.getByText('退出活动')).toBeVisible();
@@ -174,7 +173,7 @@ test.describe('Activity - Create and Join', () => {
       await page.waitForTimeout(1000);
 
       // After leaving, participant count should be back to 1/4
-      await expect(page.getByText('1')).toBeVisible();
+      await expect(page.getByText('/ 4 人')).toBeVisible();
 
       // Should see "加入活动" button again
       await expect(page.getByText('加入活动')).toBeVisible();

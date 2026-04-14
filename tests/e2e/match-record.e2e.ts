@@ -54,13 +54,16 @@ test.describe('Match record flow', () => {
     await page.goto('/activities');
     await page.waitForLoadState('networkidle');
 
-    // Find and click an activity
-    const activityCard = page.locator('[style*="cursor: pointer"]').first();
+    // Find and click the first activity card (contains venue name or time info)
+    // Activity cards are div elements with cursor pointer that contain location/time text
+    const activityCard = page.locator('div[style*="cursor: pointer"]').filter({
+      has: page.locator('text=/\\d+.*人/'),
+    }).first();
     await activityCard.waitFor({ state: 'visible', timeout: 10000 });
     await activityCard.click();
 
-    // Wait for detail page
-    await page.waitForURL(/\/activities\//, { timeout: 5000 });
+    // Wait for detail page (exclude /activities/create)
+    await page.waitForURL(/\/activities\/(?!create)/, { timeout: 5000 });
 
     // Store the activity ID
     const url = page.url();

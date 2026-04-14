@@ -167,16 +167,18 @@ export async function selectDateTime(
   label: string,
   options: { dayOffset: number; hour: number; minute: number },
 ): Promise<void> {
-  // Click the date time picker to open it
-  const picker = page
-    .locator('div')
-    .filter({ hasText: label })
-    .locator('div[style*="cursor: pointer"]')
-    .first();
+  // Click the date time picker to open it.
+  // The DateTimePicker renders: container > label div (with exact label text) + display div (cursor: pointer)
+  // We need to find the container that has a direct child with the exact label text
+  const labelDiv = page.getByText(label, { exact: true });
+  // The clickable display div is the next sibling of the label div
+  const picker = labelDiv.locator('xpath=following-sibling::div[1]');
   await picker.click();
 
-  // Wait for the picker dropdown to appear
-  await expect(page.getByText('选择日期')).toBeVisible();
+  // Wait for the picker dropdown to appear (the dropdown contains "选择日期" header)
+  await expect(page.getByText('选择日期', { exact: true })).toBeVisible();
+  // Also wait for "选择时间" to ensure the full dropdown is rendered
+  await expect(page.getByText('选择时间', { exact: true })).toBeVisible();
 
   // Get the target date
   const targetDate = new Date();
@@ -184,8 +186,8 @@ export async function selectDateTime(
   const targetDay = targetDate.getDate();
 
   // Click the day in the horizontal date selector
-  // The day number is displayed in a div with fontSize 16 and fontWeight 600
-  const dayButtons = page.locator('div[style*="width: 56"]');
+  // Day buttons have flex-shrink: 0 and width: 56px
+  const dayButtons = page.locator('div[style*="flex-shrink: 0"][style*="width: 56"]');
   const targetDayButton = dayButtons
     .filter({
       has: page.locator(`text="${targetDay}"`),
@@ -193,23 +195,80 @@ export async function selectDateTime(
     .first();
   await targetDayButton.click();
 
-  // Select hour - find in the hour column
+  // The hour and minute columns are scrollable divs with height: 160px and overflow-y: auto.
+  // They are children of the time section which contains the "时" and "分" labels.
+  // Use JavaScript evaluation to reliably click the hour and minute items.
   const hourText = String(options.hour).padStart(2, '0');
-  const hourColumn = page
-    .locator('div')
-    .filter({ hasText: '时' })
-    .locator('div[style*="height: 160"]')
-    .first();
-  await hourColumn.locator(`text="${hourText}"`).click();
-
-  // Select minute - find in the minute column
   const minuteText = String(options.minute).padStart(2, '0');
-  const minuteColumn = page
-    .locator('div')
-    .filter({ hasText: '分' })
-    .locator('div[style*="height: 160"]')
-    .first();
-  await minuteColumn.locator(`text="${minuteText}"`).click();
+
+  // Verify the dropdown is still open after selecting a date
+  const isTimeVisible = await page.getByText('选择时间', { exact: true }).isVisible().catch(() => false);
+  if (!isTimeVisible) {
+    // If the dropdown closed after clicking the day, we need to reopen it
+    await picker.click();
+    await expect(page.getByText('选择日期', { exact: true })).toBeVisible();
+    await expect(page.getByText('选择时间', { exact: true })).toBeVisible();
+  }
+
+  // Use page.evaluate to tag the correct elements, then Playwright native click
+  await page.evaluate(
+    ({ hour, minute }) => {
+      const allDivs = Array.from(document.querySelectorAll('div'));
+      const timeHeader = allDivs.find(
+        (el) =>
+          el.textContent?.trim() === '选择时间' && el.children.length === 0,
+      );
+      if (!timeHeader?.parentElement) return;
+
+      const timeSection = timeHeader.parentElement;
+      const flexContainer = timeSection.querySelector('div[style*="display: flex"]');
+      if (!flexContainer) return;
+
+      const columns = Array.from(flexContainer.children).filter(
+        (el) => (el as HTMLElement).children.length >= 2,
+      );
+      if (columns.length < 2) return;
+
+      const hourScroll = columns[0].children[1] as HTMLElement;
+      const minuteScroll = columns[1].children[1] as HTMLElement;
+
+      for (const child of Array.from(hourScroll.children)) {
+        if ((child as HTMLElement).textContent?.trim() === hour) {
+          (child as HTMLElement).setAttribute('data-e2e-hour', 'true');
+          break;
+        }
+      }
+      for (const child of Array.from(minuteScroll.children)) {
+        if ((child as HTMLElement).textContent?.trim() === minute) {
+          (child as HTMLElement).setAttribute('data-e2e-minute', 'true');
+          break;
+        }
+      }
+    },
+    { hour: hourText, minute: minuteText },
+  );
+
+  // Click hour using Playwright's native click
+  // Use force: true to bypass actionability checks (element might be inside scrollable area)
+  const hourEl = page.locator('[data-e2e-hour="true"]');
+  await expect(hourEl).toBeAttached();
+  await hourEl.click({ force: true });
+
+  // Small wait for React state update
+  await page.waitForTimeout(50);
+
+  // Click minute
+  const minuteEl = page.locator('[data-e2e-minute="true"]');
+  await expect(minuteEl).toBeAttached();
+  await minuteEl.click({ force: true });
+
+  // Clean up
+  await page.evaluate(() => {
+    document.querySelectorAll('[data-e2e-hour], [data-e2e-minute]').forEach((el) => {
+      el.removeAttribute('data-e2e-hour');
+      el.removeAttribute('data-e2e-minute');
+    });
+  });
 
   // Click confirm button
   await page.getByRole('button', { name: /确定/ }).click();

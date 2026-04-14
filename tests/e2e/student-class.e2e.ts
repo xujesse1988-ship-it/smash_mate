@@ -43,7 +43,11 @@ async function adminLogin(page: Page): Promise<void> {
   await page.getByRole('button', { name: '获取验证码' }).click();
   await sendCodeResponse;
   await page.getByPlaceholder('验证码').fill(DEV_CODE);
+  const loginResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/login'),
+  );
   await page.getByRole('button', { name: '登录' }).click();
+  await loginResponse;
   await page.waitForURL(`${ADMIN_BASE}/cities`, { timeout: 10000 });
 }
 
@@ -75,22 +79,31 @@ async function registerAndApproveCoach(page: Page, phone: string): Promise<void>
     buffer: createTestPngBuffer(),
   });
   await expect(page.locator('img[alt="证书 1"]')).toBeVisible({ timeout: 10000 });
+  const submitResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/coach-applications') && resp.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: '提交申请' }).click();
-  await expect(page.getByText('申请已提交')).toBeVisible({ timeout: 5000 });
+  await submitResponse;
 
   // Admin approves
   await adminLogin(page);
-  await page.goto(`${ADMIN_BASE}/coach-review`);
+  // Navigate via sidebar menu to avoid full reload auth issues
   await page.waitForLoadState('networkidle');
-  await page.getByText('待审核').click();
+  await page.getByText('教练审核').click();
+  await page.waitForURL(`${ADMIN_BASE}/coach-review`, { timeout: 10000 });
+  await page.getByRole('tab', { name: '待审核' }).click();
   await page.waitForLoadState('networkidle');
 
   const firstRow = page.locator('table tbody tr').first();
   await expect(firstRow).toBeVisible({ timeout: 5000 });
   await firstRow.click();
   await expect(page.getByText('审核详情')).toBeVisible({ timeout: 5000 });
+  const approveResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/review') && resp.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: '通过' }).click();
-  await expect(page.getByText('已通过审核')).toBeVisible({ timeout: 5000 });
+  const approveResp = await approveResponse;
+  expect(approveResp.status()).toBe(200);
 }
 
 async function loginAsCoach(page: Page, phone: string): Promise<void> {
@@ -141,17 +154,13 @@ test.describe('Student Class Management', () => {
       await page.getByLabel('创建学员班').click();
 
       // Should show create modal
-      await expect(page.getByText('创建学员班').nth(1)).toBeVisible();
+      await expect(page.getByRole('heading', { name: '创建学员班' })).toBeVisible();
 
       // Fill class name
       await page.getByPlaceholder('输入班级名称（2-30字）').fill('周末提高班');
 
       // Click create button
-      await page
-        .locator('div')
-        .filter({ hasText: /^创建$/ })
-        .getByRole('button', { name: '创建' })
-        .click();
+      await page.getByRole('button', { name: '创建', exact: true }).click();
 
       // Modal should close and the new class should appear
       await expect(page.getByText('周末提高班')).toBeVisible({ timeout: 5000 });

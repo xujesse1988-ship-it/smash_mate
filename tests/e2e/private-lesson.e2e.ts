@@ -47,11 +47,15 @@ test.describe('Private lesson booking', () => {
     const feeInput = page.getByPlaceholder('如：300元/小时');
     await feeInput.fill('300元/小时');
 
-    // Submit
+    // Submit and wait for API response
+    const slotResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/api/coaches/') && resp.url().includes('/availability'),
+    );
     await page.locator('button').filter({ hasText: '提交' }).click();
+    await slotResponse;
 
     // Verify slot appears in the list with "空闲" badge
-    await expect(page.getByText('空闲')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('空闲')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('300元/小时')).toBeVisible();
   });
 
@@ -62,9 +66,8 @@ test.describe('Private lesson booking', () => {
     await page.goto('/coaches');
     await page.waitForLoadState('networkidle');
 
-    // Find and click on the coach (the one we registered)
-    // The coach list should show at least one coach
-    const coachCard = page.locator('[style*="cursor: pointer"]').first();
+    // Find and click on the coach card (data-testid prefixed with "coach-card-")
+    const coachCard = page.locator('[data-testid^="coach-card-"]').first();
     await coachCard.waitFor({ state: 'visible', timeout: 10000 });
     await coachCard.click();
 

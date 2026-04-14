@@ -1469,9 +1469,9 @@ export class CoachingService {
       throw new AppError(400, 'COACHING_INVALID_CERTIFICATES', '证书图片数量必须在 1-5 张之间');
     }
 
-    // 2. Validate each URL format (http/https)
+    // 2. Validate each URL format (http/https or relative /api/uploads path)
     for (const url of certificateUrls) {
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/api/uploads/')) {
         throw new AppError(400, 'COACHING_INVALID_CERTIFICATE_URL', '证书图片 URL 格式不合法');
       }
     }

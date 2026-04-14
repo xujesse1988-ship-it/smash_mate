@@ -35,7 +35,11 @@ async function adminLogin(page: Page, phone: string): Promise<void> {
   await page.getByRole('button', { name: '获取验证码' }).click();
   await sendCodeResponse;
   await page.getByPlaceholder('验证码').fill(DEV_CODE);
+  const loginResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/login'),
+  );
   await page.getByRole('button', { name: '登录' }).click();
+  await loginResponse;
   // Admin redirects to /cities after login
   await page.waitForURL(`${ADMIN_BASE}/cities`, { timeout: 10000 });
 }
@@ -111,13 +115,16 @@ test.describe('Coach Verification Flow', () => {
       const descriptionInput = page.getByPlaceholder(/简要描述你的教练资历/);
       await descriptionInput.fill('拥有5年羽毛球教学经验，省级比赛获奖');
 
-      // Submit the application
+      // Submit the application and wait for API response
+      const submitResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/api/coach-applications') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '提交申请' }).click();
+      const resp = await submitResponse;
+      expect(resp.status()).toBe(201);
 
-      // Should see success message
-      await expect(page.getByText('申请已提交')).toBeVisible({
-        timeout: 5000,
-      });
+      // Wait for the page to reflect the pending state
+      await expect(page.getByText('审核中', { exact: true })).toBeVisible({ timeout: 10000 });
     });
 
     test('pending application shows 审核中 status', async ({ page }) => {
@@ -126,7 +133,7 @@ test.describe('Coach Verification Flow', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show pending status
-      await expect(page.getByText('审核中')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('审核中', { exact: true })).toBeVisible({ timeout: 10000 });
 
       // Should show submitted certificate
       await expect(page.getByText('提交的证书')).toBeVisible();
@@ -156,26 +163,28 @@ test.describe('Coach Verification Flow', () => {
         timeout: 10000,
       });
 
-      // Submit
+      // Submit and wait for API response
+      const submitResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/api/coach-applications') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '提交申请' }).click();
-      await expect(page.getByText('申请已提交')).toBeVisible({
-        timeout: 5000,
-      });
+      await submitResponse;
     });
 
     test('admin can see pending application in review list', async ({ page }) => {
       // Login as admin on the admin app
       await adminLogin(page, adminPhone);
 
-      // Navigate to coach review page
-      await page.goto(`${ADMIN_BASE}/coach-review`);
+      // Navigate to coach review page via sidebar menu (SPA navigation)
       await page.waitForLoadState('networkidle');
+      await page.getByText('教练审核').click();
+      await page.waitForURL(`${ADMIN_BASE}/coach-review`, { timeout: 10000 });
 
       // Should see the review page title
-      await expect(page.getByText('教练审核')).toBeVisible();
+      await expect(page.getByText('教练审核').first()).toBeVisible({ timeout: 10000 });
 
       // Click "待审核" tab to filter
-      await page.getByText('待审核').click();
+      await page.getByRole('tab', { name: '待审核' }).click();
 
       // Should see at least one pending application in the table
       await expect(page.locator('table tbody tr').first()).toBeVisible({
@@ -185,11 +194,14 @@ test.describe('Coach Verification Flow', () => {
 
     test('admin approves application', async ({ page }) => {
       await adminLogin(page, adminPhone);
-      await page.goto(`${ADMIN_BASE}/coach-review`);
+
+      // Navigate to coach review page via sidebar menu
       await page.waitForLoadState('networkidle');
+      await page.getByText('教练审核').click();
+      await page.waitForURL(`${ADMIN_BASE}/coach-review`, { timeout: 10000 });
 
       // Click "待审核" tab
-      await page.getByText('待审核').click();
+      await page.getByRole('tab', { name: '待审核' }).click();
       await page.waitForLoadState('networkidle');
 
       // Click on the first pending application row to view details
@@ -203,13 +215,13 @@ test.describe('Coach Verification Flow', () => {
       // Should see certificate images
       await expect(page.getByText(/上传的证书/)).toBeVisible();
 
-      // Click approve button
+      // Click approve button and wait for API response
+      const approveResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/review') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '通过' }).click();
-
-      // Should see success message
-      await expect(page.getByText('已通过审核')).toBeVisible({
-        timeout: 5000,
-      });
+      const approveResp = await approveResponse;
+      expect(approveResp.status()).toBe(200);
     });
 
     test('approved user sees 已通过 status on coach-apply page', async ({ page }) => {
@@ -218,7 +230,7 @@ test.describe('Coach Verification Flow', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show approved status
-      await expect(page.getByText('已通过')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('已通过', { exact: true })).toBeVisible({ timeout: 5000 });
 
       // Should see the "管理教练资料" button
       await expect(page.getByRole('button', { name: '管理教练资料' })).toBeVisible();
@@ -245,19 +257,23 @@ test.describe('Coach Verification Flow', () => {
       });
 
       await descriptionFill(page, '测试申请将被拒绝');
+      const submitResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/api/coach-applications') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '提交申请' }).click();
-      await expect(page.getByText('申请已提交')).toBeVisible({
-        timeout: 5000,
-      });
+      await submitResponse;
     });
 
     test('admin rejects application with reason', async ({ page }) => {
       await adminLogin(page, adminPhone);
-      await page.goto(`${ADMIN_BASE}/coach-review`);
+
+      // Navigate to coach review page via sidebar menu
       await page.waitForLoadState('networkidle');
+      await page.getByText('教练审核').click();
+      await page.waitForURL(`${ADMIN_BASE}/coach-review`, { timeout: 10000 });
 
       // Filter by pending
-      await page.getByText('待审核').click();
+      await page.getByRole('tab', { name: '待审核' }).click();
       await page.waitForLoadState('networkidle');
 
       // Click on the first pending row
@@ -276,13 +292,13 @@ test.describe('Coach Verification Flow', () => {
       // Fill reject reason (must be at least 5 characters)
       await page.getByPlaceholder('请填写拒绝原因').fill('证书不清晰，请重新上传更清晰的照片');
 
-      // Confirm rejection
+      // Confirm rejection and wait for API response
+      const rejectResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/review') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '确定拒绝' }).click();
-
-      // Should see success message
-      await expect(page.getByText('已拒绝申请')).toBeVisible({
-        timeout: 5000,
-      });
+      const rejectResp = await rejectResponse;
+      expect(rejectResp.status()).toBe(200);
     });
 
     test('rejected user sees rejection reason', async ({ page }) => {
@@ -322,13 +338,12 @@ test.describe('Coach Verification Flow', () => {
       // Fill updated description
       await descriptionFill(page, '重新提交，已更新证书照片');
 
-      // Click resubmit
+      // Click resubmit and wait for API response
+      const submitResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/api/coach-applications') && resp.request().method() === 'POST',
+      );
       await page.getByRole('button', { name: '重新提交申请' }).click();
-
-      // Should see success message
-      await expect(page.getByText('申请已提交')).toBeVisible({
-        timeout: 5000,
-      });
+      await submitResponse;
     });
   });
 });

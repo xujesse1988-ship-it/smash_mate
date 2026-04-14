@@ -88,11 +88,13 @@ test.describe('Profile and settings', () => {
       await bioTextarea.fill('喜欢羽毛球E2E测试用户');
     }
 
-    // Click save
+    // Click save and wait for API response
+    const saveResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/api/users/me') && resp.request().method() === 'PUT',
+    );
     await page.getByRole('button', { name: '保存' }).click();
-
-    // Should see success message
-    await expect(page.getByText('保存成功')).toBeVisible({ timeout: 5000 });
+    const resp = await saveResponse;
+    expect(resp.status()).toBe(200);
   });
 
   test('verify profile edit persisted', async ({ page }) => {
