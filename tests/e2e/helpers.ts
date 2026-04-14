@@ -7,6 +7,17 @@ import { type Page, expect } from '@playwright/test';
 const DEV_CODE = '123456';
 
 /**
+ * Admin phone number seeded in the E2E database.
+ * This must match the ADMIN_PHONES env var used by the backend.
+ */
+export const ADMIN_PHONE = '13900000000';
+
+/**
+ * Admin app base URL.
+ */
+const ADMIN_BASE = 'http://localhost:5174';
+
+/**
  * Complete login flow: navigate to /login, send code, enter code, submit.
  * After calling this, the page should be redirected to /activities.
  */
@@ -209,4 +220,22 @@ export function testPhone(suffix: number): string {
  */
 export function stablePhone(suffix: number): string {
   return `1390000${String(suffix).padStart(4, '0')}`;
+}
+
+/**
+ * Login to the admin app (port 5174) using the seeded admin phone.
+ * After calling this, the page should be on the admin /cities page.
+ */
+export async function loginAsAdmin(page: Page, phone: string = ADMIN_PHONE): Promise<void> {
+  await page.goto(`${ADMIN_BASE}/login`);
+  await page.waitForLoadState('networkidle');
+
+  await page.getByPlaceholder('手机号').fill(phone);
+  await page.getByRole('button', { name: '获取验证码' }).click();
+  await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+  await page.getByPlaceholder('验证码').fill(DEV_CODE);
+  await page.getByRole('button', { name: '登录' }).click();
+
+  // Admin redirects to /cities after login
+  await page.waitForURL(`${ADMIN_BASE}/cities`, { timeout: 10000 });
 }
