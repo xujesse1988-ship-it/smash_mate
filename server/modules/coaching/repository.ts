@@ -1000,6 +1000,7 @@ export class CoachingRepository {
       where: { id },
       include: {
         lessons: {
+          where: { status: { not: 'cancelled' } },
           orderBy: { startTime: 'desc' },
         },
       },
@@ -1025,6 +1026,12 @@ export class CoachingRepository {
 
     return prisma.privateStudent.findMany({
       where,
+      include: {
+        lessons: {
+          where: { status: { not: 'cancelled' } },
+          select: { id: true },
+        },
+      },
       orderBy: { joinedAt: 'desc' },
     });
   }

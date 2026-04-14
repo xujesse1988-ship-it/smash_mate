@@ -1168,7 +1168,11 @@ describe('PUT /api/private-students/:id/lessons/:lessonId — CoachingService.up
   it('should notify the student after updating lesson', async () => {
     repo.findPrivateStudentById.mockResolvedValue(createPrivateStudentRecord());
     repo.findPrivateLessonV2ById.mockResolvedValue(
-      createLessonRecord({ status: 'scheduled' }),
+      createLessonRecord({
+        status: 'scheduled',
+        startTime: new Date(Date.now() + 48 * 3600_000),
+        endTime: new Date(Date.now() + 50 * 3600_000),
+      }),
     );
     repo.updatePrivateLessonV2.mockResolvedValue(createLessonRecord());
 

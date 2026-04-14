@@ -150,7 +150,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students
     it('should fetch private students list', async () => {
       server.use(
-        http.get('http://localhost/api/private-students', () => {
+        http.get('/api/private-students', () => {
           return HttpResponse.json({
             data: { items: [mockPrivateStudentListItem] },
           });
@@ -173,7 +173,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id
     it('should fetch private student detail', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1', () => {
+        http.get('/api/private-students/ps-uuid-1', () => {
           return HttpResponse.json({ data: mockPrivateStudentDetail });
         }),
       );
@@ -189,7 +189,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id — 错误码 404
     it('should throw on 404 error', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/not-found', () => {
+        http.get('/api/private-students/not-found', () => {
           return HttpResponse.json(
             { error: { code: 'COACHING_PRIVATE_STUDENT_NOT_FOUND', message: '固定私教学员记录不存在' } },
             { status: 404 },
@@ -209,7 +209,7 @@ describe('Private Student API', () => {
     it('should add a private student with studentId in body', async () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
-        http.post('http://localhost/api/private-students', async ({ request }) => {
+        http.post('/api/private-students', async ({ request }) => {
           capturedBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json(
             {
@@ -237,7 +237,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — POST /api/private-students — 错误码 409
     it('should throw on duplicate student', async () => {
       server.use(
-        http.post('http://localhost/api/private-students', () => {
+        http.post('/api/private-students', () => {
           return HttpResponse.json(
             { error: { code: 'COACHING_STUDENT_ALREADY_PRIVATE', message: '学员已是该教练的活跃固定私教学员' } },
             { status: 409 },
@@ -256,7 +256,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — DELETE /api/private-students/:id
     it('should remove (soft delete) a private student', async () => {
       server.use(
-        http.delete('http://localhost/api/private-students/ps-uuid-1', () => {
+        http.delete('/api/private-students/ps-uuid-1', () => {
           return HttpResponse.json({
             data: { id: 'ps-uuid-1', isActive: false },
           });
@@ -276,7 +276,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id/lessons
     it('should fetch lessons list for a private student', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1/lessons', () => {
+        http.get('/api/private-students/ps-uuid-1/lessons', () => {
           return HttpResponse.json({
             data: { items: [mockPrivateLessonListItem] },
           });
@@ -293,7 +293,7 @@ describe('Private Student API', () => {
     it('should pass status filter as query param', async () => {
       let capturedUrl = '';
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1/lessons', ({ request }) => {
+        http.get('/api/private-students/ps-uuid-1/lessons', ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({ data: { items: [] } });
         }),
@@ -311,7 +311,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id/lessons/:lessonId
     it('should fetch lesson detail', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1', () => {
+        http.get('/api/private-students/ps-uuid-1/lessons/pl-uuid-1', () => {
           return HttpResponse.json({ data: mockPrivateLessonDetail });
         }),
       );
@@ -332,7 +332,7 @@ describe('Private Student API', () => {
     it('should create a lesson with correct request body', async () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
-        http.post('http://localhost/api/private-students/ps-uuid-1/lessons', async ({ request }) => {
+        http.post('/api/private-students/ps-uuid-1/lessons', async ({ request }) => {
           capturedBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json(
             { data: { ...mockPrivateLessonDetail, status: 'scheduled' } },
@@ -362,7 +362,7 @@ describe('Private Student API', () => {
     it('should update lesson fields', async () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
-        http.put('http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1', async ({ request }) => {
+        http.put('/api/private-students/ps-uuid-1/lessons/pl-uuid-1', async ({ request }) => {
           capturedBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json({
             data: { ...mockPrivateLessonDetail, startTime: '2026-04-16T14:00:00.000Z' },
@@ -384,7 +384,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — POST /api/private-students/:id/lessons/:lessonId/cancel
     it('should cancel a lesson', async () => {
       server.use(
-        http.post('http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1/cancel', () => {
+        http.post('/api/private-students/ps-uuid-1/lessons/pl-uuid-1/cancel', () => {
           return HttpResponse.json({
             data: { id: 'pl-uuid-1', status: 'cancelled' },
           });
@@ -406,7 +406,7 @@ describe('Private Student API', () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
         http.put(
-          'http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1/training-content',
+          '/api/private-students/ps-uuid-1/lessons/pl-uuid-1/training-content',
           async ({ request }) => {
             capturedBody = (await request.json()) as Record<string, unknown>;
             return HttpResponse.json({
@@ -435,7 +435,7 @@ describe('Private Student API', () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
         http.post(
-          'http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1/notes',
+          '/api/private-students/ps-uuid-1/lessons/pl-uuid-1/notes',
           async ({ request }) => {
             capturedBody = (await request.json()) as Record<string, unknown>;
             return HttpResponse.json({ data: mockLessonNote }, { status: 201 });
@@ -452,7 +452,7 @@ describe('Private Student API', () => {
     it('getPrivateLessonNotes should return items array', async () => {
       server.use(
         http.get(
-          'http://localhost/api/private-students/ps-uuid-1/lessons/pl-uuid-1/notes',
+          '/api/private-students/ps-uuid-1/lessons/pl-uuid-1/notes',
           () => {
             return HttpResponse.json({
               data: { items: [mockLessonNote] },
@@ -476,7 +476,7 @@ describe('Private Student API', () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
         http.post(
-          'http://localhost/api/private-students/ps-uuid-1/notes',
+          '/api/private-students/ps-uuid-1/notes',
           async ({ request }) => {
             capturedBody = (await request.json()) as Record<string, unknown>;
             return HttpResponse.json({ data: mockStudentNote }, { status: 201 });
@@ -492,7 +492,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id/notes
     it('getPrivateStudentNotes should return items array', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1/notes', () => {
+        http.get('/api/private-students/ps-uuid-1/notes', () => {
           return HttpResponse.json({
             data: { items: [mockStudentNote] },
           });
@@ -513,7 +513,7 @@ describe('Private Student API', () => {
     it('setPrivateStudentTags should send tags array', async () => {
       let capturedBody: Record<string, unknown> | null = null;
       server.use(
-        http.put('http://localhost/api/private-students/ps-uuid-1/tags', async ({ request }) => {
+        http.put('/api/private-students/ps-uuid-1/tags', async ({ request }) => {
           capturedBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json({
             data: { tags: ['右手', '防守型', '体能好'] },
@@ -529,7 +529,7 @@ describe('Private Student API', () => {
     // 来源: coaching-v2.md §4.2 — GET /api/private-students/:id/tags
     it('getPrivateStudentTags should return tags array', async () => {
       server.use(
-        http.get('http://localhost/api/private-students/ps-uuid-1/tags', () => {
+        http.get('/api/private-students/ps-uuid-1/tags', () => {
           return HttpResponse.json({
             data: { tags: ['右手', '防守型'] },
           });
