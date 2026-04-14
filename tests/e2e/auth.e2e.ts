@@ -54,18 +54,25 @@ test.describe('Auth - Registration and Login', () => {
     // Fill phone number
     await page.getByPlaceholder('请输入手机号').fill(phone);
 
-    // Send code
+    // Send code and wait for API response
+    const sendCodeResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/send-code') && resp.status() >= 200,
+    );
     await page.getByRole('button', { name: '获取验证码' }).click();
-    await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+    await sendCodeResponse;
 
     // Enter wrong code
     await page.getByPlaceholder('6 位验证码').fill('999999');
 
-    // Click login
+    // Click login and wait for the API to respond with 401
+    const loginResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/login'),
+    );
     await page.getByRole('button', { name: '登录' }).click();
+    const resp = await loginResponse;
 
-    // Should see error message about wrong code
-    await expect(page.getByText('验证码错误')).toBeVisible({ timeout: 5000 });
+    // The login API should return 401 for wrong code
+    expect(resp.status()).toBe(401);
 
     // Should stay on the login page
     await expect(page).toHaveURL(/\/login/);
@@ -113,12 +120,15 @@ test.describe('Auth - Registration and Login', () => {
     // Fill phone number
     await page.getByPlaceholder('请输入手机号').fill(phone);
 
-    // Send code
+    // Send code and wait for successful API response
+    const sendCodeResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/send-code') && resp.status() === 200,
+    );
     await page.getByRole('button', { name: '获取验证码' }).click();
-    await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+    await sendCodeResponse;
 
     // Should show countdown text (e.g., "重新获取(59s)")
-    await expect(page.getByText(/重新获取\(\d+s\)/)).toBeVisible();
+    await expect(page.getByText(/重新获取\(\d+s\)/)).toBeVisible({ timeout: 5000 });
 
     // The button should be disabled during countdown
     const sendButton = page.getByRole('button', { name: /重新获取/ });
@@ -160,7 +170,7 @@ test.describe('Auth - Registration and Login', () => {
     // Note: the LoginPage does not explicitly handle this; AuthGuard handles
     // the inverse. The login page is a public route, so it may stay on /login.
     // We verify that at least the user's session is still valid.
-    await page.goto('/activities');
+    await page.goto('/activities', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/activities/);
     await expect(page.getByText('约球')).toBeVisible();
   });

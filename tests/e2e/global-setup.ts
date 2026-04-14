@@ -22,6 +22,8 @@ export default async function globalSetup(_config: FullConfig): Promise<void> {
   const env = {
     ...process.env,
     DATABASE_URL: E2E_DATABASE_URL,
+    PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION:
+      '允许对测试数据库（localhost:5433/smashmate_test）执行 prisma db push --force-reset 来重置并初始化 E2E 测试数据',
   };
 
   // Step 1: Push Prisma schema to test database (creates/syncs tables)

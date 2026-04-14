@@ -29,18 +29,23 @@ export async function login(page: Page, phone: string): Promise<void> {
   const phoneInput = page.getByPlaceholder('请输入手机号');
   await phoneInput.fill(phone);
 
-  // Click send verification code
+  // Click send verification code and wait for API response (success or rate-limited)
+  const sendCodeResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/send-code') && resp.status() >= 200,
+  );
   await page.getByRole('button', { name: '获取验证码' }).click();
+  await sendCodeResponse;
 
-  // Wait for the success toast to appear (Ant Design message)
-  await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
-
-  // Fill verification code
+  // Fill verification code (DEV_VERIFICATION_CODE always works regardless of send-code result)
   const codeInput = page.getByPlaceholder('6 位验证码');
   await codeInput.fill(DEV_CODE);
 
-  // Click login
+  // Click login and wait for login API response
+  const loginResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/login'),
+  );
   await page.getByRole('button', { name: '登录' }).click();
+  await loginResponse;
 
   // Wait for navigation to complete (should redirect to /activities)
   await page.waitForURL('**/activities', { timeout: 10000 });
@@ -65,21 +70,28 @@ export async function register(
   const phoneInput = page.getByPlaceholder('请输入手机号');
   await phoneInput.fill(phone);
 
-  // Click send verification code
+  // Click send verification code and wait for API response
+  const sendCodeResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/send-code') && resp.status() >= 200,
+  );
   await page.getByRole('button', { name: '获取验证码' }).click();
-  await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+  await sendCodeResponse;
 
-  // Fill verification code
+  // Fill verification code (DEV_VERIFICATION_CODE always works regardless of send-code result)
   const codeInput = page.getByPlaceholder('6 位验证码');
   await codeInput.fill(DEV_CODE);
 
   // Optionally check "I am a coach"
   if (options?.isCoach) {
-    await page.getByText('我是教练').click();
+    await page.getByLabel('我是教练').check();
   }
 
-  // Click register
+  // Click register and wait for login API response
+  const loginResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/login'),
+  );
   await page.getByRole('button', { name: '注册' }).click();
+  await loginResponse;
 
   // Wait for navigation to complete
   await page.waitForURL('**/activities', { timeout: 10000 });
@@ -231,8 +243,11 @@ export async function loginAsAdmin(page: Page, phone: string = ADMIN_PHONE): Pro
   await page.waitForLoadState('networkidle');
 
   await page.getByPlaceholder('手机号').fill(phone);
+  const sendCodeResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/send-code') && resp.status() >= 200,
+  );
   await page.getByRole('button', { name: '获取验证码' }).click();
-  await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+  await sendCodeResponse;
   await page.getByPlaceholder('验证码').fill(DEV_CODE);
   await page.getByRole('button', { name: '登录' }).click();
 

@@ -15,11 +15,13 @@ export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',
   testDir: './tests/e2e',
-  fullyParallel: true,
+  testMatch: '*.e2e.ts',
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  timeout: 30000,
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
@@ -32,10 +34,18 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `DATABASE_URL="${E2E_DATABASE_URL}" DEV_VERIFICATION_CODE="123456" ADMIN_PHONES="13900000000,13800000001" LOG_LEVEL="warn" JWT_SECRET="e2e-test-secret" npm run dev:server`,
+      command: 'npx tsx server/app.ts',
       url: 'http://localhost:3000/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
+      env: {
+        DATABASE_URL: E2E_DATABASE_URL,
+        DEV_VERIFICATION_CODE: '123456',
+        ADMIN_PHONES: '13900000000,13800000001',
+        LOG_LEVEL: 'warn',
+        JWT_SECRET: 'e2e-test-secret',
+        PORT: '3000',
+      },
     },
     {
       command: 'npm run dev:web',

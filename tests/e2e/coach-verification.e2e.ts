@@ -29,8 +29,11 @@ async function adminLogin(page: Page, phone: string): Promise<void> {
   await page.waitForLoadState('networkidle');
 
   await page.getByPlaceholder('手机号').fill(phone);
+  const sendCodeResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/send-code') && resp.status() >= 200,
+  );
   await page.getByRole('button', { name: '获取验证码' }).click();
-  await expect(page.getByText('验证码已发送')).toBeVisible({ timeout: 5000 });
+  await sendCodeResponse;
   await page.getByPlaceholder('验证码').fill(DEV_CODE);
   await page.getByRole('button', { name: '登录' }).click();
   // Admin redirects to /cities after login

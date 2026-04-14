@@ -214,8 +214,8 @@ test.describe('Profile and settings', () => {
     await expect(page.getByText('确定退出登录？')).toBeVisible();
 
     // Confirm logout
-    // Find the confirm button in the dialog
-    const confirmButton = page.locator('button').filter({ hasText: '确定' });
+    // Find the confirm button in the dialog (ConfirmDialog uses "确认")
+    const confirmButton = page.locator('button').filter({ hasText: '确认' });
     await confirmButton.click();
 
     // Should redirect to login page
