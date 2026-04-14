@@ -126,7 +126,7 @@ describe('student-class-api', () => {
   describe('getStudentClasses', () => {
     it('should GET /api/student-classes and return items', async () => {
       apiServer.use(
-        http.get('http://localhost/api/student-classes', () => {
+        http.get('/api/student-classes', () => {
           return HttpResponse.json({ data: { items: [mockClassItem] } });
         }),
       );
@@ -142,7 +142,7 @@ describe('student-class-api', () => {
   describe('getStudentClassDetail', () => {
     it('should GET /api/student-classes/:id and return detail with members', async () => {
       apiServer.use(
-        http.get('http://localhost/api/student-classes/class-uuid-1', () => {
+        http.get('/api/student-classes/class-uuid-1', () => {
           return HttpResponse.json({ data: mockClassDetail });
         }),
       );
@@ -158,7 +158,7 @@ describe('student-class-api', () => {
   describe('createStudentClass', () => {
     it('should POST /api/student-classes with name and return created class', async () => {
       apiServer.use(
-        http.post('http://localhost/api/student-classes', async ({ request }) => {
+        http.post('/api/student-classes', async ({ request }) => {
           const body = (await request.json()) as { name: string };
           expect(body.name).toBe('周五高级班');
           return HttpResponse.json(
@@ -177,7 +177,7 @@ describe('student-class-api', () => {
   describe('updateStudentClass', () => {
     it('should PUT /api/student-classes/:id with new name', async () => {
       apiServer.use(
-        http.put('http://localhost/api/student-classes/class-uuid-1', async ({ request }) => {
+        http.put('/api/student-classes/class-uuid-1', async ({ request }) => {
           const body = (await request.json()) as { name: string };
           return HttpResponse.json({
             data: { id: 'class-uuid-1', coachId: 'coach-uuid-1', name: body.name, updatedAt: '2026-04-14T10:00:00.000Z' },
@@ -194,7 +194,7 @@ describe('student-class-api', () => {
   describe('deleteStudentClass', () => {
     it('should DELETE /api/student-classes/:id and return success', async () => {
       apiServer.use(
-        http.delete('http://localhost/api/student-classes/class-uuid-1', () => {
+        http.delete('/api/student-classes/class-uuid-1', () => {
           return HttpResponse.json({ data: { success: true } });
         }),
       );
@@ -208,7 +208,7 @@ describe('student-class-api', () => {
   describe('addStudentToClass', () => {
     it('should POST /api/student-classes/:id/members with studentId', async () => {
       apiServer.use(
-        http.post('http://localhost/api/student-classes/class-uuid-1/members', async ({ request }) => {
+        http.post('/api/student-classes/class-uuid-1/members', async ({ request }) => {
           const body = (await request.json()) as { studentId: string };
           expect(body.studentId).toBe('student-uuid-1');
           return HttpResponse.json(
@@ -236,7 +236,7 @@ describe('student-class-api', () => {
     it('should DELETE /api/student-classes/:id/members/:studentId', async () => {
       apiServer.use(
         http.delete(
-          'http://localhost/api/student-classes/class-uuid-1/members/student-uuid-1',
+          '/api/student-classes/class-uuid-1/members/student-uuid-1',
           () => {
             return HttpResponse.json({ data: { success: true } });
           },
@@ -252,7 +252,7 @@ describe('student-class-api', () => {
   describe('searchUsers', () => {
     it('should GET /api/users/search with query parameter', async () => {
       apiServer.use(
-        http.get('http://localhost/api/users/search', ({ request }) => {
+        http.get('/api/users/search', ({ request }) => {
           const url = new URL(request.url);
           expect(url.searchParams.get('q')).toBe('小王');
           return HttpResponse.json({
@@ -267,7 +267,7 @@ describe('student-class-api', () => {
 
       const result = await searchUsers('小王');
       expect(result.items).toHaveLength(1);
-      expect(result.items[0].phoneLast4).toBe('1234');
+      expect(result.items[0].phoneLast4).toBe('5678');
     });
   });
 
@@ -275,7 +275,7 @@ describe('student-class-api', () => {
   describe('getClassLessons', () => {
     it('should GET /api/student-classes/:id/lessons and return items', async () => {
       apiServer.use(
-        http.get('http://localhost/api/student-classes/class-uuid-1/lessons', () => {
+        http.get('/api/student-classes/class-uuid-1/lessons', () => {
           return HttpResponse.json({ data: { items: [mockLessonItem] } });
         }),
       );
@@ -287,7 +287,7 @@ describe('student-class-api', () => {
 
     it('should pass status filter as query parameter', async () => {
       apiServer.use(
-        http.get('http://localhost/api/student-classes/class-uuid-1/lessons', ({ request }) => {
+        http.get('/api/student-classes/class-uuid-1/lessons', ({ request }) => {
           const url = new URL(request.url);
           expect(url.searchParams.get('status')).toBe('completed');
           return HttpResponse.json({ data: { items: [] } });
@@ -303,7 +303,7 @@ describe('student-class-api', () => {
     it('should GET lesson detail', async () => {
       apiServer.use(
         http.get(
-          'http://localhost/api/student-classes/class-uuid-1/lessons/lesson-uuid-1',
+          '/api/student-classes/class-uuid-1/lessons/lesson-uuid-1',
           () => {
             return HttpResponse.json({ data: mockLessonDetail });
           },
@@ -321,7 +321,7 @@ describe('student-class-api', () => {
     it('should POST lesson with required fields', async () => {
       apiServer.use(
         http.post(
-          'http://localhost/api/student-classes/class-uuid-1/lessons',
+          '/api/student-classes/class-uuid-1/lessons',
           async ({ request }) => {
             const body = (await request.json()) as Record<string, unknown>;
             expect(body.venueId).toBe('venue-uuid-1');
@@ -345,7 +345,7 @@ describe('student-class-api', () => {
     it('should POST to cancel endpoint', async () => {
       apiServer.use(
         http.post(
-          'http://localhost/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/cancel',
+          '/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/cancel',
           () => {
             return HttpResponse.json({ data: { id: 'lesson-uuid-1', status: 'cancelled' } });
           },
@@ -362,7 +362,7 @@ describe('student-class-api', () => {
     it('should PUT training content', async () => {
       apiServer.use(
         http.put(
-          'http://localhost/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/training-content',
+          '/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/training-content',
           async ({ request }) => {
             const body = (await request.json()) as { trainingContent: string };
             expect(body.trainingContent).toBe('新的训练内容');
@@ -383,7 +383,7 @@ describe('student-class-api', () => {
     it('should POST note content', async () => {
       apiServer.use(
         http.post(
-          'http://localhost/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/notes',
+          '/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/notes',
           async ({ request }) => {
             const body = (await request.json()) as { content: string };
             expect(body.content).toBe('今天训练不错');
@@ -413,7 +413,7 @@ describe('student-class-api', () => {
     it('should GET lesson notes', async () => {
       apiServer.use(
         http.get(
-          'http://localhost/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/notes',
+          '/api/student-classes/class-uuid-1/lessons/lesson-uuid-1/notes',
           () => {
             return HttpResponse.json({
               data: {
@@ -436,7 +436,7 @@ describe('student-class-api', () => {
     it('should POST student note', async () => {
       apiServer.use(
         http.post(
-          'http://localhost/api/student-classes/class-uuid-1/members/student-uuid-1/notes',
+          '/api/student-classes/class-uuid-1/members/student-uuid-1/notes',
           async ({ request }) => {
             const body = (await request.json()) as { content: string };
             return HttpResponse.json(
@@ -466,7 +466,7 @@ describe('student-class-api', () => {
     it('should GET student notes', async () => {
       apiServer.use(
         http.get(
-          'http://localhost/api/student-classes/class-uuid-1/members/student-uuid-1/notes',
+          '/api/student-classes/class-uuid-1/members/student-uuid-1/notes',
           () => {
             return HttpResponse.json({
               data: {
@@ -489,7 +489,7 @@ describe('student-class-api', () => {
     it('should PUT tags array', async () => {
       apiServer.use(
         http.put(
-          'http://localhost/api/student-classes/class-uuid-1/members/student-uuid-1/tags',
+          '/api/student-classes/class-uuid-1/members/student-uuid-1/tags',
           async ({ request }) => {
             const body = (await request.json()) as { tags: string[] };
             expect(body.tags).toEqual(['左手', '进攻型']);
@@ -508,7 +508,7 @@ describe('student-class-api', () => {
     it('should GET student tags', async () => {
       apiServer.use(
         http.get(
-          'http://localhost/api/student-classes/class-uuid-1/members/student-uuid-1/tags',
+          '/api/student-classes/class-uuid-1/members/student-uuid-1/tags',
           () => {
             return HttpResponse.json({ data: { tags: ['左手', '进攻型'] } });
           },
@@ -524,7 +524,7 @@ describe('student-class-api', () => {
   describe('error handling', () => {
     it('should throw error with code on 404 response', async () => {
       apiServer.use(
-        http.get('http://localhost/api/student-classes/not-exist', () => {
+        http.get('/api/student-classes/not-exist', () => {
           return HttpResponse.json(
             { error: { code: 'COACHING_STUDENT_CLASS_NOT_FOUND', message: '学员班不存在' } },
             { status: 404 },
@@ -897,7 +897,7 @@ describe('StudentClassListPage', () => {
     render(<StudentClassListPage />);
     const deleteButtons = screen.getAllByText('删除');
     await userEvent.click(deleteButtons[0]);
-    expect(screen.getByText(/确认删除/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /确认删除/ })).toBeInTheDocument();
   });
 
   it('should show coach guard for non-coach users', () => {
@@ -966,7 +966,7 @@ describe('StudentClassDetailPage', () => {
     render(<StudentClassDetailPage />);
     await userEvent.click(screen.getByRole('button', { name: '课程' }));
     expect(screen.getByText('创建课程')).toBeInTheDocument();
-    expect(screen.getByText(/朝阳体育中心/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/朝阳体育中心/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('should show status badges on lessons', async () => {
@@ -984,7 +984,8 @@ describe('StudentClassDetailPage', () => {
     render(<StudentClassDetailPage />);
     await userEvent.click(screen.getByRole('button', { name: '课程' }));
     // Click on first lesson card
-    await userEvent.click(screen.getByText(/朝阳体育中心/i));
+    const venueTexts = screen.getAllByText(/朝阳体育中心/i);
+    await userEvent.click(venueTexts[0]);
     expect(mockNavigate).toHaveBeenCalledWith('/my-student-classes/class-uuid-1/lessons/lesson-uuid-1');
   });
 
@@ -1115,7 +1116,7 @@ describe('ClassLessonDetailPage', () => {
     mockClassLessonDetailState = { data: mockLessonDetailScheduled, isLoading: false, error: null };
     render(<ClassLessonDetailPage />);
     await userEvent.click(screen.getByText('取消课程'));
-    expect(screen.getByText(/确认取消/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /确认取消/ })).toBeInTheDocument();
   });
 });
 

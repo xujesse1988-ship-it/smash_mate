@@ -943,6 +943,7 @@ export class CoachingRepository {
       startTime?: Date;
       endTime?: Date;
       trainingContent?: string;
+      status?: string;
     },
   ) {
     return prisma.classLesson.update({
