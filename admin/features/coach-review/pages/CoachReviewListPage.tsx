@@ -15,7 +15,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
 export function CoachReviewListPage() {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<string | undefined>('pending');
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 

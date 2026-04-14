@@ -239,8 +239,10 @@ describe('CoachReviewListPage', () => {
   it('should render status filter tabs', () => {
     renderListPage();
 
+    // Use getAllByText for "待审核" because it appears in both the tab label
+    // and the status Tag column of table rows (both pending items).
     expect(screen.getByText('全部')).toBeInTheDocument();
-    expect(screen.getByText('待审核')).toBeInTheDocument();
+    expect(screen.getAllByText('待审核').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('已通过')).toBeInTheDocument();
     expect(screen.getByText('已拒绝')).toBeInTheDocument();
   });

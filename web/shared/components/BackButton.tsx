@@ -27,7 +27,7 @@ export function BackButton({ onClick, style }: BackButtonProps) {
       onClick={onClick}
       style={{ ...baseButtonStyle, ...style }}
     >
-      <LeftOutlined style={{ fontSize: 16 }} />
+      <LeftOutlined style={{ fontSize: 16 }} aria-hidden="true" role="presentation" />
       <span>返回</span>
     </button>
   );

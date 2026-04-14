@@ -189,6 +189,7 @@ export function CoachReviewDetailPage() {
             onClick={handleApprove}
             loading={reviewMutation.isPending}
             disabled={reviewMutation.isPending}
+            autoInsertSpace={false}
           >
             通过
           </Button>
@@ -196,6 +197,7 @@ export function CoachReviewDetailPage() {
             danger
             onClick={() => setRejectModalVisible(true)}
             disabled={reviewMutation.isPending}
+            autoInsertSpace={false}
           >
             拒绝
           </Button>
