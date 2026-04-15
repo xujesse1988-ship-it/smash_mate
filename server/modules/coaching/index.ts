@@ -10,7 +10,6 @@ export type {
   UpdateGroupClassInput,
   CreateAvailabilityInput,
   CreateAvailabilitySlotInput,
-  BookPrivateLessonInput,
   ScheduleLessonForStudentInput,
   UpdatePrivateLessonInput,
   CoachListQuery,

@@ -114,7 +114,7 @@ export class VenueService {
     let totalNew = 0;
     let totalUpdated = 0;
 
-    // eslint-disable-next-line no-constant-condition
+     
     while (true) {
       const { venues, total } = await fetchVenuePageFromMapService(cityName, page);
       if (venues.length === 0) break;

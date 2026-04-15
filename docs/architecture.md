@@ -31,7 +31,7 @@
 | infra | 技术模块 | 后端 | 基础设施：数据库连接、配置管理、认证中间件、全局错误处理、标准响应格式、日志 |
 | user | 业务模块 | 后端 | 用户注册/登录、身份认证、个人资料管理、教练角色管理 |
 | activity | 业务模块 | 后端 | 约球活动的创建、加入、退出、修改、取消、状态流转 |
-| coaching | 业务模块 | 后端 | 教练资料、团课发布与报名、私教时间设置与预约、课程状态流转 |
+| coaching | 业务模块 | 后端 | 教练资料/审核、团课、统一私教（slot/学员预约/教练排课）、学员班、统一学员库、课程状态流转 |
 | match-record | 业务模块 | 后端 | 战绩录入、删除、个人战绩汇总统计 |
 | venue | 业务模块 | 后端 | 球馆数据管理、球馆搜索、城市管理、定时数据更新 |
 | notification | 业务模块 | 后端 | 站内通知的创建、查询、已读标记、过期清理 |
@@ -45,7 +45,7 @@
 |----------------|---------|------|
 | 用户管理（FA） | user | 1:1 直接对应 |
 | 约球（FB） | activity | 1:1 直接对应 |
-| 教练管理（FC） | coaching | 1:1 直接对应（含团课、私教） |
+| 教练管理（FC + GA + GB + GC） | coaching | 1:1 直接对应（含团课、统一私教、教练审核、学员班、统一学员库） |
 | 战绩记录（FD） | match-record | 1:1 直接对应 |
 | 球馆管理（FE） | venue | 1:1 直接对应 |
 | 通知（FF） | notification | 1:1 直接对应 |
@@ -89,27 +89,18 @@
 - **详细设计**: module-design/activity.md
 
 #### coaching
-- **职责**: 教练资料管理、团课发布与报名管理、私教时间设置与预约管理、课程状态自动流转
-- **边界**: 负责教练维度的课程和预约管理；不负责用户基本信息（通过 user 获取）；不负责球馆数据（通过 venue 获取）；不负责评价（属于 review）；不负责通知发送（通过 notification 创建）
-- **对外接口**:
-  - `GET /api/coaches` — 教练列表（支持筛选、分页）
-  - `GET /api/coaches/:id` — 教练主页
-  - `PUT /api/coaches/me` — 更新教练资料
-  - `POST /api/group-classes` — 发布团课
-  - `GET /api/group-classes/:id` — 团课详情
-  - `PUT /api/group-classes/:id` — 修改团课
-  - `POST /api/group-classes/:id/cancel` — 取消团课
-  - `POST /api/group-classes/:id/enroll` — 报名团课
-  - `POST /api/group-classes/:id/cancel-enrollment` — 取消团课报名
-  - `POST /api/private-lessons/availability` — 设置私教空闲时间
-  - `GET /api/coaches/:id/availability` — 获取教练空闲时间
-  - `POST /api/private-lessons/book` — 预约私教课
-  - `POST /api/private-lessons/:id/cancel` — 取消私教预约
-  - `GET /api/users/:id/enrollments` — 用户的课程报名列表
-  - `GET /api/coaches/:id/private-lessons` — 教练的私教预约列表（教练视角）
-  - `CoachingService.getGroupClassById(id)` — 模块间调用：获取团课信息
-  - `CoachingService.getPrivateLessonById(id)` — 模块间调用：获取私教课信息
-  - `CoachingService.getParticipantIds(classId, type)` — 模块间调用：获取课程参与者
+- **职责**: 教练资料/审核、团课发布与报名管理、**统一私教**（slot 设置 / 学员预约 / 教练对学员排课）、**学员班**管理、**统一学员库**（4 来源聚合）、课程状态自动流转、过期 slot 清理
+- **边界**: 负责教练维度的课程、学员关系和训练记录管理；不负责用户基本信息（通过 user 获取）；不负责球馆数据（通过 venue 获取）；不负责评价（属于 review）；不负责通知发送（通过 notification 创建）
+- **对外接口**（按域分组，详见 module-design/coaching.md §3）:
+  - 教练资料：`GET /api/coaches`、`GET /api/coaches/:id`、`PUT /api/coaches/me`
+  - 教练审核（GA）：`POST /api/coach-applications`、`GET /api/coach-applications/me`、`GET /api/admin/coach-applications`、`GET /api/admin/coach-applications/:id`、`POST /api/admin/coach-applications/:id/review`
+  - 团课：`POST /api/group-classes`、`GET /api/group-classes/:id`、`PUT /api/group-classes/:id`、`POST /api/group-classes/:id/cancel`、`POST /api/group-classes/:id/enroll`、`POST /api/group-classes/:id/cancel-enrollment`
+  - 统一私教：`POST /api/private-lessons/availability`、`GET /api/coaches/:id/availability`、`POST /api/private-lessons/:id/book`、`GET /api/private-lessons/:id`、`PUT /api/private-lessons/:id`、`POST /api/private-lessons/:id/cancel`、`PUT /api/private-lessons/:id/training-content`、`POST /api/private-lessons/:id/notes`、`GET /api/private-lessons/:id/notes`
+  - 教练给学员排课：`POST /api/coach-students/:studentId/lessons`、`GET /api/coach-students/:studentId/lessons`
+  - 统一学员库（GC）：`GET /api/coach-students`、`GET /api/coach-students/:studentId`、`POST /api/coach-students`、`POST /api/coach-students/search-by-phone`、`PUT /api/coach-students/:studentId/tags`
+  - 学员班（GB）：`POST /api/student-classes`、`GET /api/student-classes`、`GET /api/student-classes/:id`、`PUT /api/student-classes/:id`、`DELETE /api/student-classes/:id`、`POST /api/student-classes/:id/members`、`DELETE /api/student-classes/:id/members/:studentId`、`POST /api/student-classes/:id/lessons`、`GET /api/student-classes/:id/lessons`、`GET /api/student-classes/:id/lessons/:lessonId`、`PUT /api/student-classes/:id/lessons/:lessonId`、`POST /api/student-classes/:id/lessons/:lessonId/cancel`、`PUT /api/student-classes/:id/lessons/:lessonId/training-content`、`POST /api/student-classes/:id/lessons/:lessonId/notes`、`GET /api/student-classes/:id/lessons/:lessonId/notes`、`POST /api/student-classes/:id/members/:studentId/notes`、`GET /api/student-classes/:id/members/:studentId/notes`、`PUT /api/student-classes/:id/members/:studentId/tags`、`GET /api/student-classes/:id/members/:studentId/tags`
+  - 我的课程 / 教练私教视图：`GET /api/users/:id/enrollments`、`GET /api/coaches/:id/private-lessons`
+  - 模块间调用：`CoachingService.getGroupClassById(id)`、`CoachingService.getPrivateLessonById(id)`、`CoachingService.getParticipantIds(classId, type)`
 - **详细设计**: module-design/coaching.md
 
 #### match-record
@@ -290,34 +281,64 @@
   → 返回成功
 ```
 
-**路径 3: 私教预约流程**
+**路径 3: 统一私教预约流程**
+
+> v3 重构：原 PrivateLessonSlot + PrivateLesson 合并为单表 PrivateLesson，slot 即 `studentId IS NULL` 的 PrivateLesson。
 
 ```
 教练请求 POST /api/private-lessons/availability
   → coaching.Controller
   → coaching.Service 校验教练身份、时间段不重叠
-  → 调用 venue.Service.getVenueById() 验证可选球馆（如有）
-  → coaching.Repository 创建空闲时间段
+  → 调用 venue.Service.getVenueById() 验证候选球馆（如有）
+  → coaching.Repository 创建 PrivateLesson(studentId=null, source=null, status='scheduled')
   → 返回成功
 
-学员请求 POST /api/private-lessons/book
+学员请求 POST /api/private-lessons/:id/book  body { venueId? }
   → coaching.Controller
-  → coaching.Service 校验时间段可用、球馆选择合法
-  → coaching.Repository 创建预约记录、标记时间段为已预约
+  → coaching.Service 校验 slot 可用、球馆选择合法
+  → coaching.Repository 用 updateMany + WHERE studentId=null AND status='scheduled' 做乐观锁
   → 调用 notification.Service.create() 通知教练（有新预约）
-  → 调用 notification.Service.create() 通知学员（预约成功确认）
-  → 返回成功
+  → 返回成功（updateMany 返回 0 则抛 409 COACHING_SLOT_ALREADY_BOOKED）
 
-学员请求 POST /api/private-lessons/:id/cancel
+学员/教练请求 POST /api/private-lessons/:id/cancel
   → coaching.Controller
-  → coaching.Service 校验预约存在、取消权限
-  → coaching.Repository 更新预约状态为已取消、释放时间段
-  → 调用 notification.Service.create() 通知教练（学员取消预约）
-  → 调用 notification.Service.create() 通知学员（取消确认）
+  → coaching.Service 调 assertCancellable() — in_progress/completed 直接 409
+  → coaching.Repository 更新 status='cancelled'
+  → 调用 notification.Service.create() 通知对方
   → 返回成功
 
-私教课结束后（定时任务触发状态流转为"已完成"）
-  → 调用 notification.Service.create() 通知学员（课程已结束，可评价和录入战绩）
+定时任务（每分钟）触发课程状态流转
+  → 已约的 scheduled → in_progress 时，把 (coachId, studentId) 写入 CoachStudent
+    （source='private-lesson'，幂等：createMany skipDuplicates）
+  → in_progress → completed 时通知学员（可评价 + 录入战绩）
+  → 未约且过期的 slot → expired
+
+定时任务（每日凌晨）清理过期 slot
+  → 删除 status='expired' AND startTime < NOW() - 30 days 的 PrivateLesson
+```
+
+**路径 4: 教练对学员排课流程（GC 统一学员库子能力）**
+
+```
+教练请求 POST /api/coach-students/:studentId/lessons
+  → coaching.Controller
+  → coaching.Service 校验 (coachId, studentId) 已在 CoachStudent 表
+  → 调用 venue.Service.getVenueById() 验证球馆（如填）
+  → coaching.Repository 创建 PrivateLesson(studentId=:studentId, source='scheduled', status='scheduled')
+  → 调用 notification.Service.create() 通知学员
+  → 返回成功
+```
+
+**路径 5: 学员入库聚合（CoachStudent）**
+
+```
+来源 1: 团课 — scheduler 把 GroupClass 从 open/full → in_progress 时，遍历 enrollments 把 (coachId, studentId, source='group-class') 写入 CoachStudent
+来源 2: 私教 — scheduler 把 PrivateLesson 从 scheduled → in_progress 时，写入 (coachId, studentId, source='private-lesson')
+来源 3: 学员班 — scheduler 把 ClassLesson 从 scheduled → in_progress 时，遍历 StudentClassMember 写入 (coachId, studentId, source='class-lesson')
+来源 4: 手动 — POST /api/coach-students 立即写入 (source='manual')
+
+写入策略：所有路径都用 createMany({ data, skipDuplicates: true })，靠 (coachId, studentId) 唯一约束兜底；
+失败被 try/catch 包裹，仅记录 error log，不阻塞主流程。
 ```
 
 ### 4.2 事件流
@@ -330,7 +351,8 @@
 |---------|---------|---------|---------|
 | 球馆数据更新 | venue | 每周一次 | 调用地图服务更新已添加城市的球馆数据 |
 | 活动状态流转 | activity | 每分钟 | 扫描需要状态变更的活动（报名中→进行中→已结束） |
-| 团课/私教状态流转 | coaching | 每分钟 | 扫描需要状态变更的课程 |
+| 团课/私教/学员班课状态流转 + 学员入库 | coaching | 每分钟 | 扫描需要状态变更的课程；课程进入 in_progress 时把参与者写入 CoachStudent；过期未约的私教 slot → expired |
+| 过期 slot 清理 | coaching | 每天一次（凌晨） | 物理删除 30 天前的 expired PrivateLesson |
 | 通知过期清理 | notification | 每天一次 | 删除 90 天前的通知 |
 
 ## 5. 目录结构
@@ -493,8 +515,10 @@ User 1 ← N Activity（一个用户可发起多个活动）
 User N ← M Activity（多对多，通过 ActivityParticipant 关联）
 User 1 ← N GroupClass（一个教练可发布多个团课）
 User N ← M GroupClass（多对多，通过 GroupClassEnrollment 关联）
-User 1 ← N PrivateLessonSlot（一个教练可设置多个空闲时间段）
-User 1 ← N PrivateLesson（一个学员可预约多个私教课）
+User 1 ← N PrivateLesson（统一私教：教练拥有多条 PrivateLesson；学员可作为 studentId 关联多条；slot 即 studentId=null 的 PrivateLesson）
+User 1 ← N CoachStudent（统一学员库：每个教练拥有多条 CoachStudent；同一学员可属于多个教练）
+User 1 ← N StudentClass（一个教练可创建多个学员班）
+User 1 ← N CoachApplication（一个用户可有多个历史申请，但同时仅一个 pending）
 Venue 1 ← N Activity（一个球馆关联多个活动）
 Venue 1 ← N GroupClass（一个球馆关联多个团课）
 User 1 ← N MatchRecord（一个用户可录入多条战绩）
@@ -512,8 +536,12 @@ User 1 ← N Notification（一个用户可收到多条通知）
 | 团课教练 | User（user） | GroupClass（coaching） | 1:N | coaching（存储 coachId 外键） |
 | 团课报名 | User（user） | GroupClass（coaching） | N:M | coaching（管理 GroupClassEnrollment 关联表） |
 | 团课场地 | Venue（venue） | GroupClass（coaching） | 1:N | coaching（存储 venueId 外键） |
-| 私教教练 | User（user） | PrivateLessonSlot（coaching） | 1:N | coaching（存储 coachId 外键） |
-| 私教学员 | User（user） | PrivateLesson（coaching） | 1:N | coaching（存储 studentId 外键） |
+| 私教教练 | User（user） | PrivateLesson（coaching） | 1:N | coaching（存储 coachId 外键，统一表） |
+| 私教学员 | User（user） | PrivateLesson（coaching） | 1:N | coaching（存储 studentId 外键，nullable=slot） |
+| 教练学员关系 | User（user） | CoachStudent（coaching） | N:M | coaching（管理 CoachStudent 关联表） |
+| 学员班 | User（user） | StudentClass（coaching） | 1:N | coaching（存储 coachId 外键） |
+| 学员班成员 | User（user） | StudentClass（coaching） | N:M | coaching（管理 StudentClassMember 关联表） |
+| 学员班课程 | StudentClass（coaching） | ClassLesson（coaching） | 1:N | coaching（存储 studentClassId 外键） |
 | 战绩关联活动 | Activity（activity） | MatchRecord（match-record） | 1:N | match-record（存储 sourceId + sourceType） |
 | 战绩关联团课 | GroupClass（coaching） | MatchRecord（match-record） | 1:N | match-record（存储 sourceId + sourceType） |
 | 战绩关联私教 | PrivateLesson（coaching） | MatchRecord（match-record） | 1:N | match-record（存储 sourceId + sourceType） |
@@ -524,7 +552,7 @@ User 1 ← N Notification（一个用户可收到多条通知）
 ### 关键约束
 
 - **外键行为**: User 删除时不级联删除业务数据（一期不支持注销账号，无需处理）；Venue 删除时使用 SET NULL 或保留引用（已关联的活动/课程不受影响，PRD 明确要求）
-- **唯一约束**: 手机号唯一（User）；同一学员对同一次课程只能评价一次（Review）；同一时间段不可重复设置私教空闲（PrivateLessonSlot）
+- **唯一约束**: 手机号唯一（User）；同一学员对同一次课程只能评价一次（Review）；同一时间段不可重复设置私教空闲（PrivateLesson 中由业务层校验时段不重叠）；`(coachId, studentId)` 唯一（CoachStudent）；`(coachId, studentId, tag)` 唯一（StudentTag）
 - **多态关联**: MatchRecord 通过 sourceType（activity / group-class / private-lesson）+ sourceId 关联到不同来源，而非使用多个外键列
 - **跨模块数据一致性**: 一期采用数据库事务保证同模块内操作的原子性；跨模块调用（如创建通知）失败时不影响主流程（通知为非关键路径，记录日志后继续）
 
@@ -695,10 +723,28 @@ Response:
 | `POST /api/group-classes/:id/cancel-enrollment` | coaching | web-app | 中 |
 | `POST /api/private-lessons/availability` | coaching | web-app | 中 |
 | `GET /api/coaches/:id/availability` | coaching | web-app | 中 |
-| `POST /api/private-lessons/book` | coaching | web-app | 中 |
+| `POST /api/private-lessons/:id/book` | coaching | web-app | 中 |
+| `GET /api/private-lessons/:id` | coaching | web-app | 中 |
+| `PUT /api/private-lessons/:id` | coaching | web-app | 中 |
 | `POST /api/private-lessons/:id/cancel` | coaching | web-app | 中 |
+| `PUT /api/private-lessons/:id/training-content` | coaching | web-app | 中 |
+| `POST /api/private-lessons/:id/notes` | coaching | web-app | 中 |
+| `GET /api/private-lessons/:id/notes` | coaching | web-app | 中 |
 | `GET /api/users/:id/enrollments` | coaching | web-app | 中 |
 | `GET /api/coaches/:id/private-lessons` | coaching | web-app | 中 |
+| `POST /api/coach-applications` | coaching | web-app | 中 |
+| `GET /api/coach-applications/me` | coaching | web-app | 中 |
+| `GET /api/admin/coach-applications` | coaching | admin | 中 |
+| `GET /api/admin/coach-applications/:id` | coaching | admin | 中 |
+| `POST /api/admin/coach-applications/:id/review` | coaching | admin | 中 |
+| `GET /api/coach-students` | coaching | web-app | 中 |
+| `GET /api/coach-students/:studentId` | coaching | web-app | 中 |
+| `POST /api/coach-students` | coaching | web-app | 中 |
+| `POST /api/coach-students/search-by-phone` | coaching | web-app | 中 |
+| `PUT /api/coach-students/:studentId/tags` | coaching | web-app | 中 |
+| `POST /api/coach-students/:studentId/lessons` | coaching | web-app | 中 |
+| `GET /api/coach-students/:studentId/lessons` | coaching | web-app | 中 |
+| `POST /api/student-classes` 等 GB 全套 | coaching | web-app | 中 |
 | `POST /api/match-records` | match-record | web-app | 中 |
 | `DELETE /api/match-records/:id` | match-record | web-app | 中 |
 | `GET /api/activities/:id/match-records` | match-record | web-app | 中 |

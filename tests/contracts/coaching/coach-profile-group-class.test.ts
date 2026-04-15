@@ -26,7 +26,6 @@ import type {
   UpdateCoachProfileInput,
   CreateGroupClassInput,
   UpdateGroupClassInput,
-  CoachListQuery,
 } from '@server/modules/coaching/types.js';
 
 // ---------------------------------------------------------------------------

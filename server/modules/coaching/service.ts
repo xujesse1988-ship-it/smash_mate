@@ -7,7 +7,6 @@ import type {
   CreateGroupClassInput,
   UpdateGroupClassInput,
   CreateAvailabilityInput,
-  BookPrivateLessonInput,
   ScheduleLessonForStudentInput,
   UpdatePrivateLessonInput,
   CoachListQuery,
@@ -849,11 +848,6 @@ export class CoachingService {
     return { slots: created };
   }
 
-  /** Back-compat alias: old controller calls setAvailability. */
-  async setAvailability(userId: string, input: CreateAvailabilityInput) {
-    return this.createAvailability(userId, input);
-  }
-
   // =========================================================================
   // GET /api/coaches/:id/availability
   // =========================================================================
@@ -996,15 +990,6 @@ export class CoachingService {
       status: updated.status,
       createdAt: updated.createdAt,
     };
-  }
-
-  /** Back-compat shim for old POST /api/private-lessons/book body {slotId}. */
-  async bookPrivateLesson(userId: string, input: BookPrivateLessonInput) {
-    const lessonId = input.lessonId ?? input.slotId;
-    if (!lessonId) {
-      throw new AppError(400, 'COACHING_INVALID_SLOT', 'lessonId/slotId 缺失或格式不合法');
-    }
-    return this.bookLesson(lessonId, userId, input.venueId);
   }
 
   // =========================================================================

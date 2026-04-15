@@ -45,14 +45,6 @@ export interface CreateAvailabilityInput {
   slots: CreateAvailabilitySlotInput[];
 }
 
-export interface BookPrivateLessonInput {
-  /** The PrivateLesson id of the open slot being booked. */
-  lessonId?: string;
-  /** Backward-compat alias used by the legacy POST /api/private-lessons/book route. */
-  slotId?: string;
-  venueId?: string;
-}
-
 export interface ScheduleLessonForStudentInput {
   startTime: string;
   endTime: string;
