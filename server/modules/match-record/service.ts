@@ -36,6 +36,8 @@ interface CoachingServiceDep {
   } | null>;
   getPrivateLessonById(id: string): Promise<{
     id: string;
+    coachId: string;
+    studentId: string | null;
     status: string;
   } | null>;
   getClassLessonByIdForCrossModule?(id: string): Promise<{
@@ -45,13 +47,6 @@ interface CoachingServiceDep {
     status: string;
   } | null>;
   getClassLessonParticipantIds?(lessonId: string): Promise<string[]>;
-  getPrivateLessonV2ById?(id: string): Promise<{
-    id: string;
-    privateStudentId: string;
-    coachId: string;
-    studentId: string;
-    status: string;
-  } | null>;
   getParticipantIds(classId: string, type: 'group-class' | 'private-lesson'): Promise<string[]>;
 }
 
@@ -391,9 +386,9 @@ export class MatchRecordService {
     }
 
     if (sourceType === 'private_lesson_v2') {
-      const lesson = this.coachingService.getPrivateLessonV2ById
-        ? await this.coachingService.getPrivateLessonV2ById(sourceId)
-        : null;
+      // Unified-refactor compat: v2 has been merged into the unified PrivateLesson.
+      // Route v2 source lookups through the same finder.
+      const lesson = await this.coachingService.getPrivateLessonById(sourceId);
       if (!lesson) {
         throw new AppError(404, 'MATCH_RECORD_SOURCE_NOT_FOUND', '来源课程不存在');
       }
@@ -403,7 +398,6 @@ export class MatchRecordService {
       if (lesson.status === 'scheduled') {
         throw new AppError(409, 'MATCH_RECORD_LESSON_NOT_STARTED', '课程尚未开始，不可录入战绩');
       }
-      // in_progress and completed are valid
       return;
     }
 
@@ -441,11 +435,10 @@ export class MatchRecordService {
       }
       return [];
     } else if (sourceType === 'private_lesson_v2') {
-      // For private_lesson_v2, the participants are the coach and student
-      const lesson = this.coachingService.getPrivateLessonV2ById
-        ? await this.coachingService.getPrivateLessonV2ById(sourceId)
-        : null;
+      // Unified-refactor compat: v2 lessons merged into PrivateLesson.
+      const lesson = await this.coachingService.getPrivateLessonById(sourceId);
       if (!lesson) return [];
+      if (!lesson.studentId) return [lesson.coachId];
       return [lesson.coachId, lesson.studentId];
     } else {
       return this.coachingService.getParticipantIds(sourceId, 'private-lesson');

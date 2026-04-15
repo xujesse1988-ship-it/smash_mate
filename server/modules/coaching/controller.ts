@@ -11,6 +11,24 @@ import { UserRepository } from '../user/repository.js';
 import { NotificationService } from '../notification/service.js';
 import { NotificationRepository } from '../notification/repository.js';
 
+/**
+ * HTTP 501 responder for legacy private-student routes that were removed in the
+ * unified coach-student refactor. Sub-task 3 will introduce new
+ * /api/coach-students/* replacements. Until then we keep these routes present
+ * to avoid 404s on callers, but signal clearly that they moved.
+ */
+function notImplemented(newEndpoint: string) {
+  return (_req: Request, res: Response) => {
+    res.status(501).json({
+      success: false,
+      error: {
+        code: 'COACHING_ENDPOINT_MOVED',
+        message: `该接口已重构，请使用 ${newEndpoint}`,
+      },
+    });
+  };
+}
+
 export function createCoachingController(): Router {
   const router = Router();
 
@@ -24,7 +42,10 @@ export function createCoachingController(): Router {
   // Register scheduled tasks
   service.registerScheduledTasks();
 
-  // GET /api/coaches
+  // =========================================================================
+  // Coach list / profile
+  // =========================================================================
+
   router.get(
     '/coaches',
     authMiddleware,
@@ -33,7 +54,7 @@ export function createCoachingController(): Router {
         const query = {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
-          specialty: req.query.specialty as string | undefined,
+          specialty: req.query.specialty as 'singles' | 'doubles' | 'footwork' | 'fitness' | 'tactics' | undefined,
         };
         const result = await service.getCoachList(query);
         success(res, result);
@@ -43,7 +64,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/coaches/me — must be before GET /api/coaches/:id to avoid conflict
   router.put(
     '/coaches/me',
     authMiddleware,
@@ -58,13 +78,12 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/coaches/:id
   router.get(
     '/coaches/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getCoachProfile(req.params.id);
+        const result = await service.getCoachProfile(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -72,7 +91,10 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/group-classes
+  // =========================================================================
+  // Group classes
+  // =========================================================================
+
   router.post(
     '/group-classes',
     authMiddleware,
@@ -87,13 +109,12 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/group-classes/:id
   router.get(
     '/group-classes/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getGroupClassDetail(req.params.id);
+        const result = await service.getGroupClassDetail(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -101,14 +122,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/group-classes/:id
   router.put(
     '/group-classes/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.updateGroupClass(req.params.id, userId, req.body);
+        const result = await service.updateGroupClass(String(req.params.id), userId, req.body);
         success(res, result);
       } catch (err) {
         next(err);
@@ -116,14 +136,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/group-classes/:id/cancel
   router.post(
     '/group-classes/:id/cancel',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelGroupClass(req.params.id, userId);
+        const result = await service.cancelGroupClass(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -131,14 +150,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/group-classes/:id/enroll
   router.post(
     '/group-classes/:id/enroll',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.enrollGroupClass(req.params.id, userId);
+        const result = await service.enrollGroupClass(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -146,14 +164,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/group-classes/:id/cancel-enrollment
   router.post(
     '/group-classes/:id/cancel-enrollment',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelEnrollment(req.params.id, userId);
+        const result = await service.cancelEnrollment(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -161,14 +178,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/private-lessons/availability
+  // =========================================================================
+  // Private lessons (unified)
+  // =========================================================================
+
   router.post(
     '/private-lessons/availability',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.setAvailability(userId, req.body);
+        const result = await service.createAvailability(userId, req.body);
         created(res, result);
       } catch (err) {
         next(err);
@@ -176,16 +196,15 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/coaches/:id/availability
   router.get(
     '/coaches/:id/availability',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const options: { startDate?: string; endDate?: string } = {};
-        if (req.query.startDate) options.startDate = req.query.startDate as string;
-        if (req.query.endDate) options.endDate = req.query.endDate as string;
-        const result = await service.getCoachAvailability(req.params.id, options);
+        if (req.query.startDate) options.startDate = String(req.query.startDate);
+        if (req.query.endDate) options.endDate = String(req.query.endDate);
+        const result = await service.getCoachAvailability(String(req.params.id), options);
         success(res, result);
       } catch (err) {
         next(err);
@@ -193,7 +212,7 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/private-lessons/book
+  // Legacy: POST /api/private-lessons/book — body { slotId, venueId }
   router.post(
     '/private-lessons/book',
     authMiddleware,
@@ -208,14 +227,32 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/private-lessons/:id/cancel
+  // New: POST /api/private-lessons/:id/book — body { venueId? }
   router.post(
-    '/private-lessons/:id/cancel',
+    '/private-lessons/:id/book',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelPrivateLesson(req.params.id, userId);
+        const result = await service.bookLesson(
+          String(req.params.id),
+          userId,
+          req.body?.venueId,
+        );
+        created(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/private-lessons/:id',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.getPrivateLessonDetail(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -223,7 +260,93 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/users/:id/enrollments
+  router.put(
+    '/private-lessons/:id',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.updatePrivateLesson(
+          String(req.params.id),
+          userId,
+          req.body,
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/private-lessons/:id/cancel',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.cancelPrivateLesson(String(req.params.id), userId);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.put(
+    '/private-lessons/:id/training-content',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const content = req.body?.trainingContent ?? '';
+        const result = await service.updatePrivateLessonTrainingContent(
+          String(req.params.id),
+          userId,
+          content,
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/private-lessons/:id/notes',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.addPrivateLessonNote(
+          String(req.params.id),
+          userId,
+          req.body,
+        );
+        created(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/private-lessons/:id/notes',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.getPrivateLessonNotes(String(req.params.id), userId);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // =========================================================================
+  // Enrollments / coach private lessons
+  // =========================================================================
+
   router.get(
     '/users/:id/enrollments',
     authMiddleware,
@@ -235,7 +358,7 @@ export function createCoachingController(): Router {
           type: req.query.type as string | undefined,
           status: req.query.status as string | undefined,
         };
-        const result = await service.getUserEnrollments(req.params.id, query);
+        const result = await service.getUserEnrollments(String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -243,7 +366,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/coaches/:id/private-lessons
   router.get(
     '/coaches/:id/private-lessons',
     authMiddleware,
@@ -252,9 +374,15 @@ export function createCoachingController(): Router {
         const query = {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
-          status: req.query.status as string | undefined,
+          status: req.query.status as
+            | 'scheduled'
+            | 'in_progress'
+            | 'completed'
+            | 'cancelled'
+            | 'expired'
+            | undefined,
         };
-        const result = await service.getCoachPrivateLessons(req.params.id, query);
+        const result = await service.getCoachPrivateLessons(String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -263,10 +391,9 @@ export function createCoachingController(): Router {
   );
 
   // =========================================================================
-  // Coach Application Routes (GA)
+  // Coach Application (GA)
   // =========================================================================
 
-  // POST /api/coach-applications
   router.post(
     '/coach-applications',
     authMiddleware,
@@ -281,7 +408,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/coach-applications/me
   router.get(
     '/coach-applications/me',
     authMiddleware,
@@ -296,11 +422,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // =========================================================================
-  // Admin Coach Application Routes (GA)
-  // =========================================================================
-
-  // GET /api/admin/coach-applications
   router.get(
     '/admin/coach-applications',
     authMiddleware,
@@ -308,7 +429,7 @@ export function createCoachingController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const query = {
-          status: req.query.status as string | undefined,
+          status: req.query.status as 'pending' | 'approved' | 'rejected' | undefined,
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
         };
@@ -320,14 +441,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/admin/coach-applications/:id
   router.get(
     '/admin/coach-applications/:id',
     authMiddleware,
     adminAuthMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getApplicationById(req.params.id);
+        const result = await service.getApplicationById(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -335,7 +455,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/admin/coach-applications/:id/review
   router.post(
     '/admin/coach-applications/:id/review',
     authMiddleware,
@@ -344,7 +463,7 @@ export function createCoachingController(): Router {
       try {
         const adminId = (req as AuthRequest).userId!;
         const result = await service.reviewCoachApplication(
-          req.params.id,
+          String(req.params.id),
           adminId,
           req.body,
         );
@@ -356,308 +475,87 @@ export function createCoachingController(): Router {
   );
 
   // =========================================================================
-  // Private Student Routes (GC)
+  // Legacy /api/private-students/* — removed in unified refactor. Sub-task 3
+  // introduces /api/coach-students/*. For now, return 501 to signal the move.
   // =========================================================================
 
-  // POST /api/private-students — Add private student
-  router.post(
-    '/private-students',
-    authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.addPrivateStudent(userId, req.body);
-        created(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  // GET /api/private-students — List private students
-  router.get(
-    '/private-students',
-    authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const includeInactive = req.query.includeInactive === 'true';
-        const result = await service.getPrivateStudents(userId, includeInactive);
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  // GET /api/private-students/:id — Private student detail
+  router.post('/private-students', authMiddleware, notImplemented('/api/coach-students'));
+  router.get('/private-students', authMiddleware, notImplemented('/api/coach-students'));
   router.get(
     '/private-students/:id',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.getPrivateStudentDetail(req.params.id, userId);
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId'),
   );
-
-  // DELETE /api/private-students/:id — Remove private student (soft delete)
   router.delete(
     '/private-students/:id',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.removePrivateStudent(req.params.id, userId);
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('该功能已取消，请使用"我的学员"统一入口'),
   );
-
-  // POST /api/private-students/:id/lessons — Create private lesson v2
   router.post(
     '/private-students/:id/lessons',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.createPrivateLessonV2(
-          req.params.id,
-          userId,
-          req.body,
-        );
-        created(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/lessons'),
   );
-
-  // GET /api/private-students/:id/lessons — List private lessons v2
   router.get(
     '/private-students/:id/lessons',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const options = {
-          page: req.query.page !== undefined ? Number(req.query.page) : undefined,
-          pageSize:
-            req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
-          status: req.query.status as string | undefined,
-        };
-        const result = await service.getPrivateLessonsV2(
-          req.params.id,
-          userId,
-          options,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/lessons'),
   );
-
-  // GET /api/private-students/:id/lessons/:lessonId — Private lesson v2 detail
   router.get(
     '/private-students/:id/lessons/:lessonId',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.getPrivateLessonV2Detail(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id'),
   );
-
-  // PUT /api/private-students/:id/lessons/:lessonId — Update private lesson v2
   router.put(
     '/private-students/:id/lessons/:lessonId',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.updatePrivateLessonV2(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-          req.body,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id'),
   );
-
-  // POST /api/private-students/:id/lessons/:lessonId/cancel — Cancel private lesson v2
   router.post(
     '/private-students/:id/lessons/:lessonId/cancel',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelPrivateLessonV2(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id/cancel'),
   );
-
-  // PUT /api/private-students/:id/lessons/:lessonId/training-content
   router.put(
     '/private-students/:id/lessons/:lessonId/training-content',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.updatePrivateLessonV2TrainingContent(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-          req.body,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id/training-content'),
   );
-
-  // =========================================================================
-  // Private Student Notes & Tags Routes (GC)
-  // =========================================================================
-
-  // POST /api/private-students/:id/lessons/:lessonId/notes — Add lesson note
   router.post(
     '/private-students/:id/lessons/:lessonId/notes',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.addPrivateLessonNote(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-          req.body,
-        );
-        created(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id/notes'),
   );
-
-  // GET /api/private-students/:id/lessons/:lessonId/notes — Get lesson notes
   router.get(
     '/private-students/:id/lessons/:lessonId/notes',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.getPrivateLessonNotes(
-          req.params.id,
-          req.params.lessonId,
-          userId,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/private-lessons/:id/notes'),
   );
-
-  // POST /api/private-students/:id/notes — Add student note
   router.post(
     '/private-students/:id/notes',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.addPrivateStudentNote(
-          req.params.id,
-          userId,
-          req.body,
-        );
-        created(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/notes'),
   );
-
-  // GET /api/private-students/:id/notes — Get student notes
   router.get(
     '/private-students/:id/notes',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.getPrivateStudentNotes(req.params.id, userId);
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/notes'),
   );
-
-  // PUT /api/private-students/:id/tags — Set student tags
   router.put(
     '/private-students/:id/tags',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.setPrivateStudentTags(
-          req.params.id,
-          userId,
-          req.body,
-        );
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/tags'),
   );
-
-  // GET /api/private-students/:id/tags — Get student tags
   router.get(
     '/private-students/:id/tags',
     authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.getPrivateStudentTags(req.params.id, userId);
-        success(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
+    notImplemented('/api/coach-students/:studentId/tags'),
   );
 
   // =========================================================================
-  // Student Class Routes (GB)
+  // Student Class (GB) — unchanged
   // =========================================================================
 
-  // POST /api/student-classes
   router.post(
     '/student-classes',
     authMiddleware,
@@ -672,7 +570,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes
   router.get(
     '/student-classes',
     authMiddleware,
@@ -687,14 +584,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id
   router.get(
     '/student-classes/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.getStudentClassDetail(userId, req.params.id);
+        const result = await service.getStudentClassDetail(userId, String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -702,14 +598,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/student-classes/:id
   router.put(
     '/student-classes/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.updateStudentClass(userId, req.params.id, req.body);
+        const result = await service.updateStudentClass(userId, String(req.params.id), req.body);
         success(res, result);
       } catch (err) {
         next(err);
@@ -717,14 +612,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // DELETE /api/student-classes/:id
   router.delete(
     '/student-classes/:id',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.deleteStudentClass(userId, req.params.id);
+        const result = await service.deleteStudentClass(userId, String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -732,14 +626,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/student-classes/:id/members
   router.post(
     '/student-classes/:id/members',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.addStudentToClass(userId, req.params.id, req.body);
+        const result = await service.addStudentToClass(userId, String(req.params.id), req.body);
         created(res, result);
       } catch (err) {
         next(err);
@@ -747,14 +640,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // DELETE /api/student-classes/:id/members/:studentId
   router.delete(
     '/student-classes/:id/members/:studentId',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.removeStudentFromClass(userId, req.params.id, req.params.studentId);
+        const result = await service.removeStudentFromClass(
+          userId,
+          String(req.params.id),
+          String(req.params.studentId),
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -762,14 +658,13 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/student-classes/:id/lessons
   router.post(
     '/student-classes/:id/lessons',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.createClassLesson(userId, req.params.id, req.body);
+        const result = await service.createClassLesson(userId, String(req.params.id), req.body);
         created(res, result);
       } catch (err) {
         next(err);
@@ -777,7 +672,6 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id/lessons
   router.get(
     '/student-classes/:id/lessons',
     authMiddleware,
@@ -787,9 +681,14 @@ export function createCoachingController(): Router {
         const query = {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
-          status: req.query.status as string | undefined,
+          status: req.query.status as
+            | 'scheduled'
+            | 'in_progress'
+            | 'completed'
+            | 'cancelled'
+            | undefined,
         };
-        const result = await service.getClassLessons(userId, req.params.id, query);
+        const result = await service.getClassLessons(userId, String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -797,14 +696,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id/lessons/:lessonId
   router.get(
     '/student-classes/:id/lessons/:lessonId',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.getClassLessonDetail(userId, req.params.id, req.params.lessonId);
+        const result = await service.getClassLessonDetail(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -812,14 +714,18 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/student-classes/:id/lessons/:lessonId
   router.put(
     '/student-classes/:id/lessons/:lessonId',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.updateClassLesson(userId, req.params.id, req.params.lessonId, req.body);
+        const result = await service.updateClassLesson(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+          req.body,
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -827,14 +733,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/student-classes/:id/lessons/:lessonId/cancel
   router.post(
     '/student-classes/:id/lessons/:lessonId/cancel',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelClassLesson(userId, req.params.id, req.params.lessonId);
+        const result = await service.cancelClassLesson(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -842,14 +751,18 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/student-classes/:id/lessons/:lessonId/training-content
   router.put(
     '/student-classes/:id/lessons/:lessonId/training-content',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.updateClassLessonTrainingContent(userId, req.params.id, req.params.lessonId, req.body);
+        const result = await service.updateClassLessonTrainingContent(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+          req.body,
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -857,14 +770,18 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/student-classes/:id/lessons/:lessonId/notes
   router.post(
     '/student-classes/:id/lessons/:lessonId/notes',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.addClassLessonNote(userId, req.params.id, req.params.lessonId, req.body);
+        const result = await service.addClassLessonNote(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+          req.body,
+        );
         created(res, result);
       } catch (err) {
         next(err);
@@ -872,14 +789,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id/lessons/:lessonId/notes
   router.get(
     '/student-classes/:id/lessons/:lessonId/notes',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.getClassLessonNotes(userId, req.params.id, req.params.lessonId);
+        const result = await service.getClassLessonNotes(
+          userId,
+          String(req.params.id),
+          String(req.params.lessonId),
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -887,14 +807,18 @@ export function createCoachingController(): Router {
     },
   );
 
-  // POST /api/student-classes/:id/members/:studentId/notes
   router.post(
     '/student-classes/:id/members/:studentId/notes',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.addStudentNote(userId, req.params.id, req.params.studentId, req.body);
+        const result = await service.addStudentNote(
+          userId,
+          String(req.params.id),
+          String(req.params.studentId),
+          req.body,
+        );
         created(res, result);
       } catch (err) {
         next(err);
@@ -902,14 +826,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id/members/:studentId/notes
   router.get(
     '/student-classes/:id/members/:studentId/notes',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.getStudentNotes(userId, req.params.id, req.params.studentId);
+        const result = await service.getStudentNotes(
+          userId,
+          String(req.params.id),
+          String(req.params.studentId),
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -917,14 +844,18 @@ export function createCoachingController(): Router {
     },
   );
 
-  // PUT /api/student-classes/:id/members/:studentId/tags
   router.put(
     '/student-classes/:id/members/:studentId/tags',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.setStudentTags(userId, req.params.id, req.params.studentId, req.body);
+        const result = await service.setStudentTags(
+          userId,
+          String(req.params.id),
+          String(req.params.studentId),
+          req.body,
+        );
         success(res, result);
       } catch (err) {
         next(err);
@@ -932,14 +863,17 @@ export function createCoachingController(): Router {
     },
   );
 
-  // GET /api/student-classes/:id/members/:studentId/tags
   router.get(
     '/student-classes/:id/members/:studentId/tags',
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.getStudentTags(userId, req.params.id, req.params.studentId);
+        const result = await service.getStudentTags(
+          userId,
+          String(req.params.id),
+          String(req.params.studentId),
+        );
         success(res, result);
       } catch (err) {
         next(err);

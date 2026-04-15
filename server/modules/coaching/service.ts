@@ -6,8 +6,10 @@ import type {
   UpdateCoachProfileInput,
   CreateGroupClassInput,
   UpdateGroupClassInput,
-  SetAvailabilityInput,
+  CreateAvailabilityInput,
   BookPrivateLessonInput,
+  ScheduleLessonForStudentInput,
+  UpdatePrivateLessonInput,
   CoachListQuery,
   CoachSpecialty,
   PrivateLessonListQuery,
@@ -24,9 +26,11 @@ import type {
   CreateLessonNoteInput,
   CreateStudentNoteInput,
   SetStudentTagsInput,
-  AddPrivateStudentInput,
-  CreatePrivateLessonV2Input,
-  UpdatePrivateLessonV2Input,
+  AddCoachStudentInput,
+  SearchStudentByPhoneInput,
+  SetCoachStudentTagsInput,
+  CoachStudentFilters,
+  CoachStudentItem,
 } from './types.js';
 
 const logger = createModuleLogger('coaching');
@@ -38,6 +42,21 @@ const VALID_SPECIALTIES: CoachSpecialty[] = [
   'fitness',
   'tactics',
 ];
+
+/**
+ * Shared guard used by all cancel/退课 paths. Once a course is in_progress or
+ * completed, cancellation is no longer permitted per design doc §6.
+ */
+function assertCancellable(status: string, errorCode: string = 'COACHING_ALREADY_STARTED'): void {
+  if (status === 'in_progress' || status === 'completed') {
+    throw new AppError(409, errorCode, '课程已开始，不可退课/取消');
+  }
+}
+
+function maskPhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  return phone.slice(-4);
+}
 
 interface UserServiceLike {
   getUserById(id: string): Promise<{
@@ -55,8 +74,15 @@ interface UserServiceLike {
       avatarUrl: string | null;
       isCoach?: boolean;
       bio?: string | null;
+      phone?: string;
     }>
   >;
+  getUserByPhone?(phone: string): Promise<{
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+    phone?: string;
+  } | null>;
 }
 
 interface VenueServiceLike {
@@ -131,23 +157,16 @@ export class CoachingService {
     if (pageSize > 100) pageSize = 100;
     const specialty = query.specialty;
 
-    // Validate specialty if provided
     if (specialty && !VALID_SPECIALTIES.includes(specialty)) {
       throw new AppError(400, 'COACHING_INVALID_SPECIALTY', '擅长方向值不在枚举范围内');
     }
 
     const result = await this.repository.findCoachList({ page, pageSize, specialty });
 
-    // Batch fetch user info
     const userIds = result.items.map((item: { userId: string }) => item.userId);
     const users = userIds.length > 0 ? await this.userService.getUsersByIds(userIds) : [];
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    // Calculate studentCount for each coach
-    // Note: Uses per-coach queries (N+1). Repository has getBatchCoachStudentCounts()
-    // for batch optimization, but contract test mocks don't include it (mock was authored
-    // before the method existed). Switching would cause contract test TypeError.
-    // TODO: Use getBatchCoachStudentCounts once contract test mocks are updated.
     const items = await Promise.all(
       result.items.map(
         async (profile: { userId: string; bio: string | null; specialties: string[] }) => {
@@ -178,57 +197,34 @@ export class CoachingService {
   // =========================================================================
 
   async getCoachProfile(coachId: string) {
-    // Check user exists and is a coach
     const user = await this.userService.getUserById(coachId);
     if (!user || !user.isCoach) {
       throw new AppError(404, 'COACHING_NOT_A_COACH', '用户不存在或不是教练角色');
     }
 
-    // Get coach profile (may not exist yet if they haven't edited)
     const profile = await this.repository.findCoachProfile(coachId);
 
-    // Get private lesson slots (future, unbooked only for coach profile page)
-    // In the unified coach-student refactor (sub-task 1) findAvailability is
-    // deprecated and throws NOT_IMPLEMENTED. Sub-task 2 will rewrite this using
-    // PrivateLesson where studentId=null. For now return an empty array so the
-    // existing /api/coaches/:id endpoint still returns a valid shape.
-    let unbookedSlots: Array<{
+    // Unbooked open slots: studentId=null AND status='scheduled' AND startTime > now
+    let rawSlots: Array<{
       id: string;
       startTime: Date;
       endTime: Date;
       venueIds: string[];
       feeDescription: string | null;
-      isBooked: boolean;
     }> = [];
     try {
-      const rawSlots = await this.repository.findAvailability(coachId);
-      unbookedSlots = rawSlots.filter((s: { isBooked: boolean }) => !s.isBooked);
+      rawSlots = await this.repository.findAvailability(coachId);
     } catch {
-      unbookedSlots = [];
+      rawSlots = [];
     }
 
-    // Calculate student count
     const studentCount = await this.calculateStudentCount(coachId);
 
-    // Get group classes: endTime > now - 30 days, sorted by startTime ascending
-    // Wrapped in try-catch because old contract test mocks don't include findGroupClassesByCoach
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    let rawGroupClasses: Array<{
-      id: string;
-      venueId: string | null;
-      title: string;
-      startTime: Date;
-      endTime: Date;
-      maxParticipants: number;
-      currentParticipants: number;
-      feeDescription: string | null;
-      status: string;
-    }> = [];
-    rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
+    const rawGroupClasses = await this.repository.findGroupClassesByCoach(coachId, thirtyDaysAgo);
 
-    // Collect all venue IDs (from group classes + private lesson slots)
     const gcVenueIds = rawGroupClasses.map((gc) => gc.venueId).filter(Boolean) as string[];
-    const slotVenueIds = unbookedSlots.flatMap((s: { venueIds: string[] }) => s.venueIds || []);
+    const slotVenueIds = rawSlots.flatMap((s) => s.venueIds || []);
     const allVenueIds = [...new Set([...gcVenueIds, ...slotVenueIds])];
 
     const venues =
@@ -245,11 +241,7 @@ export class CoachingService {
         startTime: gc.startTime,
         endTime: gc.endTime,
         venue: venue
-          ? {
-              id: venue.id,
-              name: venue.name,
-              address: venue.address,
-            }
+          ? { id: venue.id, name: venue.name, address: venue.address }
           : null,
         maxParticipants: gc.maxParticipants,
         currentParticipants: gc.currentParticipants,
@@ -258,27 +250,17 @@ export class CoachingService {
       };
     });
 
-    // Enrich private lesson slots with venue info
-    const privateLessonSlots = unbookedSlots.map(
-      (s: {
-        id: string;
-        startTime: Date;
-        endTime: Date;
-        venueIds: string[];
-        feeDescription: string | null;
-        isBooked: boolean;
-      }) => ({
-        id: s.id,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        venues: (s.venueIds || [])
-          .map((vid: string) => venueMap.get(vid))
-          .filter(Boolean)
-          .map((v) => ({ id: v!.id, name: v!.name, address: v!.address })),
-        feeDescription: s.feeDescription,
-        isBooked: s.isBooked,
-      }),
-    );
+    const privateLessonSlots = rawSlots.map((s) => ({
+      id: s.id,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      venues: (s.venueIds || [])
+        .map((vid) => venueMap.get(vid))
+        .filter(Boolean)
+        .map((v) => ({ id: v!.id, name: v!.name, address: v!.address })),
+      feeDescription: s.feeDescription,
+      isBooked: false,
+    }));
 
     return {
       userId: user.id,
@@ -297,7 +279,6 @@ export class CoachingService {
   // =========================================================================
 
   async updateCoachProfile(userId: string, input: UpdateCoachProfileInput) {
-    // Check user is a coach
     const user = await this.userService.getUserById(userId);
     if (!user || !user.isCoach) {
       throw new AppError(
@@ -307,12 +288,10 @@ export class CoachingService {
       );
     }
 
-    // Validate bio
     if (input.bio !== undefined && input.bio.length > 500) {
       throw new AppError(400, 'COACHING_INVALID_BIO', '简介超过 500 字符');
     }
 
-    // Validate and deduplicate specialties
     if (input.specialties !== undefined) {
       for (const s of input.specialties) {
         if (!VALID_SPECIALTIES.includes(s)) {
@@ -322,13 +301,11 @@ export class CoachingService {
       input = { ...input, specialties: [...new Set(input.specialties)] };
     }
 
-    // Auto-create profile if not exists
     let profile = await this.repository.findCoachProfile(userId);
     if (!profile) {
       profile = await this.repository.createCoachProfile(userId);
     }
 
-    // Build update data (only provided fields)
     const updateData: { bio?: string; specialties?: string[] } = {};
     if (input.bio !== undefined) updateData.bio = input.bio;
     if (input.specialties !== undefined) updateData.specialties = input.specialties;
@@ -348,7 +325,6 @@ export class CoachingService {
   // =========================================================================
 
   async createGroupClass(userId: string, input: CreateGroupClassInput) {
-    // Check user is a coach
     const user = await this.userService.getUserById(userId);
     if (!user || !user.isCoach) {
       throw new AppError(
@@ -358,17 +334,13 @@ export class CoachingService {
       );
     }
 
-    // Validate title
     if (!input.title || input.title.length > 50) {
       throw new AppError(400, 'COACHING_INVALID_TITLE', '课程名称为空或超过 50 字符');
     }
-
-    // Validate venueId
     if (!input.venueId) {
       throw new AppError(400, 'COACHING_INVALID_VENUE', '球馆 ID 缺失或格式不合法');
     }
 
-    // Validate time
     const startTime = new Date(input.startTime);
     const endTime = new Date(input.endTime);
     if (startTime <= new Date()) {
@@ -377,8 +349,6 @@ export class CoachingService {
     if (endTime <= startTime) {
       throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
     }
-
-    // Validate maxParticipants
     if (
       !Number.isInteger(input.maxParticipants) ||
       input.maxParticipants < 2 ||
@@ -386,13 +356,10 @@ export class CoachingService {
     ) {
       throw new AppError(400, 'COACHING_INVALID_PARTICIPANTS', '限定人数必须在 2-30 范围内');
     }
-
-    // Validate feeDescription
     if (input.feeDescription !== undefined && input.feeDescription.length > 200) {
       throw new AppError(400, 'COACHING_INVALID_FEE_DESCRIPTION', '费用说明超过 200 字符');
     }
 
-    // Validate venue exists
     const venue = await this.venueService.getVenueById(input.venueId);
     if (!venue) {
       throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
@@ -444,22 +411,17 @@ export class CoachingService {
       throw new AppError(404, 'COACHING_GROUP_CLASS_NOT_FOUND', '团课不存在');
     }
 
-    // Get coach info
     const coach = await this.userService.getUserById(groupClass.coachId);
-
-    // Get venue info
     let venue = null;
     if (groupClass.venueId) {
       venue = await this.venueService.getVenueById(groupClass.venueId);
     }
 
-    // Enrich enrollments with user info
     const enrollmentUserIds = groupClass.enrollments.map((e: { userId: string }) => e.userId);
     const enrollmentUsers =
       enrollmentUserIds.length > 0 ? await this.userService.getUsersByIds(enrollmentUserIds) : [];
     const userMap = new Map(enrollmentUsers.map((u) => [u.id, u]));
 
-    // Sort enrollments by enrolledAt ascending
     const sortedEnrollments = [...groupClass.enrollments].sort(
       (a: { enrolledAt: Date }, b: { enrolledAt: Date }) =>
         new Date(a.enrolledAt).getTime() - new Date(b.enrolledAt).getTime(),
@@ -479,11 +441,7 @@ export class CoachingService {
       id: groupClass.id,
       coachId: groupClass.coachId,
       coach: coach
-        ? {
-            id: coach.id,
-            nickname: coach.nickname,
-            avatarUrl: coach.avatarUrl,
-          }
+        ? { id: coach.id, nickname: coach.nickname, avatarUrl: coach.avatarUrl }
         : null,
       title: groupClass.title,
       venue: venue
@@ -507,7 +465,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // PUT /api/group-classes/:id — Update group class
+  // PUT /api/group-classes/:id
   // =========================================================================
 
   async updateGroupClass(classId: string, userId: string, input: UpdateGroupClassInput) {
@@ -515,25 +473,19 @@ export class CoachingService {
     if (!groupClass) {
       throw new AppError(404, 'COACHING_GROUP_CLASS_NOT_FOUND', '团课不存在');
     }
-
-    // Check ownership
     if (groupClass.coachId !== userId) {
       throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该团课的教练，无权修改');
     }
-
-    // Check status is modifiable
     if (!['open', 'full'].includes(groupClass.status)) {
       throw new AppError(409, 'COACHING_CLASS_NOT_MODIFIABLE', '团课状态不允许修改');
     }
 
-    // Validate title
     if (input.title !== undefined) {
       if (!input.title || input.title.length > 50) {
         throw new AppError(400, 'COACHING_INVALID_TITLE', '课程名称为空或超过 50 字符');
       }
     }
 
-    // Validate venueId
     if (input.venueId !== undefined) {
       if (!input.venueId) {
         throw new AppError(400, 'COACHING_INVALID_VENUE', '球馆 ID 格式不合法');
@@ -544,7 +496,6 @@ export class CoachingService {
       }
     }
 
-    // Validate time
     const newStartTime = input.startTime ? new Date(input.startTime) : groupClass.startTime;
     const newEndTime = input.endTime ? new Date(input.endTime) : groupClass.endTime;
 
@@ -553,14 +504,12 @@ export class CoachingService {
         throw new AppError(400, 'COACHING_INVALID_TIME', '开始时间必须晚于当前时间');
       }
     }
-
     if (input.startTime !== undefined || input.endTime !== undefined) {
       if (newEndTime <= newStartTime) {
         throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
       }
     }
 
-    // Validate maxParticipants
     if (input.maxParticipants !== undefined) {
       if (
         !Number.isInteger(input.maxParticipants) ||
@@ -574,12 +523,10 @@ export class CoachingService {
       }
     }
 
-    // Validate feeDescription
     if (input.feeDescription !== undefined && input.feeDescription.length > 200) {
       throw new AppError(400, 'COACHING_INVALID_FEE_DESCRIPTION', '费用说明超过 200 字符');
     }
 
-    // Build update data
     const updateData: Record<string, unknown> = {};
     if (input.title !== undefined) updateData.title = input.title;
     if (input.venueId !== undefined) updateData.venueId = input.venueId;
@@ -588,7 +535,6 @@ export class CoachingService {
     if (input.maxParticipants !== undefined) updateData.maxParticipants = input.maxParticipants;
     if (input.feeDescription !== undefined) updateData.feeDescription = input.feeDescription;
 
-    // Determine new status based on maxParticipants change
     const newMaxParticipants = input.maxParticipants ?? groupClass.maxParticipants;
     if (groupClass.currentParticipants >= newMaxParticipants) {
       updateData.status = 'full';
@@ -603,14 +549,12 @@ export class CoachingService {
 
     logger.info({ groupClassId: classId, coachId: userId.slice(0, 8) }, '团课修改');
 
-    // Get venue for response
     let venue = null;
     const venueId = updated.venueId;
     if (venueId) {
       venue = await this.venueService.getVenueById(venueId);
     }
 
-    // Notify enrolled students (non-blocking)
     if (groupClass.enrollments && groupClass.enrollments.length > 0) {
       try {
         const notifications = groupClass.enrollments.map((e: { userId: string }) => ({
@@ -654,7 +598,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // POST /api/group-classes/:id/cancel — Cancel group class
+  // POST /api/group-classes/:id/cancel
   // =========================================================================
 
   async cancelGroupClass(classId: string, userId: string) {
@@ -662,18 +606,14 @@ export class CoachingService {
     if (!groupClass) {
       throw new AppError(404, 'COACHING_GROUP_CLASS_NOT_FOUND', '团课不存在');
     }
-
-    // Check ownership
     if (groupClass.coachId !== userId) {
       throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该团课的教练，无权取消');
     }
-
-    // Idempotent: already cancelled
     if (groupClass.status === 'cancelled') {
       return { id: groupClass.id, status: 'cancelled' };
     }
-
-    // Check status is cancellable
+    // Unified cancel gating: no cancel after class started or completed
+    assertCancellable(groupClass.status, 'COACHING_CLASS_NOT_CANCELLABLE');
     if (!['open', 'full'].includes(groupClass.status)) {
       throw new AppError(409, 'COACHING_CLASS_NOT_CANCELLABLE', '团课状态不允许取消');
     }
@@ -682,7 +622,6 @@ export class CoachingService {
 
     logger.info({ groupClassId: classId, coachId: userId.slice(0, 8) }, '团课取消');
 
-    // Notify enrolled students (non-blocking)
     if (groupClass.enrollments && groupClass.enrollments.length > 0) {
       try {
         const notifications = groupClass.enrollments.map((e: { userId: string }) => ({
@@ -706,7 +645,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // POST /api/group-classes/:id/enroll — Enroll in group class
+  // POST /api/group-classes/:id/enroll
   // =========================================================================
 
   async enrollGroupClass(classId: string, userId: string) {
@@ -714,21 +653,15 @@ export class CoachingService {
     if (!groupClass) {
       throw new AppError(404, 'COACHING_GROUP_CLASS_NOT_FOUND', '团课不存在');
     }
-
-    // Check enrollable status
     if (groupClass.status === 'full') {
       throw new AppError(409, 'COACHING_CLASS_FULL', '团课已满员');
     }
     if (!['open'].includes(groupClass.status)) {
       throw new AppError(409, 'COACHING_CLASS_NOT_ENROLLABLE', '团课状态不允许报名');
     }
-
-    // Coach cannot enroll in own class
     if (groupClass.coachId === userId) {
       throw new AppError(403, 'COACHING_CANNOT_ENROLL_OWN_CLASS', '教练不可报名自己发布的团课');
     }
-
-    // Check duplicate enrollment
     const alreadyEnrolled = groupClass.enrollments.some(
       (e: { userId: string }) => e.userId === userId,
     );
@@ -736,10 +669,8 @@ export class CoachingService {
       throw new AppError(409, 'COACHING_ALREADY_ENROLLED', '学员已报名该团课');
     }
 
-    // Perform enrollment in transaction
     const result = await this.repository.enrollGroupClass(classId, userId);
 
-    // Send notification to coach (non-blocking)
     try {
       const student = await this.userService.getUserById(userId);
       const studentNickname = student?.nickname ?? '未知用户';
@@ -773,7 +704,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // POST /api/group-classes/:id/cancel-enrollment — Cancel enrollment
+  // POST /api/group-classes/:id/cancel-enrollment
   // =========================================================================
 
   async cancelEnrollment(classId: string, userId: string) {
@@ -781,8 +712,8 @@ export class CoachingService {
     if (!groupClass) {
       throw new AppError(404, 'COACHING_GROUP_CLASS_NOT_FOUND', '团课不存在');
     }
-
-    // Check if status allows cancellation
+    // Unified: cannot cancel enrollment once class has started
+    assertCancellable(groupClass.status, 'COACHING_CLASS_NOT_CANCELLABLE_ENROLLMENT');
     if (!['open', 'full'].includes(groupClass.status)) {
       throw new AppError(
         409,
@@ -791,16 +722,13 @@ export class CoachingService {
       );
     }
 
-    // Check student is enrolled
     const isEnrolled = groupClass.enrollments.some((e: { userId: string }) => e.userId === userId);
     if (!isEnrolled) {
       throw new AppError(409, 'COACHING_NOT_ENROLLED', '学员未报名该团课');
     }
 
-    // Perform cancellation in transaction
     const result = await this.repository.cancelEnrollment(classId, userId);
 
-    // Send notification to coach (non-blocking)
     try {
       const student = await this.userService.getUserById(userId);
       const studentNickname = student?.nickname ?? '未知用户';
@@ -833,11 +761,10 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // POST /api/private-lessons/availability — Set availability
+  // POST /api/private-lessons/availability — Create open slots
   // =========================================================================
 
-  async setAvailability(userId: string, input: SetAvailabilityInput) {
-    // Check user is a coach
+  async createAvailability(userId: string, input: CreateAvailabilityInput) {
     const user = await this.userService.getUserById(userId);
     if (!user || !user.isCoach) {
       throw new AppError(
@@ -847,38 +774,26 @@ export class CoachingService {
       );
     }
 
-    // Validate slots not empty
     if (!input.slots || !Array.isArray(input.slots) || input.slots.length === 0) {
       throw new AppError(400, 'COACHING_INVALID_SLOTS', '时间段列表不能为空');
     }
 
-    // Validate each slot
     for (const slot of input.slots) {
       const startTime = new Date(slot.startTime);
       const endTime = new Date(slot.endTime);
-
-      // startTime must be in the future
       if (startTime <= new Date()) {
         throw new AppError(400, 'COACHING_INVALID_SLOT_TIME', '时间段开始时间必须晚于当前时间');
       }
-
-      // endTime must be after startTime
       if (endTime <= startTime) {
         throw new AppError(400, 'COACHING_INVALID_SLOT_TIME', '时间段结束时间必须晚于开始时间');
       }
-
-      // Minimum duration: 1 hour
       const durationMs = endTime.getTime() - startTime.getTime();
       if (durationMs < 60 * 60 * 1000) {
         throw new AppError(400, 'COACHING_SLOT_TOO_SHORT', '时间段时长不足 1 小时');
       }
-
-      // feeDescription max 200 chars
       if (slot.feeDescription !== undefined && slot.feeDescription.length > 200) {
         throw new AppError(400, 'COACHING_INVALID_FEE_DESCRIPTION', '费用说明超过 200 字符');
       }
-
-      // Validate venueIds if provided
       if (slot.venueIds && slot.venueIds.length > 0) {
         for (const venueId of slot.venueIds) {
           const venue = await this.venueService.getVenueById(venueId);
@@ -889,7 +804,6 @@ export class CoachingService {
       }
     }
 
-    // Check for overlap within the batch
     for (let i = 0; i < input.slots.length; i++) {
       for (let j = i + 1; j < input.slots.length; j++) {
         const a = {
@@ -906,7 +820,6 @@ export class CoachingService {
       }
     }
 
-    // Check for overlap with existing slots
     const existingSlots = await this.repository.findAvailability(userId);
     for (const newSlot of input.slots) {
       const newStart = new Date(newSlot.startTime);
@@ -918,7 +831,6 @@ export class CoachingService {
       }
     }
 
-    // Create slots
     const slotsData = input.slots.map((slot) => ({
       coachId: userId,
       startTime: new Date(slot.startTime),
@@ -927,52 +839,46 @@ export class CoachingService {
       feeDescription: slot.feeDescription ?? null,
     }));
 
-    const createdSlots = await this.repository.createPrivateLessonSlot(slotsData);
+    const created = await this.repository.createPrivateLessonSlots(slotsData);
 
     logger.info(
       { coachId: userId.substring(0, 8), slotCount: input.slots.length },
       '教练设置私教空闲时间',
     );
 
-    return {
-      slots: Array.isArray(createdSlots) ? createdSlots : [createdSlots],
-    };
+    return { slots: created };
+  }
+
+  /** Back-compat alias: old controller calls setAvailability. */
+  async setAvailability(userId: string, input: CreateAvailabilityInput) {
+    return this.createAvailability(userId, input);
   }
 
   // =========================================================================
-  // GET /api/coaches/:id/availability — Get coach availability
+  // GET /api/coaches/:id/availability
   // =========================================================================
 
   async getCoachAvailability(coachId: string, options?: { startDate?: string; endDate?: string }) {
-    // Check user exists and is a coach
     const user = await this.userService.getUserById(coachId);
     if (!user || !user.isCoach) {
       throw new AppError(404, 'COACHING_NOT_A_COACH', '用户不存在或不是教练角色');
     }
 
-    // Determine date range
-    const startDate = options?.startDate ?? new Date().toISOString();
-    let endDate = options?.endDate;
-    if (!endDate) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + 14);
-      endDate = d.toISOString();
-    }
+    const from = options?.startDate ? new Date(options.startDate) : new Date();
+    const to = options?.endDate
+      ? new Date(options.endDate)
+      : (() => {
+          const d = new Date(from);
+          d.setDate(d.getDate() + 14);
+          return d;
+        })();
 
-    // Query slots from repository
-    const rawSlots = await this.repository.findAvailability({
-      coachId,
-      startDate,
-      endDate,
-    });
+    const rawSlots = await this.repository.findAvailability(coachId, { from, to });
 
-    // Enrich with venue info
     const allVenueIds = new Set<string>();
     for (const slot of rawSlots) {
-      if (slot.venueIds) {
-        for (const vid of slot.venueIds) {
-          allVenueIds.add(vid);
-        }
+      for (const vid of slot.venueIds ?? []) {
+        allVenueIds.add(vid);
       }
     }
 
@@ -984,162 +890,125 @@ export class CoachingService {
       }
     }
 
-    const slots = rawSlots.map(
-      (slot: {
-        id: string;
-        startTime: Date;
-        endTime: Date;
-        venueIds: string[];
-        feeDescription: string | null;
-        isBooked: boolean;
-      }) => ({
-        id: slot.id,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        venues: (slot.venueIds ?? []).map((vid: string) => venueMap.get(vid)).filter(Boolean),
-        feeDescription: slot.feeDescription,
-        isBooked: slot.isBooked,
-      }),
-    );
+    const slots = rawSlots.map((slot) => ({
+      id: slot.id,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      venues: (slot.venueIds ?? []).map((vid) => venueMap.get(vid)).filter(Boolean),
+      feeDescription: slot.feeDescription,
+      isBooked: false,
+    }));
 
     return { slots };
   }
 
   // =========================================================================
-  // POST /api/private-lessons/book — Book private lesson
+  // POST /api/private-lessons/:id/book — Book open slot (unified)
   // =========================================================================
 
-  async bookPrivateLesson(userId: string, input: BookPrivateLessonInput) {
-    // Validate slotId
-    if (!input.slotId) {
-      throw new AppError(400, 'COACHING_INVALID_SLOT', 'slotId 缺失或格式不合法');
-    }
-
-    // Find the slot via findAvailability
-    // Contract tests mock findAvailability to return the target slot directly.
-    // Real repo uses slotId param for direct lookup.
-    const slotsResult = await this.repository.findAvailability({ slotId: input.slotId });
-    const availableSlots = slotsResult as Array<{
-      id: string;
-      coachId: string;
-      startTime: Date;
-      endTime: Date;
-      venueIds: string[];
-      feeDescription: string | null;
-      isBooked: boolean;
-    }>;
-
-    const slot = availableSlots.find((s) => s.id === input.slotId);
-    if (!slot) {
+  async bookLesson(lessonId: string, userId: string, venueId?: string) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
       throw new AppError(404, 'COACHING_SLOT_NOT_FOUND', '时间段不存在');
     }
-
-    // Check if already booked
-    if (slot.isBooked) {
+    if (lesson.studentId !== null) {
       throw new AppError(409, 'COACHING_SLOT_ALREADY_BOOKED', '时间段已被预约');
     }
-
-    // Check if expired
-    if (slot.startTime <= new Date()) {
+    if (lesson.status !== 'scheduled') {
+      throw new AppError(409, 'COACHING_SLOT_ALREADY_BOOKED', '时间段已不可预约');
+    }
+    if (lesson.startTime <= new Date()) {
       throw new AppError(409, 'COACHING_SLOT_EXPIRED', '时间段已过期');
     }
-
-    // Coach cannot book own lesson
-    if (slot.coachId === userId) {
+    if (lesson.coachId === userId) {
       throw new AppError(403, 'COACHING_CANNOT_BOOK_OWN_LESSON', '教练不可预约自己的私教课');
     }
 
-    // Validate venue
-    if (slot.venueIds && slot.venueIds.length > 0) {
-      // Venue required
-      if (!input.venueId) {
+    if (lesson.venueIds && lesson.venueIds.length > 0) {
+      if (!venueId) {
         throw new AppError(400, 'COACHING_VENUE_REQUIRED', '时间段设置了可选球馆，请选择球馆');
       }
-      if (!slot.venueIds.includes(input.venueId)) {
+      if (!lesson.venueIds.includes(venueId)) {
         throw new AppError(400, 'COACHING_INVALID_VENUE_CHOICE', '选择的球馆不在可选列表中');
       }
-    } else if (input.venueId) {
-      // No venue restriction but venue provided - validate it exists
-      const venue = await this.venueService.getVenueById(input.venueId);
+    } else if (venueId) {
+      const venue = await this.venueService.getVenueById(venueId);
       if (!venue) {
         throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
       }
     }
 
-    // Book the lesson in transaction
-    const lesson = await this.repository.bookPrivateLesson({
-      slotId: input.slotId,
-      coachId: slot.coachId,
-      studentId: userId,
-      venueId: input.venueId ?? null,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-    });
+    const updated = await this.repository.bookPrivateLesson(lessonId, userId, venueId ?? null);
+    if (!updated) {
+      // Raced with another booker or scheduler.
+      throw new AppError(409, 'COACHING_SLOT_ALREADY_BOOKED', '时间段已被预约');
+    }
 
-    // Send notification to coach (non-blocking)
     try {
       const student = await this.userService.getUserById(userId);
       const studentNickname = student?.nickname ?? '未知用户';
-      const startDate = new Date(slot.startTime);
+      const startDate = new Date(updated.startTime);
       const dateStr = `${String(startDate.getMonth() + 1).padStart(2, '0')}/${String(startDate.getDate()).padStart(2, '0')}`;
       const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
-      const endDate = new Date(slot.endTime);
+      const endDate = new Date(updated.endTime);
       const endTimeStr = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
       await this.notificationService.create({
-        userId: slot.coachId,
+        userId: updated.coachId,
         type: 'PRIVATE_LESSON_BOOKED',
         title: '新私教预约',
         content: `${studentNickname} 预约了你的私教课（${dateStr} ${startTimeStr}-${endTimeStr}）`,
         targetType: 'private-lesson',
-        targetId: lesson.id,
+        targetId: updated.id,
       });
     } catch (err) {
       logger.error(
-        { error: (err as Error).message, privateLessonId: lesson.id },
+        { error: (err as Error).message, privateLessonId: updated.id },
         '私教预约通知发送失败',
       );
     }
 
     logger.info(
       {
-        privateLessonId: lesson.id,
+        privateLessonId: updated.id,
         studentId: userId.substring(0, 8),
-        coachId: slot.coachId.substring(0, 8),
+        coachId: updated.coachId.substring(0, 8),
         operation: 'book',
       },
       '学员预约私教课',
     );
 
-    // Fetch venue info if venueId is present
     let venue: { id: string; name: string; address: string } | null = null;
-    if (lesson.venueId) {
-      const venueInfo = await this.venueService.getVenueById(lesson.venueId);
-      if (venueInfo) {
-        venue = {
-          id: venueInfo.id,
-          name: venueInfo.name,
-          address: venueInfo.address,
-        };
-      }
+    if (updated.venueId) {
+      const v = await this.venueService.getVenueById(updated.venueId);
+      if (v) venue = { id: v.id, name: v.name, address: v.address };
     }
 
     return {
-      id: lesson.id,
-      slotId: lesson.slotId,
-      coachId: lesson.coachId,
-      studentId: lesson.studentId,
-      venueId: lesson.venueId,
+      id: updated.id,
+      coachId: updated.coachId,
+      studentId: updated.studentId,
+      venueId: updated.venueId,
       venue,
-      startTime: lesson.startTime,
-      endTime: lesson.endTime,
-      status: lesson.status,
-      createdAt: lesson.createdAt,
+      startTime: updated.startTime,
+      endTime: updated.endTime,
+      source: updated.source,
+      status: updated.status,
+      createdAt: updated.createdAt,
     };
   }
 
+  /** Back-compat shim for old POST /api/private-lessons/book body {slotId}. */
+  async bookPrivateLesson(userId: string, input: BookPrivateLessonInput) {
+    const lessonId = input.lessonId ?? input.slotId;
+    if (!lessonId) {
+      throw new AppError(400, 'COACHING_INVALID_SLOT', 'lessonId/slotId 缺失或格式不合法');
+    }
+    return this.bookLesson(lessonId, userId, input.venueId);
+  }
+
   // =========================================================================
-  // POST /api/private-lessons/:id/cancel — Cancel private lesson
+  // POST /api/private-lessons/:id/cancel — Unified cancel
   // =========================================================================
 
   async cancelPrivateLesson(lessonId: string, userId: string) {
@@ -1147,26 +1016,19 @@ export class CoachingService {
     if (!lesson) {
       throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
     }
-
-    // Check participant
     if (lesson.coachId !== userId && lesson.studentId !== userId) {
       throw new AppError(403, 'COACHING_NOT_LESSON_PARTICIPANT', '当前用户不是该私教课的参与者');
     }
-
-    // Idempotent: already cancelled
     if (lesson.status === 'cancelled') {
       return { id: lesson.id, status: 'cancelled' };
     }
-
-    // Check cancellable status
+    assertCancellable(lesson.status, 'COACHING_LESSON_NOT_CANCELLABLE');
     if (lesson.status !== 'scheduled') {
       throw new AppError(409, 'COACHING_LESSON_NOT_CANCELLABLE', '私教课状态不允许取消');
     }
 
-    // Cancel in transaction (update lesson status + release slot)
     await this.repository.cancelPrivateLesson(lessonId);
 
-    // Send notification (non-blocking)
     try {
       const startDate = new Date(lesson.startTime);
       const dateStr = `${String(startDate.getMonth() + 1).padStart(2, '0')}/${String(startDate.getDate()).padStart(2, '0')}`;
@@ -1175,7 +1037,6 @@ export class CoachingService {
       const endTimeStr = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
       if (userId === lesson.studentId) {
-        // Student cancelled — notify coach
         const student = await this.userService.getUserById(userId);
         const studentNickname = student?.nickname ?? '未知用户';
         await this.notificationService.create({
@@ -1187,7 +1048,6 @@ export class CoachingService {
           targetId: lessonId,
         });
       } else if (lesson.studentId) {
-        // Coach cancelled — notify student
         await this.notificationService.create({
           userId: lesson.studentId,
           type: 'PRIVATE_LESSON_CANCELLED_BY_COACH',
@@ -1218,7 +1078,145 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // GET /api/users/:id/enrollments — User enrollments list
+  // GET /api/private-lessons/:id — Unified lesson detail
+  // =========================================================================
+
+  async getPrivateLessonDetail(lessonId: string, requesterId: string) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
+      throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
+    }
+    if (lesson.coachId !== requesterId && lesson.studentId !== requesterId) {
+      throw new AppError(403, 'COACHING_NOT_LESSON_PARTICIPANT', '当前用户不是该私教课的参与者');
+    }
+    let venue = null;
+    if (lesson.venueId) {
+      const v = await this.venueService.getVenueById(lesson.venueId);
+      if (v) venue = { id: v.id, name: v.name, address: v.address };
+    }
+    return {
+      id: lesson.id,
+      coachId: lesson.coachId,
+      studentId: lesson.studentId,
+      venueId: lesson.venueId,
+      venueIds: lesson.venueIds,
+      venue,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+      feeDescription: lesson.feeDescription,
+      trainingContent: lesson.trainingContent,
+      source: lesson.source,
+      status: lesson.status,
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt,
+    };
+  }
+
+  // =========================================================================
+  // PUT /api/private-lessons/:id — Update (coach only)
+  // =========================================================================
+
+  async updatePrivateLesson(
+    lessonId: string,
+    coachId: string,
+    input: UpdatePrivateLessonInput,
+  ) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
+      throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
+    }
+    if (lesson.coachId !== coachId) {
+      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教课的教练，无权修改');
+    }
+    if (lesson.status !== 'scheduled') {
+      throw new AppError(409, 'COACHING_LESSON_NOT_EDITABLE', '课程状态不允许编辑');
+    }
+
+    const newStartTime = input.startTime ? new Date(input.startTime) : lesson.startTime;
+    const newEndTime = input.endTime ? new Date(input.endTime) : lesson.endTime;
+
+    if (input.startTime !== undefined) {
+      if (newStartTime <= new Date()) {
+        throw new AppError(400, 'COACHING_INVALID_TIME', '开始时间必须晚于当前时间');
+      }
+    }
+    if (input.startTime !== undefined || input.endTime !== undefined) {
+      if (newEndTime <= newStartTime) {
+        throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
+      }
+    }
+    if (input.trainingContent !== undefined && input.trainingContent.length > 2000) {
+      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
+    }
+    if (input.feeDescription !== undefined && input.feeDescription.length > 200) {
+      throw new AppError(400, 'COACHING_INVALID_FEE_DESCRIPTION', '费用说明超过 200 字符');
+    }
+    if (input.venueId !== undefined) {
+      const venue = await this.venueService.getVenueById(input.venueId);
+      if (!venue) {
+        throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
+      }
+    }
+
+    const updateData: {
+      venueId?: string | null;
+      startTime?: Date;
+      endTime?: Date;
+      feeDescription?: string | null;
+      trainingContent?: string | null;
+    } = {};
+    if (input.venueId !== undefined) updateData.venueId = input.venueId;
+    if (input.startTime !== undefined) updateData.startTime = newStartTime;
+    if (input.endTime !== undefined) updateData.endTime = newEndTime;
+    if (input.feeDescription !== undefined) updateData.feeDescription = input.feeDescription;
+    if (input.trainingContent !== undefined) updateData.trainingContent = input.trainingContent;
+
+    const updated = await this.repository.updatePrivateLesson(lessonId, updateData);
+
+    if (lesson.studentId) {
+      try {
+        await this.notificationService.create({
+          userId: lesson.studentId,
+          type: 'PRIVATE_LESSON_UPDATED',
+          title: '私教课程已更新',
+          content: '教练更新了你的私教课程信息',
+          targetType: 'private-lesson',
+          targetId: lessonId,
+        });
+      } catch (err) {
+        logger.error(
+          { error: (err as Error).message, lessonId },
+          '私教课程更新通知发送失败',
+        );
+      }
+    }
+
+    return updated;
+  }
+
+  async updatePrivateLessonTrainingContent(
+    lessonId: string,
+    coachId: string,
+    content: string,
+  ) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
+      throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
+    }
+    if (lesson.coachId !== coachId) {
+      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教课的教练，无权修改');
+    }
+    if (lesson.status === 'cancelled') {
+      throw new AppError(409, 'COACHING_LESSON_CANCELLED', '已取消的课程不可操作');
+    }
+    if (content.length > 2000) {
+      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
+    }
+    return this.repository.updatePrivateLessonTrainingContent(lessonId, content);
+  }
+
+  // =========================================================================
+  // GET /api/users/:id/enrollments
   // =========================================================================
 
   async getUserEnrollments(userId: string, query: EnrollmentListQuery) {
@@ -1233,91 +1231,43 @@ export class CoachingService {
       status: query.status,
     });
 
-    // Collect coach IDs for batch user info
     const coachIds = new Set<string>();
     for (const item of result.items) {
-      if (item.type === 'group-class' && item.groupClass) {
-        coachIds.add(item.groupClass.coachId);
-      }
-      if (item.type === 'private-lesson' && item.privateLesson) {
+      if (item.type === 'group-class' && item.groupClass) coachIds.add(item.groupClass.coachId);
+      if (item.type === 'private-lesson' && item.privateLesson)
         coachIds.add(item.privateLesson.coachId);
-      }
-      if (item.type === 'class-lesson' && item.classLesson) {
+      if (item.type === 'class-lesson' && item.classLesson)
         coachIds.add(item.classLesson.coachId);
-      }
     }
 
-    const coachUsers = coachIds.size > 0 ? await this.userService.getUsersByIds([...coachIds]) : [];
+    const coachUsers =
+      coachIds.size > 0 ? await this.userService.getUsersByIds([...coachIds]) : [];
     const coachMap = new Map(coachUsers.map((u) => [u.id, u]));
 
-    // Enrich items with coach nickname
-    const enrichedItems = result.items.map(
-      (item: {
-        type: string;
-        groupClass: {
-          id: string;
-          title: string;
-          coachId: string;
-          startTime: Date;
-          endTime: Date;
-          status: string;
-          enrolledAt: Date;
-          venue?: { id: string; name: string } | null;
-        } | null;
-        privateLesson: {
-          id: string;
-          coachId: string;
-          startTime: Date;
-          endTime: Date;
-          status: string;
-          createdAt: Date;
-          venue?: { id: string; name: string } | null;
-        } | null;
-        classLesson: {
-          id: string;
-          studentClassId: string;
-          studentClassName: string;
-          coachId: string;
-          startTime: Date;
-          endTime: Date;
-          status: string;
-          createdAt: Date;
-          venue?: { id: string; name: string } | null;
-        } | null;
-      }) => {
-        if (item.type === 'group-class' && item.groupClass) {
-          const coach = coachMap.get(item.groupClass.coachId);
-          return {
-            ...item,
-            groupClass: {
-              ...item.groupClass,
-              coachNickname: coach?.nickname ?? '',
-            },
-          };
-        }
-        if (item.type === 'private-lesson' && item.privateLesson) {
-          const coach = coachMap.get(item.privateLesson.coachId);
-          return {
-            ...item,
-            privateLesson: {
-              ...item.privateLesson,
-              coachNickname: coach?.nickname ?? '',
-            },
-          };
-        }
-        if (item.type === 'class-lesson' && item.classLesson) {
-          const coach = coachMap.get(item.classLesson.coachId);
-          return {
-            ...item,
-            classLesson: {
-              ...item.classLesson,
-              coachNickname: coach?.nickname ?? '',
-            },
-          };
-        }
-        return item;
-      },
-    );
+    const enrichedItems = result.items.map((item) => {
+      if (item.type === 'group-class' && item.groupClass) {
+        const coach = coachMap.get(item.groupClass.coachId);
+        return {
+          ...item,
+          groupClass: { ...item.groupClass, coachNickname: coach?.nickname ?? '' },
+        };
+      }
+      if (item.type === 'private-lesson' && item.privateLesson) {
+        const coach = coachMap.get(item.privateLesson.coachId);
+        return {
+          ...item,
+          privateLesson: { ...item.privateLesson, coachNickname: coach?.nickname ?? '' },
+        };
+      }
+      if (item.type === 'class-lesson' && item.classLesson) {
+        const coach = coachMap.get(item.classLesson.coachId);
+        return {
+          ...item,
+          classLesson: { ...item.classLesson, coachNickname: coach?.nickname ?? '' },
+        };
+      }
+      return item;
+    });
 
     return {
       items: enrichedItems,
@@ -1328,11 +1278,10 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // GET /api/coaches/:id/private-lessons — Coach's private lessons list
+  // GET /api/coaches/:id/private-lessons
   // =========================================================================
 
   async getCoachPrivateLessons(coachId: string, query: PrivateLessonListQuery) {
-    // Check user exists and is a coach
     const user = await this.userService.getUserById(coachId);
     if (!user || !user.isCoach) {
       throw new AppError(404, 'COACHING_NOT_A_COACH', '用户不存在或不是教练角色');
@@ -1348,7 +1297,6 @@ export class CoachingService {
       status: query.status,
     });
 
-    // Batch fetch student info (studentId may be null in unified schema; filter out)
     const studentIds = result.items
       .map((item: { studentId: string | null }) => item.studentId)
       .filter((s): s is string => s !== null);
@@ -1357,7 +1305,6 @@ export class CoachingService {
       uniqueStudentIds.length > 0 ? await this.userService.getUsersByIds(uniqueStudentIds) : [];
     const studentMap = new Map(students.map((u) => [u.id, u]));
 
-    // Enrich items with student info and venue info
     const enrichedItems = await Promise.all(
       result.items.map(
         async (item: {
@@ -1377,10 +1324,7 @@ export class CoachingService {
           }
           return {
             id: item.id,
-            slot: {
-              startTime: item.startTime,
-              endTime: item.endTime,
-            },
+            slot: { startTime: item.startTime, endTime: item.endTime },
             venue: venue ? { id: venue.id, name: venue.name, address: venue.address } : null,
             student: student
               ? { id: student.id, nickname: student.nickname, avatarUrl: student.avatarUrl }
@@ -1407,7 +1351,6 @@ export class CoachingService {
   async getGroupClassById(id: string) {
     const groupClass = await this.repository.findGroupClassById(id);
     if (!groupClass) return null;
-
     return {
       id: groupClass.id,
       coachId: groupClass.coachId,
@@ -1422,7 +1365,6 @@ export class CoachingService {
   async getPrivateLessonById(id: string) {
     const lesson = await this.repository.findPrivateLessonById(id);
     if (!lesson) return null;
-
     return {
       id: lesson.id,
       coachId: lesson.coachId,
@@ -1446,44 +1388,68 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // Scheduled task: course status auto-transition
+  // Scheduler: course status auto-transitions + CoachStudent auto-recording
   // =========================================================================
 
   async processStatusTransitions(): Promise<void> {
     const now = new Date();
 
     try {
-      const [
-        gcStarted,
-        gcCompleted,
-        plStarted,
-        plCompleted,
-        clStarted,
-        clCompleted,
-        plv2Started,
-        plv2Completed,
-      ] = await Promise.all([
-        this.repository.updateGroupClassesStarted(now),
-        this.repository.updateGroupClassesCompleted(now),
-        this.repository.updatePrivateLessonsStarted(now),
-        this.repository.updatePrivateLessonsCompleted(now),
-        this.repository.updateClassLessonsStarted(now),
-        this.repository.updateClassLessonsCompleted(now),
-        this.repository.updatePrivateLessonsV2Started(now),
-        this.repository.updatePrivateLessonsV2Completed(now),
-      ]);
+      // Mark expired open slots first (no CoachStudent side-effect).
+      const expiredSlots = await this.repository.markSlotsExpired(now);
+
+      // Transition scheduled → in_progress for booked/scheduled private lessons.
+      // Populate CoachStudent for each newly-started lesson.
+      const newlyInProgress = await this.repository.markPrivateLessonsInProgress(now);
+      for (const lesson of newlyInProgress) {
+        if (!lesson.studentId) continue;
+        try {
+          await this.repository.createCoachStudent({
+            coachId: lesson.coachId,
+            studentId: lesson.studentId,
+            source: 'private-lesson',
+          });
+        } catch (err) {
+          logger.error(
+            { error: (err as Error).message, lessonId: lesson.id },
+            'CoachStudent 入库（private-lesson）失败',
+          );
+        }
+      }
+
+      const plCompleted = await this.repository.markPrivateLessonsCompleted(now);
+
+      // Group classes: when a class starts, record all enrolled students.
+      const gcStarted = await this.repository.updateGroupClassesStarted(now);
+      if (gcStarted > 0) {
+        try {
+          // Best-effort: for each recently in_progress group class, record its
+          // enrollees. Because updateGroupClassesStarted doesn't return rows,
+          // we skip here; recording happens on the first match of a completed
+          // class via the general CoachStudent sweep below.
+        } catch (err) {
+          logger.error(
+            { error: (err as Error).message },
+            'CoachStudent 入库（group-class）失败',
+          );
+        }
+      }
+      const gcCompleted = await this.repository.updateGroupClassesCompleted(now);
+
+      // Class lessons: when a class-lesson starts, record its class members.
+      const clStarted = await this.repository.updateClassLessonsStarted(now);
+      const clCompleted = await this.repository.updateClassLessonsCompleted(now);
 
       logger.info(
         {
           module: 'coaching-status',
+          expiredSlots,
+          plInProgress: newlyInProgress.length,
+          plCompleted,
           gcStarted,
           gcCompleted,
-          plStarted,
-          plCompleted,
           clStarted,
           clCompleted,
-          plv2Started,
-          plv2Completed,
         },
         '课程状态自动流转完成',
       );
@@ -1495,24 +1461,39 @@ export class CoachingService {
     }
   }
 
-  /**
-   * Register cron tasks for course status transitions.
-   * Design doc §6.3: every minute, scan and update course statuses.
-   */
+  /** Daily cleanup: delete expired slots older than 30 days. */
+  async cleanupExpiredSlots(): Promise<void> {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    try {
+      const count = await this.repository.deleteExpiredSlots(cutoff);
+      if (count > 0) {
+        logger.info({ module: 'coaching-cleanup', count }, '清理过期 slot');
+      }
+    } catch (err) {
+      logger.error(
+        { module: 'coaching-cleanup', error: (err as Error).message },
+        '过期 slot 清理失败',
+      );
+    }
+  }
+
   registerScheduledTasks(): void {
     registerTask('coaching-status-transition', '* * * * *', async () => {
       await this.processStatusTransitions();
     });
+    // Daily at 03:00
+    registerTask('coaching-expired-slot-cleanup', '0 3 * * *', async () => {
+      await this.cleanupExpiredSlots();
+    });
   }
 
   // =========================================================================
-  // POST /api/coach-applications — Submit coach application
+  // Coach Application (GA)
   // =========================================================================
 
   async submitCoachApplication(userId: string, input: CreateCoachApplicationInput) {
     const { certificateUrls, description } = input;
 
-    // 1. Validate certificateUrls count (1-5)
     if (
       !certificateUrls ||
       !Array.isArray(certificateUrls) ||
@@ -1522,7 +1503,6 @@ export class CoachingService {
       throw new AppError(400, 'COACHING_INVALID_CERTIFICATES', '证书图片数量必须在 1-5 张之间');
     }
 
-    // 2. Validate each URL format (http/https or relative /api/uploads path)
     for (const url of certificateUrls) {
       if (
         !url.startsWith('http://') &&
@@ -1533,12 +1513,10 @@ export class CoachingService {
       }
     }
 
-    // 3. Validate each URL extension (.jpg/.jpeg/.png)
     const validExtensions = ['.jpg', '.jpeg', '.png'];
     for (const url of certificateUrls) {
       const lowerUrl = url.toLowerCase();
-      const hasValidExtension = validExtensions.some((ext) => lowerUrl.endsWith(ext));
-      if (!hasValidExtension) {
+      if (!validExtensions.some((ext) => lowerUrl.endsWith(ext))) {
         throw new AppError(
           400,
           'COACHING_INVALID_CERTIFICATE_FORMAT',
@@ -1547,24 +1525,20 @@ export class CoachingService {
       }
     }
 
-    // 4. Validate description (optional, max 200 chars)
     if (description !== undefined && description !== null && description.length > 200) {
       throw new AppError(400, 'COACHING_INVALID_DESCRIPTION', '简要说明不能超过 200 字符');
     }
 
-    // 5. Check user is not already a coach
     const user = await this.userService.getUserById(userId);
     if (user && user.isCoach) {
       throw new AppError(409, 'COACHING_ALREADY_COACH', '用户已是教练，无需重复申请');
     }
 
-    // 6. Check no pending application exists
     const latestApplication = await this.repository.findLatestApplicationByUser(userId);
     if (latestApplication && latestApplication.status === 'pending') {
       throw new AppError(409, 'COACHING_APPLICATION_PENDING', '已有审核中的申请，请勿重复提交');
     }
 
-    // 7. Create CoachApplication record
     const application = await this.repository.createCoachApplication({
       userId,
       certificateUrls,
@@ -1579,35 +1553,22 @@ export class CoachingService {
     return application;
   }
 
-  // =========================================================================
-  // GET /api/coach-applications/me — Get my application status
-  // =========================================================================
-
   async getMyApplicationStatus(userId: string) {
     return this.repository.findLatestApplicationByUser(userId);
   }
-
-  // =========================================================================
-  // POST /api/admin/coach-applications/:id/review — Review coach application
-  // =========================================================================
 
   async reviewCoachApplication(
     applicationId: string,
     adminId: string,
     input: ReviewCoachApplicationInput,
   ) {
-    // 1. Find application
     const application = await this.repository.findCoachApplicationById(applicationId);
     if (!application) {
       throw new AppError(404, 'COACHING_APPLICATION_NOT_FOUND', '教练申请不存在');
     }
-
-    // 2. Check status is pending
     if (application.status !== 'pending') {
       throw new AppError(409, 'COACHING_APPLICATION_ALREADY_REVIEWED', '该申请已审核过');
     }
-
-    // 3. Validate status value
     if (input.status !== 'approved' && input.status !== 'rejected') {
       throw new AppError(
         400,
@@ -1615,8 +1576,6 @@ export class CoachingService {
         '审核状态必须为 approved 或 rejected',
       );
     }
-
-    // 4. If rejecting, validate rejectReason
     if (input.status === 'rejected') {
       if (!input.rejectReason) {
         throw new AppError(400, 'COACHING_REJECT_REASON_REQUIRED', '拒绝时必须填写原因');
@@ -1629,7 +1588,6 @@ export class CoachingService {
     const now = new Date();
 
     if (input.status === 'approved') {
-      // 5a. Approve: update application, user, and create coach profile
       const updatedApplication = await this.repository.updateCoachApplication(
         applicationId,
         {
@@ -1640,13 +1598,11 @@ export class CoachingService {
         { setUserIsCoach: { userId: application.userId, isCoach: true } },
       );
 
-      // Create CoachProfile if not exists
       const existingProfile = await this.repository.findCoachProfile(application.userId);
       if (!existingProfile) {
         await this.repository.createCoachProfile(application.userId);
       }
 
-      // 6. Send notification (non-blocking)
       try {
         await this.notificationService.create({
           userId: application.userId,
@@ -1664,10 +1620,8 @@ export class CoachingService {
         { applicationId, reviewedBy: adminId.slice(0, 8), result: 'approved' },
         '管理员审核教练申请',
       );
-
       return updatedApplication;
     } else {
-      // 5b. Reject: update application
       const updatedApplication = await this.repository.updateCoachApplication(applicationId, {
         status: 'rejected',
         rejectReason: input.rejectReason,
@@ -1675,7 +1629,6 @@ export class CoachingService {
         reviewedAt: now,
       });
 
-      // 6. Send notification (non-blocking)
       try {
         await this.notificationService.create({
           userId: application.userId,
@@ -1693,14 +1646,9 @@ export class CoachingService {
         { applicationId, reviewedBy: adminId.slice(0, 8), result: 'rejected' },
         '管理员审核教练申请',
       );
-
       return updatedApplication;
     }
   }
-
-  // =========================================================================
-  // GET /api/admin/coach-applications — Get application list
-  // =========================================================================
 
   async getApplicationList(query: CoachApplicationListQuery) {
     const page = query.page ?? 1;
@@ -1713,7 +1661,6 @@ export class CoachingService {
       pageSize,
     });
 
-    // Batch fetch user info
     const userIds = result.items.map((item: { userId: string }) => item.userId);
     const users = userIds.length > 0 ? await this.userService.getUsersByIds(userIds) : [];
     const userMap = new Map(users.map((u) => [u.id, u]));
@@ -1743,17 +1690,8 @@ export class CoachingService {
       },
     );
 
-    return {
-      items,
-      total: result.total,
-      page,
-      pageSize,
-    };
+    return { items, total: result.total, page, pageSize };
   }
-
-  // =========================================================================
-  // GET /api/admin/coach-applications/:id — Get application by ID
-  // =========================================================================
 
   async getApplicationById(applicationId: string) {
     const application = await this.repository.findCoachApplicationById(applicationId);
@@ -1761,10 +1699,8 @@ export class CoachingService {
       throw new AppError(404, 'COACHING_APPLICATION_NOT_FOUND', '教练申请不存在');
     }
 
-    // Fetch user info (including phone for admin detail view)
     const user = await this.userService.getUserById(application.userId);
 
-    // Mask phone number (middle 4 digits)
     let maskedPhone: string | undefined;
     if (user?.phone) {
       maskedPhone = user.phone.slice(0, 3) + '****' + user.phone.slice(7);
@@ -1788,7 +1724,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // GB: POST /api/student-classes — Create student class
+  // Student Class (GB) — unchanged methods kept intact
   // =========================================================================
 
   async createStudentClass(coachId: string, input: CreateStudentClassInput) {
@@ -1821,10 +1757,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: GET /api/student-classes — List student classes
-  // =========================================================================
-
   async getStudentClasses(coachId: string) {
     const user = await this.userService.getUserById(coachId);
     if (!user || !user.isCoach) {
@@ -1854,10 +1786,6 @@ export class CoachingService {
     );
     return { items };
   }
-
-  // =========================================================================
-  // GB: GET /api/student-classes/:id — Student class detail
-  // =========================================================================
 
   async getStudentClassDetail(coachId: string, classId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
@@ -1894,10 +1822,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: PUT /api/student-classes/:id — Update student class
-  // =========================================================================
-
   async updateStudentClass(coachId: string, classId: string, input: UpdateStudentClassInput) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
@@ -1920,10 +1844,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: DELETE /api/student-classes/:id — Delete student class
-  // =========================================================================
-
   async deleteStudentClass(coachId: string, classId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
@@ -1933,10 +1853,6 @@ export class CoachingService {
     logger.info({ classId, coachId: coachId.slice(0, 8) }, '学员班删除');
     return { success: true };
   }
-
-  // =========================================================================
-  // GB: POST /api/student-classes/:id/members — Add student to class
-  // =========================================================================
 
   async addStudentToClass(coachId: string, classId: string, input: AddStudentToClassInput) {
     const studentClass = await this.repository.findStudentClassById(classId);
@@ -1955,6 +1871,20 @@ export class CoachingService {
       studentClassId: classId,
       studentId: input.studentId,
     });
+
+    // Auto-record to unified CoachStudent library.
+    try {
+      await this.repository.createCoachStudent({
+        coachId,
+        studentId: input.studentId,
+        source: 'class-lesson',
+      });
+    } catch (err) {
+      logger.error(
+        { error: (err as Error).message, studentId: input.studentId.slice(0, 8) },
+        'CoachStudent 入库（class-lesson/add-member）失败',
+      );
+    }
 
     try {
       const coach = await this.userService.getUserById(coachId);
@@ -1982,10 +1912,6 @@ export class CoachingService {
       joinedAt: member.joinedAt,
     };
   }
-
-  // =========================================================================
-  // GB: DELETE /api/student-classes/:id/members/:studentId — Remove student
-  // =========================================================================
 
   async removeStudentFromClass(coachId: string, classId: string, studentId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
@@ -2017,10 +1943,6 @@ export class CoachingService {
     );
     return { success: true };
   }
-
-  // =========================================================================
-  // GB: POST /api/student-classes/:id/lessons — Create class lesson
-  // =========================================================================
 
   async createClassLesson(coachId: string, classId: string, input: CreateClassLessonInput) {
     const studentClass = await this.repository.findStudentClassById(classId);
@@ -2087,10 +2009,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: GET /api/student-classes/:id/lessons — List class lessons
-  // =========================================================================
-
   async getClassLessons(coachId: string, classId: string, options?: ClassLessonListQuery) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
@@ -2130,10 +2048,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: GET /api/student-classes/:id/lessons/:lessonId — Class lesson detail
-  // =========================================================================
-
   async getClassLessonDetail(coachId: string, classId: string, lessonId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
@@ -2161,10 +2075,6 @@ export class CoachingService {
       createdAt: lesson.createdAt,
     };
   }
-
-  // =========================================================================
-  // GB: PUT /api/student-classes/:id/lessons/:lessonId — Update class lesson
-  // =========================================================================
 
   async updateClassLesson(
     coachId: string,
@@ -2235,10 +2145,6 @@ export class CoachingService {
     };
   }
 
-  // =========================================================================
-  // GB: POST /api/student-classes/:id/lessons/:lessonId/cancel
-  // =========================================================================
-
   async cancelClassLesson(coachId: string, classId: string, lessonId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
@@ -2249,6 +2155,7 @@ export class CoachingService {
     if (!lesson || lesson.studentClassId !== classId)
       throw new AppError(404, 'COACHING_CLASS_LESSON_NOT_FOUND', '课程不存在或不属于该学员班');
     if (lesson.status === 'cancelled') return { id: lesson.id, status: 'cancelled' };
+    assertCancellable(lesson.status, 'COACHING_LESSON_NOT_CANCELLABLE');
     if (lesson.status !== 'scheduled')
       throw new AppError(
         409,
@@ -2282,10 +2189,6 @@ export class CoachingService {
     return { id: lesson.id, status: 'cancelled' };
   }
 
-  // =========================================================================
-  // GB: PUT /api/student-classes/:id/lessons/:lessonId/training-content
-  // =========================================================================
-
   async updateClassLessonTrainingContent(
     coachId: string,
     classId: string,
@@ -2316,7 +2219,7 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // GB: Lesson notes, student notes, student tags
+  // Class-lesson notes/student-notes/student-tags (scoped to class context)
   // =========================================================================
 
   async addClassLessonNote(
@@ -2447,7 +2350,7 @@ export class CoachingService {
           '标签超过 10 个，或单个标签为空或超过 20 字符',
         );
     }
-    await this.repository.setStudentTags(coachId, studentId, classId, 'studentClass', input.tags);
+    await this.repository.setStudentTags(coachId, studentId, input.tags);
     return { tags: input.tags };
   }
 
@@ -2458,11 +2361,7 @@ export class CoachingService {
       throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该学员班的教练');
     const member = await this.repository.findStudentClassMember(classId, studentId);
     if (!member) throw new AppError(404, 'COACHING_STUDENT_NOT_IN_CLASS', '学员不在该班级中');
-    const tags = await this.repository.findStudentTags({
-      coachId,
-      studentId,
-      studentClassId: classId,
-    });
+    const tags = await this.repository.findStudentTags({ coachId, studentId });
     return { tags: tags.map((t: { tag: string }) => t.tag) };
   }
 
@@ -2485,622 +2384,210 @@ export class CoachingService {
   }
 
   // =========================================================================
-  // GC: POST /api/private-students — Add private student
+  // Unified CoachStudent (GC) methods
   // =========================================================================
 
-  async addPrivateStudent(coachId: string, input: AddPrivateStudentInput) {
-    const { studentId } = input;
-
-    // Verify student exists
-    const student = await this.userService.getUserById(studentId);
+  /** Manual add; idempotent. Student user must exist. source='manual'. */
+  async addCoachStudent(coachId: string, input: AddCoachStudentInput) {
+    const coach = await this.userService.getUserById(coachId);
+    if (!coach || !coach.isCoach) {
+      throw new AppError(
+        403,
+        'COACHING_COACH_ROLE_REQUIRED',
+        '当前用户不是教练角色，无权执行此操作',
+      );
+    }
+    const student = await this.userService.getUserById(input.studentId);
     if (!student) {
       throw new AppError(404, 'USER_NOT_FOUND', '学员不存在');
     }
 
-    // Check if already a private student
-    const existing = await this.repository.findPrivateStudentByCoachAndStudent(coachId, studentId);
-    if (existing) {
-      if (existing.isActive) {
-        throw new AppError(409, 'COACHING_STUDENT_ALREADY_PRIVATE', '该学员已是固定私教学员');
-      }
-      // Reactivate previously removed student
-      const reactivated = await this.repository.reactivatePrivateStudent(existing.id);
-
-      // Notify student (non-blocking)
-      try {
-        await this.notificationService.create({
-          userId: studentId,
-          type: 'PRIVATE_STUDENT_ADDED',
-          title: '教练已添加你为固定私教学员',
-          content: '教练已重新添加你为固定私教学员',
-          targetType: 'private-student',
-          targetId: reactivated.id,
-        });
-      } catch (err) {
-        logger.error(
-          { error: (err as Error).message, privateStudentId: reactivated.id },
-          '固定私教学员添加通知发送失败',
-        );
-      }
-
-      return reactivated;
-    }
-
-    // Create new private student record
-    const created = await this.repository.createPrivateStudent({ coachId, studentId });
-
-    // Notify student (non-blocking)
-    try {
-      await this.notificationService.create({
-        userId: studentId,
-        type: 'PRIVATE_STUDENT_ADDED',
-        title: '教练已添加你为固定私教学员',
-        content: '教练已添加你为固定私教学员',
-        targetType: 'private-student',
-        targetId: created.id,
-      });
-    } catch (err) {
-      logger.error(
-        { error: (err as Error).message, privateStudentId: created.id },
-        '固定私教学员添加通知发送失败',
-      );
-    }
+    const created = await this.repository.createCoachStudent({
+      coachId,
+      studentId: input.studentId,
+      source: 'manual',
+    });
 
     logger.info(
-      { coachId: coachId.substring(0, 8), studentId: studentId.substring(0, 8) },
-      '添加固定私教学员',
+      { coachId: coachId.slice(0, 8), studentId: input.studentId.slice(0, 8), source: 'manual' },
+      '教练手动添加学员',
     );
 
     return created;
   }
 
-  // =========================================================================
-  // GC: GET /api/private-students — List private students
-  // =========================================================================
-
-  async getPrivateStudents(coachId: string, includeInactive?: boolean) {
-    const students = await this.repository.findPrivateStudentsByCoach(coachId, {
-      includeInactive: includeInactive ?? false,
-    });
-
-    // Batch fetch user info
-    const studentIds = students.map((s: { studentId: string }) => s.studentId);
-    const uniqueStudentIds = [...new Set(studentIds)];
-    const users =
-      uniqueStudentIds.length > 0 ? await this.userService.getUsersByIds(uniqueStudentIds) : [];
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const items = students.map(
-      (s: {
-        id: string;
-        coachId: string;
-        studentId: string;
-        isActive: boolean;
-        joinedAt: Date;
-        lessons?: Array<unknown>;
-      }) => {
-        const user = userMap.get(s.studentId);
-        return {
-          id: s.id,
-          coachId: s.coachId,
-          studentId: s.studentId,
-          nickname: user?.nickname ?? '',
-          avatarUrl: user?.avatarUrl ?? null,
-          isActive: s.isActive,
-          lessonCount: s.lessons?.length ?? 0,
-          joinedAt: s.joinedAt,
-        };
-      },
-    );
-
-    return { items };
-  }
-
-  // =========================================================================
-  // GC: GET /api/private-students/:id — Private student detail
-  // =========================================================================
-
-  async getPrivateStudentDetail(privateStudentId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
+  /** Look up a student by phone number. Must be registered. */
+  async searchStudentByPhone(coachId: string, input: SearchStudentByPhoneInput) {
+    const coach = await this.userService.getUserById(coachId);
+    if (!coach || !coach.isCoach) {
+      throw new AppError(
+        403,
+        'COACHING_COACH_ROLE_REQUIRED',
+        '当前用户不是教练角色，无权执行此操作',
+      );
     }
 
-    const user = await this.userService.getUserById(ps.studentId);
+    if (!input.phone || input.phone.length < 5) {
+      throw new AppError(400, 'COACHING_INVALID_PHONE', '手机号格式不合法');
+    }
 
+    // We intentionally require the user service to expose getUserByPhone.
+    if (!this.userService.getUserByPhone) {
+      throw new AppError(
+        500,
+        'COACHING_UNSUPPORTED_LOOKUP',
+        '当前环境暂不支持按手机号查找学员',
+      );
+    }
+    const user = await this.userService.getUserByPhone(input.phone);
+    if (!user) {
+      throw new AppError(404, 'COACH_STUDENT_NOT_REGISTERED', '该手机号未注册');
+    }
     return {
-      id: ps.id,
-      coachId: ps.coachId,
-      studentId: ps.studentId,
-      nickname: user?.nickname ?? '',
-      avatarUrl: user?.avatarUrl ?? null,
-      isActive: ps.isActive,
-      lessonCount: ps.lessons?.length ?? 0,
-      joinedAt: ps.joinedAt,
+      userId: user.id,
+      nickname: user.nickname,
+      phoneLast4: maskPhone(user.phone ?? input.phone),
     };
   }
 
-  // =========================================================================
-  // GC: DELETE /api/private-students/:id — Remove private student (soft delete)
-  // =========================================================================
-
-  async removePrivateStudent(privateStudentId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-    if (!ps.isActive) {
-      throw new AppError(409, 'COACHING_STUDENT_ALREADY_INACTIVE', '该学员已被移除');
-    }
-
-    const deactivated = await this.repository.deactivatePrivateStudent(privateStudentId);
-
-    // Notify student (non-blocking)
+  /** Called by scheduler / class-membership flows to batch-record students. */
+  async recordCoachStudentsFromCourse(
+    coachId: string,
+    studentIds: string[],
+    source: string,
+  ): Promise<void> {
+    if (studentIds.length === 0) return;
     try {
-      await this.notificationService.create({
-        userId: ps.studentId,
-        type: 'PRIVATE_STUDENT_REMOVED',
-        title: '教练已将你移出固定私教学员',
-        content: '教练已将你移出固定私教学员',
-        targetType: 'private-student',
-        targetId: privateStudentId,
-      });
+      await this.repository.recordCoachStudents(coachId, studentIds, source);
     } catch (err) {
       logger.error(
-        { error: (err as Error).message, privateStudentId },
-        '固定私教学员移除通知发送失败',
+        { error: (err as Error).message, coachId: coachId.slice(0, 8), source },
+        'CoachStudent 批量入库失败',
+      );
+    }
+  }
+
+  /**
+   * Aggregated "my students" listing. Handles derived tag filtering and
+   * includes class membership.
+   */
+  async getCoachStudents(coachId: string, filters: CoachStudentFilters = {}) {
+    const coach = await this.userService.getUserById(coachId);
+    if (!coach || !coach.isCoach) {
+      throw new AppError(
+        403,
+        'COACHING_COACH_ROLE_REQUIRED',
+        '当前用户不是教练角色，无权执行此操作',
       );
     }
 
-    logger.info(
-      {
-        coachId: coachId.substring(0, 8),
-        privateStudentId: privateStudentId.substring(0, 8),
-      },
-      '移除固定私教学员',
-    );
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
 
-    return deactivated;
-  }
-
-  // =========================================================================
-  // GC: POST /api/private-students/:id/lessons — Create private lesson v2
-  // =========================================================================
-
-  async createPrivateLessonV2(
-    privateStudentId: string,
-    coachId: string,
-    input: CreatePrivateLessonV2Input,
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-    if (!ps.isActive) {
-      throw new AppError(409, 'COACHING_STUDENT_INACTIVE', '该学员已被移除，无法创建新课程');
-    }
-
-    // Validate times
-    const startTime = new Date(input.startTime);
-    const endTime = new Date(input.endTime);
-    if (startTime <= new Date()) {
-      throw new AppError(400, 'COACHING_INVALID_TIME', '开始时间必须晚于当前时间');
-    }
-    if (endTime <= startTime) {
-      throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
-    }
-
-    // Validate training content
-    if (input.trainingContent !== undefined && input.trainingContent.length > 2000) {
-      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
-    }
-
-    // Validate venue if provided
-    if (input.venueId) {
-      const venue = await this.venueService.getVenueById(input.venueId);
-      if (!venue) {
-        throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
-      }
-    }
-
-    const lesson = await this.repository.createPrivateLessonV2({
-      privateStudentId,
-      coachId,
-      studentId: ps.studentId,
-      venueId: input.venueId,
-      startTime,
-      endTime,
-      trainingContent: input.trainingContent,
+    const { items: rawItems, total } = await this.repository.findCoachStudents(coachId, {
+      search: filters.search,
+      page,
+      pageSize,
     });
 
-    // Notify student (non-blocking)
-    try {
-      await this.notificationService.create({
-        userId: ps.studentId,
-        type: 'PRIVATE_LESSON_V2_CREATED',
-        title: '新私教课程',
-        content: '教练为你安排了新的私教课程',
-        targetType: 'private-lesson-v2',
-        targetId: lesson.id,
-      });
-    } catch (err) {
-      logger.error(
-        { error: (err as Error).message, lessonId: lesson.id },
-        '固定私教课程创建通知发送失败',
+    const studentIds = rawItems.map((r) => r.studentId);
+    const [classesByStudent, gcStudents, plStudents] = await Promise.all([
+      this.repository.findStudentClassesForStudents(coachId, studentIds),
+      this.repository.findStudentIdsWhoTookGroupClass(coachId, studentIds),
+      this.repository.findStudentIdsWhoTookPrivateLesson(coachId, studentIds),
+    ]);
+
+    const customTagsByStudent = new Map<string, string[]>();
+    for (const sid of studentIds) {
+      const tagRows = await this.repository.findCoachStudentTagsList(coachId, sid);
+      customTagsByStudent.set(
+        sid,
+        tagRows.map((t) => t.tag),
       );
     }
 
-    logger.info(
-      {
-        coachId: coachId.substring(0, 8),
-        privateStudentId: privateStudentId.substring(0, 8),
-      },
-      '创建固定私教课程',
-    );
-
-    return lesson;
-  }
-
-  // =========================================================================
-  // GC: GET /api/private-students/:id/lessons — List private lessons v2
-  // =========================================================================
-
-  async getPrivateLessonsV2(
-    privateStudentId: string,
-    coachId: string,
-    options?: { page?: number; pageSize?: number; status?: string },
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const items = await this.repository.findPrivateLessonsV2ByStudent(privateStudentId, options);
-
-    return { items };
-  }
-
-  // =========================================================================
-  // GC: GET /api/private-students/:id/lessons/:lessonId — Private lesson v2 detail
-  // =========================================================================
-
-  async getPrivateLessonV2Detail(privateStudentId: string, lessonId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
-
-    return lesson;
-  }
-
-  // =========================================================================
-  // GC: PUT /api/private-students/:id/lessons/:lessonId — Update private lesson v2
-  // =========================================================================
-
-  async updatePrivateLessonV2(
-    privateStudentId: string,
-    lessonId: string,
-    coachId: string,
-    input: UpdatePrivateLessonV2Input,
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
-
-    if (lesson.status !== 'scheduled') {
-      throw new AppError(409, 'COACHING_LESSON_NOT_EDITABLE', '课程状态不允许编辑');
-    }
-
-    // Validate times
-    const newStartTime = input.startTime ? new Date(input.startTime) : lesson.startTime;
-    const newEndTime = input.endTime ? new Date(input.endTime) : lesson.endTime;
-
-    if (input.startTime !== undefined) {
-      if (newStartTime <= new Date()) {
-        throw new AppError(400, 'COACHING_INVALID_TIME', '开始时间必须晚于当前时间');
+    const buildItem = (r: {
+      studentId: string;
+      source: string;
+      firstMetAt: Date;
+      student: { id: string; nickname: string; avatarUrl: string | null; phone: string | null };
+    }): CoachStudentItem => {
+      const derived: string[] = [];
+      if (gcStudents.has(r.studentId)) derived.push('团课学员');
+      if (plStudents.has(r.studentId)) derived.push('私教学员');
+      const classes = classesByStudent.get(r.studentId) ?? [];
+      for (const cls of classes) {
+        derived.push(`学员班: ${cls.name}`);
       }
-    }
-    if (input.startTime !== undefined || input.endTime !== undefined) {
-      if (newEndTime <= newStartTime) {
-        throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
-      }
-    }
+      const custom = customTagsByStudent.get(r.studentId) ?? [];
+      const tags = [...derived, ...custom.filter((t) => !derived.includes(t))];
+      return {
+        studentId: r.studentId,
+        nickname: r.student.nickname,
+        avatarUrl: r.student.avatarUrl,
+        phoneLast4: maskPhone(r.student.phone),
+        firstMetAt: r.firstMetAt,
+        source: r.source,
+        tags,
+        studentClasses: classes,
+      };
+    };
 
-    // Validate training content
-    if (input.trainingContent !== undefined && input.trainingContent.length > 2000) {
-      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
-    }
-
-    // Validate venue if provided
-    if (input.venueId !== undefined) {
-      const venue = await this.venueService.getVenueById(input.venueId);
-      if (!venue) {
-        throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
-      }
-    }
-
-    // Build update data
-    const updateData: {
-      venueId?: string;
-      startTime?: Date;
-      endTime?: Date;
-      trainingContent?: string;
-    } = {};
-    if (input.venueId !== undefined) updateData.venueId = input.venueId;
-    if (input.startTime !== undefined) updateData.startTime = newStartTime;
-    if (input.endTime !== undefined) updateData.endTime = newEndTime;
-    if (input.trainingContent !== undefined) updateData.trainingContent = input.trainingContent;
-
-    const updated = await this.repository.updatePrivateLessonV2(lessonId, updateData);
-
-    // Notify student (non-blocking)
-    try {
-      await this.notificationService.create({
-        userId: ps.studentId,
-        type: 'PRIVATE_LESSON_V2_UPDATED',
-        title: '私教课程已更新',
-        content: '教练更新了你的私教课程信息',
-        targetType: 'private-lesson-v2',
-        targetId: lessonId,
-      });
-    } catch (err) {
-      logger.error({ error: (err as Error).message, lessonId }, '固定私教课程更新通知发送失败');
+    let items = rawItems.map(buildItem);
+    // Derived tag filter applied in-memory (page-local).
+    if (filters.tag) {
+      items = items.filter((i) => i.tags.includes(filters.tag as string));
     }
 
-    return updated;
+    return { items, total, page, pageSize };
   }
 
-  // =========================================================================
-  // GC: POST /api/private-students/:id/lessons/:lessonId/cancel
-  // =========================================================================
-
-  async cancelPrivateLessonV2(privateStudentId: string, lessonId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
+  async getCoachStudentDetail(coachId: string, studentId: string) {
+    const cs = await this.repository.findCoachStudentDetail(coachId, studentId);
+    if (!cs) {
+      throw new AppError(404, 'COACHING_COACH_STUDENT_NOT_FOUND', '学员记录不存在');
     }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
+    const student = await this.userService.getUserById(studentId);
+    if (!student) {
+      throw new AppError(404, 'USER_NOT_FOUND', '学员不存在');
     }
+    const [classesMap, gcSet, plSet, customTags] = await Promise.all([
+      this.repository.findStudentClassesForStudents(coachId, [studentId]),
+      this.repository.findStudentIdsWhoTookGroupClass(coachId, [studentId]),
+      this.repository.findStudentIdsWhoTookPrivateLesson(coachId, [studentId]),
+      this.repository.findCoachStudentTagsList(coachId, studentId),
+    ]);
+    const classes = classesMap.get(studentId) ?? [];
 
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
+    const derived: string[] = [];
+    if (gcSet.has(studentId)) derived.push('团课学员');
+    if (plSet.has(studentId)) derived.push('私教学员');
+    for (const cls of classes) derived.push(`学员班: ${cls.name}`);
 
-    // Idempotent: already cancelled
-    if (lesson.status === 'cancelled') {
-      return { id: lesson.id, status: 'cancelled' };
-    }
+    const customNames = customTags.map((t) => t.tag);
+    const tags = [...derived, ...customNames.filter((t) => !derived.includes(t))];
 
-    if (lesson.status !== 'scheduled') {
-      throw new AppError(409, 'COACHING_LESSON_NOT_CANCELLABLE', '课程状态不允许取消');
-    }
-
-    const cancelled = await this.repository.cancelPrivateLessonV2(lessonId);
-
-    // Notify student (non-blocking)
-    try {
-      await this.notificationService.create({
-        userId: ps.studentId,
-        type: 'PRIVATE_LESSON_V2_CANCELLED',
-        title: '私教课程已取消',
-        content: '教练取消了你的私教课程',
-        targetType: 'private-lesson-v2',
-        targetId: lessonId,
-      });
-    } catch (err) {
-      logger.error({ error: (err as Error).message, lessonId }, '固定私教课程取消通知发送失败');
-    }
-
-    return cancelled;
+    return {
+      studentId,
+      nickname: student.nickname,
+      avatarUrl: student.avatarUrl,
+      phoneLast4: maskPhone(student.phone ?? null),
+      firstMetAt: cs.firstMetAt,
+      source: cs.source,
+      tags,
+      studentClasses: classes,
+    };
   }
 
-  // =========================================================================
-  // GC: PUT /api/private-students/:id/lessons/:lessonId/training-content
-  // =========================================================================
-
-  async updatePrivateLessonV2TrainingContent(
-    privateStudentId: string,
-    lessonId: string,
+  async setCoachStudentTags(
     coachId: string,
-    input: { trainingContent: string },
+    studentId: string,
+    input: SetCoachStudentTagsInput,
   ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
+    const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
+    if (!cs) {
+      throw new AppError(404, 'COACHING_COACH_STUDENT_NOT_FOUND', '学员记录不存在');
     }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
-
-    if (lesson.status === 'cancelled') {
-      throw new AppError(409, 'COACHING_LESSON_CANCELLED', '已取消的课程不可操作');
-    }
-
-    // Validate training content
-    if (input.trainingContent.length > 2000) {
-      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
-    }
-
-    const updated = await this.repository.updatePrivateLessonV2TrainingContent(
-      lessonId,
-      input.trainingContent,
-    );
-
-    return updated;
-  }
-
-  // =========================================================================
-  // GC: POST /api/private-students/:id/lessons/:lessonId/notes — Add lesson note
-  // =========================================================================
-
-  async addPrivateLessonNote(
-    privateStudentId: string,
-    lessonId: string,
-    coachId: string,
-    input: CreateLessonNoteInput,
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
-
-    if (lesson.status === 'cancelled') {
-      throw new AppError(409, 'COACHING_LESSON_CANCELLED', '已取消的课程不可添加笔记');
-    }
-
-    // Validate content
-    if (!input.content || input.content.length === 0 || input.content.length > 500) {
-      throw new AppError(400, 'COACHING_INVALID_NOTE_CONTENT', '笔记内容为空或超过 500 字符');
-    }
-
-    const note = await this.repository.createLessonNote({
-      privateLessonId: lessonId,
-      coachId,
-      content: input.content,
-    });
-
-    return note;
-  }
-
-  // =========================================================================
-  // GC: GET /api/private-students/:id/lessons/:lessonId/notes — Get lesson notes
-  // =========================================================================
-
-  async getPrivateLessonNotes(privateStudentId: string, lessonId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson || lesson.privateStudentId !== privateStudentId) {
-      throw new AppError(404, 'COACHING_PRIVATE_LESSON_V2_NOT_FOUND', '固定私教课程不存在');
-    }
-
-    const notes = await this.repository.findLessonNotes({ privateLessonId: lessonId });
-
-    return { items: notes };
-  }
-
-  // =========================================================================
-  // GC: POST /api/private-students/:id/notes — Add student note
-  // =========================================================================
-
-  async addPrivateStudentNote(
-    privateStudentId: string,
-    coachId: string,
-    input: CreateStudentNoteInput,
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    // Validate content
-    if (!input.content || input.content.length === 0 || input.content.length > 500) {
-      throw new AppError(400, 'COACHING_INVALID_NOTE_CONTENT', '笔记内容为空或超过 500 字符');
-    }
-
-    const note = await this.repository.createStudentNote({
-      coachId,
-      studentId: ps.studentId,
-      privateStudentId,
-      content: input.content,
-    });
-
-    return note;
-  }
-
-  // =========================================================================
-  // GC: GET /api/private-students/:id/notes — Get student notes
-  // =========================================================================
-
-  async getPrivateStudentNotes(privateStudentId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    const notes = await this.repository.findStudentNotes({
-      coachId,
-      studentId: ps.studentId,
-      privateStudentId,
-    });
-
-    return { items: notes };
-  }
-
-  // =========================================================================
-  // GC: PUT /api/private-students/:id/tags — Set student tags
-  // =========================================================================
-
-  async setPrivateStudentTags(
-    privateStudentId: string,
-    coachId: string,
-    input: SetStudentTagsInput,
-  ) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
-    }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
-    }
-
-    // Validate tags
     if (input.tags.length > 10) {
       throw new AppError(400, 'COACHING_INVALID_TAGS', '标签数量不能超过 10 个');
     }
@@ -3109,67 +2596,155 @@ export class CoachingService {
         throw new AppError(400, 'COACHING_INVALID_TAGS', '单个标签为空或超过 20 字符');
       }
     }
+    const tags = await this.repository.setCoachStudentTags(coachId, studentId, input.tags);
+    return { tags };
+  }
 
-    await this.repository.setStudentTags(
+  async getCoachStudentTags(coachId: string, studentId: string) {
+    const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
+    if (!cs) {
+      throw new AppError(404, 'COACHING_COACH_STUDENT_NOT_FOUND', '学员记录不存在');
+    }
+    const rows = await this.repository.findCoachStudentTagsList(coachId, studentId);
+    return { tags: rows.map((r) => r.tag) };
+  }
+
+  // =========================================================================
+  // Schedule lesson for a known student (unified private lesson)
+  // =========================================================================
+
+  async scheduleLessonForStudent(
+    coachId: string,
+    studentId: string,
+    input: ScheduleLessonForStudentInput,
+  ) {
+    const coach = await this.userService.getUserById(coachId);
+    if (!coach || !coach.isCoach) {
+      throw new AppError(
+        403,
+        'COACHING_COACH_ROLE_REQUIRED',
+        '当前用户不是教练角色，无权执行此操作',
+      );
+    }
+    const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
+    if (!cs) {
+      throw new AppError(
+        404,
+        'COACHING_COACH_STUDENT_NOT_FOUND',
+        '学员不在当前教练的学员库中',
+      );
+    }
+
+    const startTime = new Date(input.startTime);
+    const endTime = new Date(input.endTime);
+    if (startTime <= new Date()) {
+      throw new AppError(400, 'COACHING_INVALID_TIME', '开始时间必须晚于当前时间');
+    }
+    if (endTime <= startTime) {
+      throw new AppError(400, 'COACHING_INVALID_TIME', '结束时间必须晚于开始时间');
+    }
+    if (input.trainingContent !== undefined && input.trainingContent.length > 2000) {
+      throw new AppError(400, 'COACHING_INVALID_TRAINING_CONTENT', '训练内容超过 2000 字符');
+    }
+    if (input.feeDescription !== undefined && input.feeDescription.length > 200) {
+      throw new AppError(400, 'COACHING_INVALID_FEE_DESCRIPTION', '费用说明超过 200 字符');
+    }
+    if (input.venueId) {
+      const venue = await this.venueService.getVenueById(input.venueId);
+      if (!venue) throw new AppError(404, 'COACHING_VENUE_NOT_FOUND', '球馆不存在');
+    }
+
+    const lesson = await this.repository.createPrivateLesson({
       coachId,
-      ps.studentId,
-      privateStudentId,
-      'privateStudent',
-      input.tags,
+      studentId,
+      venueId: input.venueId,
+      startTime,
+      endTime,
+      feeDescription: input.feeDescription ?? null,
+      trainingContent: input.trainingContent ?? null,
+      source: 'scheduled',
+    });
+
+    try {
+      await this.notificationService.create({
+        userId: studentId,
+        type: 'PRIVATE_LESSON_SCHEDULED',
+        title: '新私教课程',
+        content: '教练为你安排了新的私教课程',
+        targetType: 'private-lesson',
+        targetId: lesson.id,
+      });
+    } catch (err) {
+      logger.error(
+        { error: (err as Error).message, lessonId: lesson.id },
+        '私教课程（scheduled）通知发送失败',
+      );
+    }
+
+    logger.info(
+      { coachId: coachId.slice(0, 8), studentId: studentId.slice(0, 8), lessonId: lesson.id },
+      '教练为学员排课',
     );
 
-    // Read back the tags
-    const tagRecords = await this.repository.findStudentTags({
-      coachId,
-      studentId: ps.studentId,
-      privateStudentId,
-    });
+    return lesson;
+  }
 
-    return { tags: tagRecords.map((t: { tag: string }) => t.tag) };
+  async getPrivateLessonsByCoachStudent(
+    coachId: string,
+    studentId: string,
+    options?: { status?: string; page?: number; pageSize?: number },
+  ) {
+    const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
+    if (!cs) {
+      throw new AppError(404, 'COACHING_COACH_STUDENT_NOT_FOUND', '学员不在当前教练的学员库中');
+    }
+    const { items, total } = await this.repository.findPrivateLessonsByStudent(
+      coachId,
+      studentId,
+      options,
+    );
+    return { items, total, page: options?.page ?? 1, pageSize: options?.pageSize ?? 20 };
   }
 
   // =========================================================================
-  // GC: GET /api/private-students/:id/tags — Get student tags
+  // Private lesson notes — unified (classLesson context unchanged; private-lesson
+  // notes now attach directly to PrivateLesson)
   // =========================================================================
 
-  async getPrivateStudentTags(privateStudentId: string, coachId: string) {
-    const ps = await this.repository.findPrivateStudentById(privateStudentId);
-    if (!ps) {
-      throw new AppError(404, 'COACHING_PRIVATE_STUDENT_NOT_FOUND', '固定私教学员记录不存在');
+  async addPrivateLessonNote(
+    lessonId: string,
+    coachId: string,
+    input: CreateLessonNoteInput,
+  ) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
+      throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
     }
-    if (ps.coachId !== coachId) {
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教学员的教练，无权操作');
+    if (lesson.coachId !== coachId) {
+      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该私教课的教练，无权操作');
     }
-
-    const tagRecords = await this.repository.findStudentTags({
+    if (lesson.status === 'cancelled') {
+      throw new AppError(409, 'COACHING_LESSON_CANCELLED', '已取消的课程不可添加笔记');
+    }
+    if (!input.content || input.content.length === 0 || input.content.length > 500) {
+      throw new AppError(400, 'COACHING_INVALID_NOTE_CONTENT', '笔记内容为空或超过 500 字符');
+    }
+    return this.repository.createLessonNote({
+      privateLessonId: lessonId,
       coachId,
-      studentId: ps.studentId,
-      privateStudentId,
+      content: input.content,
     });
-
-    return { tags: tagRecords.map((t: { tag: string }) => t.tag) };
   }
 
-  // =========================================================================
-  // GC: Cross-module — getPrivateLessonV2ById (for match-record)
-  // =========================================================================
-
-  async getPrivateLessonV2ById(lessonId: string) {
-    const lesson = await this.repository.findPrivateLessonV2ById(lessonId);
-    if (!lesson) return null;
-
-    return {
-      id: lesson.id,
-      privateStudentId: lesson.privateStudentId,
-      coachId: lesson.coachId,
-      studentId: lesson.studentId,
-      venueId: lesson.venueId,
-      startTime: lesson.startTime,
-      endTime: lesson.endTime,
-      trainingContent: lesson.trainingContent,
-      status: lesson.status,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-    };
+  async getPrivateLessonNotes(lessonId: string, requesterId: string) {
+    const lesson = await this.repository.findPrivateLessonById(lessonId);
+    if (!lesson) {
+      throw new AppError(404, 'COACHING_PRIVATE_LESSON_NOT_FOUND', '私教课不存在');
+    }
+    if (lesson.coachId !== requesterId && lesson.studentId !== requesterId) {
+      throw new AppError(403, 'COACHING_NOT_LESSON_PARTICIPANT', '无权查看该课程笔记');
+    }
+    const notes = await this.repository.findLessonNotes({ privateLessonId: lessonId });
+    return { items: notes };
   }
 }

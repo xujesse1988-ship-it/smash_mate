@@ -1,6 +1,11 @@
 export type CoachSpecialty = 'singles' | 'doubles' | 'footwork' | 'fitness' | 'tactics';
 export type GroupClassStatus = 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled';
-export type PrivateLessonStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+export type PrivateLessonStatus =
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'expired';
 
 export interface UpdateCoachProfileInput {
   bio?: string;
@@ -25,20 +30,43 @@ export interface UpdateGroupClassInput {
   feeDescription?: string;
 }
 
-export interface SetAvailabilitySlotInput {
+/**
+ * Unified availability (slot) creation input. In the unified model a slot is a
+ * PrivateLesson with studentId=null and source=null.
+ */
+export interface CreateAvailabilitySlotInput {
   startTime: string;
   endTime: string;
   venueIds?: string[];
   feeDescription?: string;
 }
 
-export interface SetAvailabilityInput {
-  slots: SetAvailabilitySlotInput[];
+export interface CreateAvailabilityInput {
+  slots: CreateAvailabilitySlotInput[];
 }
 
 export interface BookPrivateLessonInput {
-  slotId: string;
+  /** The PrivateLesson id of the open slot being booked. */
+  lessonId?: string;
+  /** Backward-compat alias used by the legacy POST /api/private-lessons/book route. */
+  slotId?: string;
   venueId?: string;
+}
+
+export interface ScheduleLessonForStudentInput {
+  startTime: string;
+  endTime: string;
+  venueId?: string;
+  feeDescription?: string;
+  trainingContent?: string;
+}
+
+export interface UpdatePrivateLessonInput {
+  venueId?: string;
+  startTime?: string;
+  endTime?: string;
+  feeDescription?: string;
+  trainingContent?: string;
 }
 
 export interface CoachListQuery {
@@ -64,7 +92,6 @@ export interface EnrollmentListQuery {
 
 export type CoachApplicationStatus = 'pending' | 'approved' | 'rejected';
 export type ClassLessonStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-export type PrivateLessonV2Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
 // --- Coach Application (GA) ---
 
@@ -118,30 +145,63 @@ export interface ClassLessonListQuery {
   status?: ClassLessonStatus;
 }
 
-// --- Private Student (GC) ---
+// --- Coach Student (GC unified) ---
 
-export interface AddPrivateStudentInput {
+export interface AddCoachStudentInput {
   studentId: string;
 }
 
-export interface CreatePrivateLessonV2Input {
-  venueId?: string;
-  startTime: string;
-  endTime: string;
-  trainingContent?: string;
+export interface SearchStudentByPhoneInput {
+  phone: string;
 }
 
-export interface UpdatePrivateLessonV2Input {
-  venueId?: string;
-  startTime?: string;
-  endTime?: string;
-  trainingContent?: string;
+export interface SetCoachStudentTagsInput {
+  tags: string[];
 }
 
-export interface PrivateLessonV2ListQuery {
+export interface CoachStudentFilters {
+  tag?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
-  status?: PrivateLessonV2Status;
+}
+
+export interface CoachStudentItem {
+  studentId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  phoneLast4: string | null;
+  firstMetAt: Date;
+  source: string;
+  tags: string[];
+  studentClasses: Array<{ id: string; name: string }>;
+}
+
+export interface PrivateLessonItem {
+  id: string;
+  coachId: string;
+  studentId: string | null;
+  venueId: string | null;
+  venueIds: string[];
+  startTime: Date;
+  endTime: Date;
+  feeDescription: string | null;
+  trainingContent: string | null;
+  source: string | null;
+  status: PrivateLessonStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CoachStudentDetail extends CoachStudentItem {
+  recentLessons: Array<{
+    type: 'group-class' | 'private-lesson' | 'class-lesson';
+    id: string;
+    title: string | null;
+    startTime: Date;
+    endTime: Date;
+    status: string;
+  }>;
 }
 
 // --- Notes & Tags (shared) ---

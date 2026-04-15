@@ -199,91 +199,249 @@ export class CoachingRepository {
     });
   }
 
-  async createPrivateLessonSlot(
-    _data:
-      | Array<{
-          coachId: string;
-          startTime: Date;
-          endTime: Date;
-          venueIds: string[];
-          feeDescription: string | null;
-        }>
-      | {
-          coachId: string;
-          startTime: Date;
-          endTime: Date;
-          venueIds: string[];
-          feeDescription: string | null;
-        },
-  ) {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  // ===== Unified PrivateLesson (slot + booked + scheduled) =====
+
+  /**
+   * Create a single private lesson. Supports two modes:
+   *   - slot mode: studentId=null, source=null (open availability)
+   *   - direct schedule: studentId!=null, source='scheduled'
+   */
+  async createPrivateLesson(data: {
+    coachId: string;
+    studentId?: string | null;
+    venueId?: string | null;
+    venueIds?: string[];
+    startTime: Date;
+    endTime: Date;
+    feeDescription?: string | null;
+    trainingContent?: string | null;
+    source?: string | null;
+  }) {
+    return prisma.privateLesson.create({
+      data: {
+        coachId: data.coachId,
+        studentId: data.studentId ?? null,
+        venueId: data.venueId ?? null,
+        venueIds: data.venueIds ?? [],
+        startTime: data.startTime,
+        endTime: data.endTime,
+        feeDescription: data.feeDescription ?? null,
+        trainingContent: data.trainingContent ?? null,
+        source: data.source ?? null,
+        status: 'scheduled',
+      },
+    });
   }
 
-  async findAvailability(
-    _coachIdOrQuery?:
-      | string
-      | { coachId?: string; startDate?: string; endDate?: string; slotId?: string },
-  ): Promise<
-    Array<{
-      id: string;
+  /**
+   * Batch create open slots (studentId=null, source=null).
+   */
+  async createPrivateLessonSlots(
+    slots: Array<{
       coachId: string;
       startTime: Date;
       endTime: Date;
       venueIds: string[];
       feeDescription: string | null;
-      isBooked: boolean;
-    }>
-  > {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+    }>,
+  ) {
+    const created: Awaited<ReturnType<typeof prisma.privateLesson.create>>[] = [];
+    for (const s of slots) {
+      const row = await prisma.privateLesson.create({
+        data: {
+          coachId: s.coachId,
+          studentId: null,
+          venueIds: s.venueIds,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          feeDescription: s.feeDescription,
+          source: null,
+          status: 'scheduled',
+        },
+      });
+      created.push(row);
+    }
+    return created;
   }
 
-  async bookPrivateLesson(_data: {
-    slotId: string;
-    coachId: string;
-    studentId: string;
-    venueId: string | null;
-    startTime: Date;
-    endTime: Date;
-  }): Promise<{
-    id: string;
-    slotId: string;
-    coachId: string;
-    studentId: string;
-    venueId: string | null;
-    startTime: Date;
-    endTime: Date;
-    status: string;
-    createdAt: Date;
-  }> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /**
+   * Find open availability slots for a coach (studentId=null, status='scheduled').
+   * Optional time range filter.
+   */
+  async findAvailability(
+    coachId: string,
+    options?: { from?: Date; to?: Date },
+  ) {
+    const where: Record<string, unknown> = {
+      coachId,
+      studentId: null,
+      status: 'scheduled',
+    };
+    if (options?.from || options?.to) {
+      const range: Record<string, Date> = {};
+      if (options.from) range.gte = options.from;
+      if (options.to) range.lte = options.to;
+      where.startTime = range;
+    } else {
+      where.startTime = { gt: new Date() };
+    }
+    return prisma.privateLesson.findMany({
+      where,
+      orderBy: { startTime: 'asc' },
+    });
   }
 
-  async cancelPrivateLesson(_id: string): Promise<{
-    id: string;
-    slotId: string;
-    coachId: string;
-    studentId: string;
-    venueId: string | null;
-    startTime: Date;
-    endTime: Date;
-    status: string;
-    createdAt: Date;
-  }> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /**
+   * Student books an open slot. Atomic: uses updateMany with guards on studentId=null
+   * and status='scheduled' to enforce optimistic concurrency.
+   *
+   * Returns the lesson on success; returns null if the slot was no longer available.
+   */
+  async bookPrivateLesson(
+    lessonId: string,
+    studentId: string,
+    venueId: string | null,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const result = await tx.privateLesson.updateMany({
+        where: {
+          id: lessonId,
+          studentId: null,
+          status: 'scheduled',
+        },
+        data: {
+          studentId,
+          venueId: venueId ?? undefined,
+          source: 'booked',
+        },
+      });
+      if (result.count === 0) {
+        return null;
+      }
+      return tx.privateLesson.findUnique({ where: { id: lessonId } });
+    });
+  }
+
+  /**
+   * Mark a private lesson as cancelled. Business checks (who may cancel, status
+   * gating) are enforced in the service layer.
+   */
+  async cancelPrivateLesson(id: string) {
+    return prisma.privateLesson.update({
+      where: { id },
+      data: { status: 'cancelled' },
+    });
   }
 
   async findPrivateLessonById(id: string) {
     return prisma.privateLesson.findUnique({
       where: { id },
     });
+  }
+
+  async updatePrivateLesson(
+    id: string,
+    data: {
+      venueId?: string | null;
+      venueIds?: string[];
+      startTime?: Date;
+      endTime?: Date;
+      feeDescription?: string | null;
+      trainingContent?: string | null;
+      status?: string;
+    },
+  ) {
+    return prisma.privateLesson.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async updatePrivateLessonTrainingContent(id: string, content: string) {
+    return prisma.privateLesson.update({
+      where: { id },
+      data: { trainingContent: content },
+    });
+  }
+
+  async findPrivateLessonsByStudent(
+    coachId: string,
+    studentId: string,
+    options?: { status?: string; page?: number; pageSize?: number },
+  ) {
+    const page = options?.page ?? 1;
+    const pageSize = options?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const where: Record<string, unknown> = { coachId, studentId };
+    if (options?.status) {
+      where.status = options.status;
+    }
+    const [items, total] = await Promise.all([
+      prisma.privateLesson.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { startTime: 'desc' },
+      }),
+      prisma.privateLesson.count({ where }),
+    ]);
+    return { items, total };
+  }
+
+  /** Scheduler: mark unbooked slots whose startTime has passed as expired. */
+  async markSlotsExpired(now: Date): Promise<number> {
+    const result = await prisma.privateLesson.updateMany({
+      where: {
+        studentId: null,
+        status: 'scheduled',
+        startTime: { lte: now },
+      },
+      data: { status: 'expired' },
+    });
+    return result.count;
+  }
+
+  /**
+   * Scheduler: transition booked/scheduled lessons to in_progress.
+   * Returns the lessons that were updated, so the caller can populate CoachStudent.
+   */
+  async markPrivateLessonsInProgress(now: Date) {
+    const toStart = await prisma.privateLesson.findMany({
+      where: {
+        status: 'scheduled',
+        startTime: { lte: now },
+        studentId: { not: null },
+      },
+    });
+    if (toStart.length === 0) return [] as typeof toStart;
+    await prisma.privateLesson.updateMany({
+      where: { id: { in: toStart.map((l) => l.id) } },
+      data: { status: 'in_progress' },
+    });
+    return toStart;
+  }
+
+  /** Scheduler: transition in_progress → completed when endTime passed. */
+  async markPrivateLessonsCompleted(now: Date): Promise<number> {
+    const result = await prisma.privateLesson.updateMany({
+      where: {
+        status: 'in_progress',
+        endTime: { lte: now },
+      },
+      data: { status: 'completed' },
+    });
+    return result.count;
+  }
+
+  /** Daily cleanup: physically delete expired slots older than the cutoff. */
+  async deleteExpiredSlots(beforeDate: Date): Promise<number> {
+    const result = await prisma.privateLesson.deleteMany({
+      where: {
+        status: 'expired',
+        startTime: { lt: beforeDate },
+      },
+    });
+    return result.count;
   }
 
   // TODO: 当前实现将团课报名、私教预约和学员班排课全量加载到内存后合并排序、切片分页。
@@ -995,123 +1153,204 @@ export class CoachingRepository {
     });
   }
 
-  // ===== Coaching v2: Private Student (GC) — DEPRECATED =====
-  // All these methods are placeholders for sub-task 1 (schema refactor).
-  // The PrivateStudent / PrivateLessonV2 tables have been removed; sub-task 2
-  // will replace these with CoachStudent + unified PrivateLesson equivalents.
+  // ===== Coaching v2: CoachStudent (unified student library) =====
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async addPrivateStudent(_data: { coachId: string; studentId: string }): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /**
+   * Create a CoachStudent row. If an entry already exists for (coachId, studentId)
+   * it is left untouched (create-if-not-exists). `source` is only written on first
+   * insert per design doc decision 4.
+   */
+  async createCoachStudent(data: { coachId: string; studentId: string; source: string }) {
+    const existing = await prisma.coachStudent.findUnique({
+      where: { coachId_studentId: { coachId: data.coachId, studentId: data.studentId } },
+    });
+    if (existing) return existing;
+    return prisma.coachStudent.create({
+      data: {
+        coachId: data.coachId,
+        studentId: data.studentId,
+        source: data.source,
+      },
+    });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findPrivateStudentById(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /** Batch insert; skipDuplicates ensures idempotency and preserves first source. */
+  async recordCoachStudents(
+    coachId: string,
+    studentIds: string[],
+    source: string,
+  ): Promise<number> {
+    if (studentIds.length === 0) return 0;
+    const unique = [...new Set(studentIds)];
+    const result = await prisma.coachStudent.createMany({
+      data: unique.map((studentId) => ({ coachId, studentId, source })),
+      skipDuplicates: true,
+    });
+    return result.count;
   }
 
-  async findPrivateStudentByCoachAndStudent(
-    _coachId: string,
-    _studentId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  async findCoachStudentByCoachAndStudent(coachId: string, studentId: string) {
+    return prisma.coachStudent.findUnique({
+      where: { coachId_studentId: { coachId, studentId } },
+    });
   }
 
-  async findPrivateStudentsByCoachId(
-    _coachId: string,
-    _includeInactive?: boolean,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  async findCoachStudentDetail(coachId: string, studentId: string) {
+    return prisma.coachStudent.findUnique({
+      where: { coachId_studentId: { coachId, studentId } },
+    });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async updatePrivateStudentActive(_id: string, _isActive: boolean): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /**
+   * List the coach's CoachStudent rows with basic pagination / search.
+   *
+   * Note: full tag filtering is applied at the service layer because
+   * derived tags (e.g. '团课学员', '私教学员', '学员班: <name>') require
+   * cross-table aggregation. This method only applies nickname search
+   * against the related User, and returns the student user relation.
+   */
+  async findCoachStudents(
+    coachId: string,
+    filters?: { search?: string; page?: number; pageSize?: number },
+  ) {
+    const page = filters?.page ?? 1;
+    const pageSize = filters?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = { coachId };
+    if (filters?.search) {
+      where.student = {
+        OR: [
+          { nickname: { contains: filters.search, mode: 'insensitive' } },
+          { phone: { contains: filters.search } },
+        ],
+      };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.coachStudent.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { firstMetAt: 'desc' },
+        include: {
+          student: {
+            select: { id: true, nickname: true, avatarUrl: true, phone: true },
+          },
+        },
+      }),
+      prisma.coachStudent.count({ where }),
+    ]);
+
+    return { items, total };
   }
 
-  // ===== Coaching v2: Private Lesson V2 (GC) — DEPRECATED =====
-
-  async createPrivateLessonV2(_data: {
-    privateStudentId: string;
-    coachId: string;
-    studentId: string;
-    venueId?: string;
-    startTime: Date;
-    endTime: Date;
-    trainingContent?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  async findCoachStudentTagsList(coachId: string, studentId: string) {
+    return prisma.studentTag.findMany({
+      where: { coachId, studentId },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findPrivateLessonV2ById(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /** Return distinct tag strings ever used by this coach (for filter UI). */
+  async findAllCoachCustomTags(coachId: string): Promise<string[]> {
+    const rows = await prisma.studentTag.findMany({
+      where: { coachId },
+      select: { tag: true },
+      distinct: ['tag'],
+    });
+    return rows.map((r) => r.tag);
   }
 
-  async findPrivateLessonsV2ByPrivateStudentId(
-    _privateStudentId: string,
-    _options?: { page?: number; pageSize?: number; status?: string },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  async setCoachStudentTags(
+    coachId: string,
+    studentId: string,
+    tags: string[],
+  ): Promise<string[]> {
+    await prisma.$transaction(async (tx) => {
+      await tx.studentTag.deleteMany({ where: { coachId, studentId } });
+      if (tags.length > 0) {
+        await tx.studentTag.createMany({
+          data: tags.map((tag) => ({ coachId, studentId, tag })),
+          skipDuplicates: true,
+        });
+      }
+    });
+    const rows = await prisma.studentTag.findMany({
+      where: { coachId, studentId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((r) => r.tag);
   }
 
-  async updatePrivateLessonV2(
-    _id: string,
-    _data: {
-      venueId?: string;
-      startTime?: Date;
-      endTime?: Date;
-      trainingContent?: string;
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /** Tag lookups for derived aggregations used by the service. */
+  async findStudentIdsWithTag(coachId: string, tag: string): Promise<string[]> {
+    const rows = await prisma.studentTag.findMany({
+      where: { coachId, tag },
+      select: { studentId: true },
+    });
+    return rows.map((r) => r.studentId);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async updatePrivateLessonV2Status(_id: string, _status: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /**
+   * Given a list of studentIds, return a map studentId -> { classes that belong to this coach }.
+   * Used by service layer to enrich CoachStudent items with studentClasses.
+   */
+  async findStudentClassesForStudents(
+    coachId: string,
+    studentIds: string[],
+  ): Promise<Map<string, Array<{ id: string; name: string }>>> {
+    if (studentIds.length === 0) return new Map();
+    const memberships = await prisma.studentClassMember.findMany({
+      where: {
+        studentId: { in: studentIds },
+        studentClass: { coachId },
+      },
+      select: {
+        studentId: true,
+        studentClass: { select: { id: true, name: true } },
+      },
+    });
+    const map = new Map<string, Array<{ id: string; name: string }>>();
+    for (const m of memberships) {
+      const arr = map.get(m.studentId) ?? [];
+      arr.push({ id: m.studentClass.id, name: m.studentClass.name });
+      map.set(m.studentId, arr);
+    }
+    return map;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async updatePrivateLessonV2TrainingContent(_id: string, _content: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
+  /** Which of these students have at least one group-class enrollment that has started or completed? */
+  async findStudentIdsWhoTookGroupClass(
+    coachId: string,
+    studentIds: string[],
+  ): Promise<Set<string>> {
+    if (studentIds.length === 0) return new Set();
+    const rows = await prisma.groupClassEnrollment.findMany({
+      where: {
+        userId: { in: studentIds },
+        groupClass: { coachId, status: { in: ['in_progress', 'completed'] } },
+      },
+      select: { userId: true },
+    });
+    return new Set(rows.map((r) => r.userId));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findScheduledPrivateLessonsV2ToStart(_now: Date): Promise<any[]> {
-    return [];
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findInProgressPrivateLessonsV2ToEnd(_now: Date): Promise<any[]> {
-    return [];
+  /** Which of these students have at least one private lesson in_progress or completed with this coach? */
+  async findStudentIdsWhoTookPrivateLesson(
+    coachId: string,
+    studentIds: string[],
+  ): Promise<Set<string>> {
+    if (studentIds.length === 0) return new Set();
+    const rows = await prisma.privateLesson.findMany({
+      where: {
+        coachId,
+        studentId: { in: studentIds },
+        status: { in: ['in_progress', 'completed'] },
+      },
+      select: { studentId: true },
+    });
+    return new Set(rows.map((r) => r.studentId).filter((s): s is string => s !== null));
   }
 
   // ===== Coaching v2: Notes & Tags (shared) =====
@@ -1151,15 +1390,8 @@ export class CoachingRepository {
     coachId: string;
     studentId: string;
     studentClassId?: string;
-    // privateStudentId removed: sub-task 2 will use CoachStudent-scoped notes instead
-    privateStudentId?: string;
     content: string;
   }) {
-    if (data.privateStudentId) {
-      throw new Error(
-        'NOT_IMPLEMENTED: privateStudentId scope removed in unified coach-student refactor',
-      );
-    }
     return prisma.studentNote.create({
       data: {
         coachId: data.coachId,
@@ -1174,13 +1406,7 @@ export class CoachingRepository {
     coachId: string;
     studentId: string;
     studentClassId?: string;
-    privateStudentId?: string;
   }) {
-    if (query.privateStudentId) {
-      throw new Error(
-        'NOT_IMPLEMENTED: privateStudentId scope removed in unified coach-student refactor',
-      );
-    }
     const where: Record<string, unknown> = {
       coachId: query.coachId,
       studentId: query.studentId,
@@ -1195,35 +1421,22 @@ export class CoachingRepository {
     });
   }
 
+  /**
+   * Overwrite the coach-student tag set with the given list.
+   * Returns the resulting tag rows, sorted by createdAt asc.
+   */
   async setStudentTags(
     coachId: string,
     studentId: string,
-    contextId: string | null,
-    contextType: 'studentClass' | 'privateStudent',
     tags: string[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any[]> {
-    if (contextType === 'privateStudent') {
-      throw new Error(
-        'NOT_IMPLEMENTED: privateStudent tag scope removed in unified coach-student refactor, will be replaced in sub-task 2',
-      );
-    }
-    // studentClass context — unchanged behaviour against simplified StudentTag
-    // (StudentTag no longer stores studentClassId; a migration keeps the tag at
-    //  (coachId, studentId, tag) level. contextId is retained for API compatibility
-    //  but does not partition storage.)
-    void contextId;
+  ): Promise<Array<{ id: string; coachId: string; studentId: string; tag: string; createdAt: Date }>> {
     const deleteWhere = { coachId, studentId };
     await prisma.studentTag.deleteMany({ where: deleteWhere });
 
-    if (tags.length === 0) return [];
-
-    const createData = tags.map((tag) => ({
-      coachId,
-      studentId,
-      tag,
-    }));
-    await prisma.studentTag.createMany({ data: createData, skipDuplicates: true });
+    if (tags.length > 0) {
+      const createData = tags.map((tag) => ({ coachId, studentId, tag }));
+      await prisma.studentTag.createMany({ data: createData, skipDuplicates: true });
+    }
 
     return prisma.studentTag.findMany({
       where: deleteWhere,
@@ -1231,17 +1444,7 @@ export class CoachingRepository {
     });
   }
 
-  async findStudentTags(query: {
-    coachId: string;
-    studentId: string;
-    studentClassId?: string;
-    privateStudentId?: string;
-  }) {
-    if (query.privateStudentId) {
-      throw new Error(
-        'NOT_IMPLEMENTED: privateStudentId scope removed in unified coach-student refactor',
-      );
-    }
+  async findStudentTags(query: { coachId: string; studentId: string }) {
     return prisma.studentTag.findMany({
       where: {
         coachId: query.coachId,
@@ -1319,57 +1522,7 @@ export class CoachingRepository {
     });
   }
 
-  // ===== Coaching v2: GC repository aliases (contract-test-compatible names) =====
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async createPrivateStudent(_data: { coachId: string; studentId: string }): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async reactivatePrivateStudent(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async deactivatePrivateStudent(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  async findPrivateStudentsByCoach(
-    _coachId: string,
-    _options?: { includeInactive?: boolean },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any[]> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  async findPrivateLessonsV2ByStudent(
-    _privateStudentId: string,
-    _options?: { page?: number; pageSize?: number; status?: string },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any[]> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async cancelPrivateLessonV2(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  // ===== Coaching v2: Batch status transitions (contract-test-compatible names) =====
+  // ===== Coaching v2: Batch status transitions =====
 
   async updateClassLessonsStarted(now: Date): Promise<number> {
     const lessons = await this.findScheduledClassLessonsToStart(now);
@@ -1387,31 +1540,12 @@ export class CoachingRepository {
     return lessons.length;
   }
 
-  async updatePrivateLessonsV2Started(_now: Date): Promise<number> {
-    // Deprecated: PrivateLessonV2 table removed; unified PrivateLesson scheduler
-    // will be introduced in sub-task 2.
-    return 0;
-  }
-
-  async updatePrivateLessonsV2Completed(_now: Date): Promise<number> {
-    // Deprecated: PrivateLessonV2 table removed; unified PrivateLesson scheduler
-    // will be introduced in sub-task 2.
-    return 0;
-  }
-
   // ===== Coaching v2: Raw finders (for cross-module service calls) =====
 
   async findClassLessonByIdRaw(id: string) {
     return prisma.classLesson.findUnique({
       where: { id },
     });
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findPrivateLessonV2ByIdRaw(_id: string): Promise<any> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
   }
 
   // ===== Coaching v2: Cross-module (for match-record) =====
@@ -1437,7 +1571,7 @@ export class CoachingRepository {
     return [...new Set([lesson.coachId, ...studentIds])];
   }
 
-  // ===== Coaching v2: Additional GB/GC aliases for contract tests =====
+  // ===== Coaching v2: Additional GB aliases for contract tests =====
 
   async findClassLessonsByClass(
     classId: string,
@@ -1456,23 +1590,5 @@ export class CoachingRepository {
       include: { studentClass: true },
     });
     return memberships.map((m) => m.studentClass);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findPrivateCoachesByStudent(_studentId: string): Promise<any[]> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
-  }
-
-  async findLessonsByStudent(_studentId: string): Promise<{
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    classLessons: any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    privateLessons: any[];
-  }> {
-    throw new Error(
-      'NOT_IMPLEMENTED: deprecated in unified coach-student refactor, will be replaced in sub-task 2',
-    );
   }
 }
