@@ -832,7 +832,9 @@ describe('PrivateStudentListPage', () => {
     render(<PrivateStudentListPage />);
     await user.click(screen.getByTestId('add-private-student-fab'));
     expect(screen.getByText('添加私教学员')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('输入用户昵称搜索')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('输入昵称、手机号或手机号后 4 位'),
+    ).toBeInTheDocument();
   });
 
   // 来源: coaching-v2.md 附录 B.1 — 点击学员卡片导航

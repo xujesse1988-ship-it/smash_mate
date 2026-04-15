@@ -12,17 +12,8 @@ import {
   getPrivateStudentTags,
 } from '../api/private-student-api';
 import type { PrivateStudentListItem } from '../api/private-student-api';
-import { resolveUrl, getAuthHeaders, handleResponse } from '../../../shared/utils/api-client';
-
-// Simple user search for the add student modal
-async function searchUsers(keyword: string): Promise<Array<{ id: string; nickname: string; avatarUrl: string | null }>> {
-  const response = await fetch(resolveUrl(`/api/users?keyword=${encodeURIComponent(keyword)}`), {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
-  const result = await handleResponse<{ items: Array<{ id: string; nickname: string; avatarUrl: string | null }> }>(response);
-  return result.items;
-}
+import { searchUsers } from '../api/student-class-api';
+import type { UserSearchResult } from '../api/student-class-api';
 
 export function PrivateStudentListPage() {
   const navigate = useNavigate();
@@ -32,8 +23,9 @@ export function PrivateStudentListPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; nickname: string; avatarUrl: string | null }>>([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { data: studentsData, isLoading: isStudentsLoading } = useQuery({
     queryKey: ['private-students'],
@@ -48,6 +40,7 @@ export function PrivateStudentListPage() {
       setShowAddModal(false);
       setSearchKeyword('');
       setSearchResults([]);
+      setHasSearched(false);
       message.success('添加成功');
     },
     onError: (error: Error & { code?: string }) => {
@@ -64,10 +57,12 @@ export function PrivateStudentListPage() {
   const handleSearch = async () => {
     if (!searchKeyword.trim()) return;
     setIsSearching(true);
+    setHasSearched(true);
     try {
-      const results = await searchUsers(searchKeyword.trim());
-      setSearchResults(results);
+      const result = await searchUsers(searchKeyword.trim());
+      setSearchResults(result.items);
     } catch {
+      setSearchResults([]);
       message.error('搜索失败');
     } finally {
       setIsSearching(false);
@@ -150,7 +145,7 @@ export function PrivateStudentListPage() {
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="输入用户昵称搜索"
+                  placeholder="输入昵称、手机号或手机号后 4 位"
                   style={{
                     flex: 1,
                     padding: '10px 14px',
@@ -173,6 +168,12 @@ export function PrivateStudentListPage() {
 
               {isSearching && (
                 <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>搜索中...</div>
+              )}
+
+              {!isSearching && hasSearched && searchResults.length === 0 && (
+                <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>
+                  未找到匹配的用户
+                </div>
               )}
 
               {searchResults.map((user) => (
@@ -206,7 +207,14 @@ export function PrivateStudentListPage() {
                     >
                       {!user.avatarUrl && user.nickname.charAt(0)}
                     </div>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{user.nickname}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{user.nickname}</span>
+                      {user.phoneLast4 && (
+                        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                          尾号 {user.phoneLast4}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => addStudentMutation.mutate(user.id)}
@@ -225,6 +233,7 @@ export function PrivateStudentListPage() {
                     setShowAddModal(false);
                     setSearchKeyword('');
                     setSearchResults([]);
+                    setHasSearched(false);
                   }}
                   className="btn-dark btn-sm"
                   style={{
