@@ -796,15 +796,45 @@ export class CoachingRepository {
     return result;
   }
 
-  async updateGroupClassesStarted(now: Date): Promise<number> {
-    const result = await prisma.groupClass.updateMany({
+  /**
+   * Transition group classes from 'open'/'full' to 'in_progress' when startTime
+   * has passed. Returns the rows that were transitioned so the scheduler can
+   * record their participants into CoachStudent (design §5).
+   */
+  async updateGroupClassesStarted(
+    now: Date,
+  ): Promise<Array<{ id: string; coachId: string }>> {
+    const candidates = await prisma.groupClass.findMany({
       where: {
         status: { in: ['open', 'full'] },
         startTime: { lte: now },
       },
+      select: { id: true, coachId: true },
+    });
+    if (candidates.length === 0) return [];
+    await prisma.groupClass.updateMany({
+      where: {
+        id: { in: candidates.map((c) => c.id) },
+        status: { in: ['open', 'full'] },
+      },
       data: { status: 'in_progress' },
     });
-    return result.count;
+    return candidates;
+  }
+
+  /**
+   * Batch-load enrollments (userId) for the given group class ids. Used by the
+   * scheduler to populate CoachStudent when a group class enters in_progress.
+   */
+  async findEnrollmentsByGroupClassIds(
+    groupClassIds: string[],
+  ): Promise<Array<{ groupClassId: string; userId: string }>> {
+    if (groupClassIds.length === 0) return [];
+    const rows = await prisma.groupClassEnrollment.findMany({
+      where: { groupClassId: { in: groupClassIds } },
+      select: { groupClassId: true, userId: true },
+    });
+    return rows;
   }
 
   async updateGroupClassesCompleted(now: Date): Promise<number> {

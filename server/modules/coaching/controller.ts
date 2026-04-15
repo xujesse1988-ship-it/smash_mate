@@ -11,24 +11,6 @@ import { UserRepository } from '../user/repository.js';
 import { NotificationService } from '../notification/service.js';
 import { NotificationRepository } from '../notification/repository.js';
 
-/**
- * HTTP 501 responder for legacy private-student routes that were removed in the
- * unified coach-student refactor. Sub-task 3 will introduce new
- * /api/coach-students/* replacements. Until then we keep these routes present
- * to avoid 404s on callers, but signal clearly that they moved.
- */
-function notImplemented(newEndpoint: string) {
-  return (_req: Request, res: Response) => {
-    res.status(501).json({
-      success: false,
-      error: {
-        code: 'COACHING_ENDPOINT_MOVED',
-        message: `该接口已重构，请使用 ${newEndpoint}`,
-      },
-    });
-  };
-}
-
 export function createCoachingController(): Router {
   const router = Router();
 
@@ -212,22 +194,7 @@ export function createCoachingController(): Router {
     },
   );
 
-  // Legacy: POST /api/private-lessons/book — body { slotId, venueId }
-  router.post(
-    '/private-lessons/book',
-    authMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const userId = (req as AuthRequest).userId!;
-        const result = await service.bookPrivateLesson(userId, req.body);
-        created(res, result);
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  // New: POST /api/private-lessons/:id/book — body { venueId? }
+  // POST /api/private-lessons/:id/book — body { venueId? }
   router.post(
     '/private-lessons/:id/book',
     authMiddleware,
@@ -475,81 +442,131 @@ export function createCoachingController(): Router {
   );
 
   // =========================================================================
-  // Legacy /api/private-students/* — removed in unified refactor. Sub-task 3
-  // introduces /api/coach-students/*. For now, return 501 to signal the move.
+  // Coach Students (unified student library — design §4.1/§4.2)
   // =========================================================================
 
-  router.post('/private-students', authMiddleware, notImplemented('/api/coach-students'));
-  router.get('/private-students', authMiddleware, notImplemented('/api/coach-students'));
   router.get(
-    '/private-students/:id',
+    '/coach-students',
     authMiddleware,
-    notImplemented('/api/coach-students/:studentId'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const filters = {
+          tag: req.query.tag as string | undefined,
+          search: req.query.search as string | undefined,
+          page: req.query.page !== undefined ? Number(req.query.page) : undefined,
+          pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
+        };
+        const result = await service.getCoachStudents(userId, filters);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
-  router.delete(
-    '/private-students/:id',
-    authMiddleware,
-    notImplemented('该功能已取消，请使用"我的学员"统一入口'),
-  );
+
   router.post(
-    '/private-students/:id/lessons',
+    '/coach-students',
     authMiddleware,
-    notImplemented('/api/coach-students/:studentId/lessons'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.addCoachStudent(userId, req.body);
+        created(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
+
+  router.post(
+    '/coach-students/search-by-phone',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.searchStudentByPhone(userId, req.body);
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.get(
-    '/private-students/:id/lessons',
+    '/coach-students/:studentId',
     authMiddleware,
-    notImplemented('/api/coach-students/:studentId/lessons'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.getCoachStudentDetail(
+          userId,
+          String(req.params.studentId),
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
-  router.get(
-    '/private-students/:id/lessons/:lessonId',
-    authMiddleware,
-    notImplemented('/api/private-lessons/:id'),
-  );
+
   router.put(
-    '/private-students/:id/lessons/:lessonId',
+    '/coach-students/:studentId/tags',
     authMiddleware,
-    notImplemented('/api/private-lessons/:id'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.setCoachStudentTags(
+          userId,
+          String(req.params.studentId),
+          req.body,
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
+
   router.post(
-    '/private-students/:id/lessons/:lessonId/cancel',
+    '/coach-students/:studentId/lessons',
     authMiddleware,
-    notImplemented('/api/private-lessons/:id/cancel'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.scheduleLessonForStudent(
+          userId,
+          String(req.params.studentId),
+          req.body,
+        );
+        created(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
-  router.put(
-    '/private-students/:id/lessons/:lessonId/training-content',
-    authMiddleware,
-    notImplemented('/api/private-lessons/:id/training-content'),
-  );
-  router.post(
-    '/private-students/:id/lessons/:lessonId/notes',
-    authMiddleware,
-    notImplemented('/api/private-lessons/:id/notes'),
-  );
+
   router.get(
-    '/private-students/:id/lessons/:lessonId/notes',
+    '/coach-students/:studentId/lessons',
     authMiddleware,
-    notImplemented('/api/private-lessons/:id/notes'),
-  );
-  router.post(
-    '/private-students/:id/notes',
-    authMiddleware,
-    notImplemented('/api/coach-students/:studentId/notes'),
-  );
-  router.get(
-    '/private-students/:id/notes',
-    authMiddleware,
-    notImplemented('/api/coach-students/:studentId/notes'),
-  );
-  router.put(
-    '/private-students/:id/tags',
-    authMiddleware,
-    notImplemented('/api/coach-students/:studentId/tags'),
-  );
-  router.get(
-    '/private-students/:id/tags',
-    authMiddleware,
-    notImplemented('/api/coach-students/:studentId/tags'),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const options = {
+          status: req.query.status as string | undefined,
+          page: req.query.page !== undefined ? Number(req.query.page) : undefined,
+          pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
+        };
+        const result = await service.getPrivateLessonsByCoachStudent(
+          userId,
+          String(req.params.studentId),
+          options,
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
   );
 
   // =========================================================================

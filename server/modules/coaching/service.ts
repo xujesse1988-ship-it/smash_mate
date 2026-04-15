@@ -1420,13 +1420,29 @@ export class CoachingService {
       const plCompleted = await this.repository.markPrivateLessonsCompleted(now);
 
       // Group classes: when a class starts, record all enrolled students.
-      const gcStarted = await this.repository.updateGroupClassesStarted(now);
-      if (gcStarted > 0) {
+      const newlyStartedGroupClasses = await this.repository.updateGroupClassesStarted(now);
+      if (newlyStartedGroupClasses.length > 0) {
         try {
-          // Best-effort: for each recently in_progress group class, record its
-          // enrollees. Because updateGroupClassesStarted doesn't return rows,
-          // we skip here; recording happens on the first match of a completed
-          // class via the general CoachStudent sweep below.
+          const enrollments = await this.repository.findEnrollmentsByGroupClassIds(
+            newlyStartedGroupClasses.map((g) => g.id),
+          );
+          // Group userIds by coachId so we can batch-insert per coach.
+          const coachIdByClass = new Map<string, string>();
+          for (const g of newlyStartedGroupClasses) coachIdByClass.set(g.id, g.coachId);
+          const perCoachStudents = new Map<string, Set<string>>();
+          for (const e of enrollments) {
+            const coachId = coachIdByClass.get(e.groupClassId);
+            if (!coachId) continue;
+            if (!perCoachStudents.has(coachId)) perCoachStudents.set(coachId, new Set());
+            perCoachStudents.get(coachId)!.add(e.userId);
+          }
+          for (const [coachId, studentIdSet] of perCoachStudents) {
+            await this.recordCoachStudentsFromCourse(
+              coachId,
+              [...studentIdSet],
+              'group-class',
+            );
+          }
         } catch (err) {
           logger.error(
             { error: (err as Error).message },
@@ -1437,7 +1453,32 @@ export class CoachingService {
       const gcCompleted = await this.repository.updateGroupClassesCompleted(now);
 
       // Class lessons: when a class-lesson starts, record its class members.
+      // Primary write happens via addStudentToClass at membership time;
+      // the scheduler does an idempotent sweep here as a safety net
+      // (createMany + skipDuplicates preserves original source).
+      const startedClassLessons = await this.repository.findScheduledClassLessonsToStart(now);
       const clStarted = await this.repository.updateClassLessonsStarted(now);
+      if (startedClassLessons.length > 0) {
+        try {
+          for (const lesson of startedClassLessons) {
+            const memberIds = await this.repository.getStudentClassMemberIds(
+              lesson.studentClassId,
+            );
+            if (memberIds.length > 0) {
+              await this.recordCoachStudentsFromCourse(
+                lesson.coachId,
+                memberIds,
+                'class-lesson',
+              );
+            }
+          }
+        } catch (err) {
+          logger.error(
+            { error: (err as Error).message },
+            'CoachStudent 入库（class-lesson）失败',
+          );
+        }
+      }
       const clCompleted = await this.repository.updateClassLessonsCompleted(now);
 
       logger.info(
@@ -1446,7 +1487,7 @@ export class CoachingService {
           expiredSlots,
           plInProgress: newlyInProgress.length,
           plCompleted,
-          gcStarted,
+          gcStarted: newlyStartedGroupClasses.length,
           gcCompleted,
           clStarted,
           clCompleted,
