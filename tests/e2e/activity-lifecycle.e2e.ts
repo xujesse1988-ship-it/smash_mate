@@ -215,10 +215,7 @@ test.describe('Activity - Lifecycle', () => {
       await page.goto(activityUrl);
       await page.waitForLoadState('networkidle');
 
-      // Should see "已满员" status
-      await expect(page.getByText('已满员')).toBeVisible();
-
-      // The join button should be disabled
+      // The join button should show "已满员" and be disabled
       const fullButton = page.getByRole('button', { name: '已满员' });
       await expect(fullButton).toBeVisible();
       await expect(fullButton).toBeDisabled();

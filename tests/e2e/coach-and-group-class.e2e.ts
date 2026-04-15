@@ -164,7 +164,7 @@ test.describe('Coach and Group Class', () => {
       await page.waitForLoadState('networkidle');
 
       // Should see the "课程" tab
-      await expect(page.getByText('课程')).toBeVisible();
+      await expect(page.getByRole('button', { name: '课程' })).toBeVisible();
 
       // Should see the "评价" tab
       await expect(page.getByRole('button', { name: '评价' })).toBeVisible();
