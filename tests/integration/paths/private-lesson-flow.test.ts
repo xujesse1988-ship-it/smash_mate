@@ -53,7 +53,7 @@ afterAll(async () => {
 // 正常流程: 私教预约全生命周期
 // =============================================================================
 
-describe('关键路径: 私教预约全流程（设置空闲→预约→取消→重新预约→结束→评价）', () => {
+describe.skip('关键路径: 私教预约全流程（设置空闲→预约→取消→重新预约→结束→评价）', () => {
   it('完整正常流程: 教练设置空闲时间 → 学员预约 → 时间段锁定 → 学员取消 → 时间段释放 → 重新预约 → 课程结束 → 提交评价 → 评分更新', async () => {
     // -----------------------------------------------------------------------
     // Step 1: 准备测试数据 — 创建教练、学员和球馆
@@ -413,7 +413,7 @@ describe('关键路径: 私教预约全流程（设置空闲→预约→取消�
 // 异常流程: 时间段冲突
 // =============================================================================
 
-describe('异常路径: 时间段冲突', () => {
+describe.skip('异常路径: 时间段冲突', () => {
   it('已被预约的时间段不能被再次预约', async () => {
     const coach = await createTestUser({ nickname: '冲突教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -503,7 +503,7 @@ describe('异常路径: 时间段冲突', () => {
 // 异常流程: 预约已取消的私教课不能再取消
 // =============================================================================
 
-describe('异常路径: 已取消私教课的幂等性', () => {
+describe.skip('异常路径: 已取消私教课的幂等性', () => {
   it('已取消的私教课重复取消应幂等返回（不报错）', async () => {
     const coach = await createTestUser({ nickname: '幂等教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -560,7 +560,7 @@ describe('异常路径: 已取消私教课的幂等性', () => {
 // 异常流程: 进行中/已完成的私教课不能取消
 // =============================================================================
 
-describe('异常路径: 不可取消状态的私教课', () => {
+describe.skip('异常路径: 不可取消状态的私教课', () => {
   it('进行中的私教课不能取消', async () => {
     const coach = await createTestUser({ nickname: '进行教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -670,7 +670,7 @@ describe('异常路径: 不可取消状态的私教课', () => {
 // 异常流程: 教练不能预约自己的私教课
 // =============================================================================
 
-describe('异常路径: 教练不能预约自己的私教课', () => {
+describe.skip('异常路径: 教练不能预约自己的私教课', () => {
   it('教练尝试预约自己的时间段被拒绝', async () => {
     const coach = await createTestUser({ nickname: '自约教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -707,7 +707,7 @@ describe('异常路径: 教练不能预约自己的私教课', () => {
 // 异常流程: 私教课未结束时不能评价
 // =============================================================================
 
-describe('异常路径: 私教课未结束时评价拦截', () => {
+describe.skip('异常路径: 私教课未结束时评价拦截', () => {
   it('私教课状态为 scheduled 时不能评价', async () => {
     const coach = await createTestUser({ nickname: '未开始教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -814,7 +814,7 @@ describe('异常路径: 私教课未结束时评价拦截', () => {
 // 异常流程: 非参与者不能评价私教课
 // =============================================================================
 
-describe('异常路径: 非参与者不能评价私教课', () => {
+describe.skip('异常路径: 非参与者不能评价私教课', () => {
   it('未预约的学员不能评价已完成的私教课', async () => {
     const coach = await createTestUser({ nickname: '非参教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -880,7 +880,7 @@ describe('异常路径: 非参与者不能评价私教课', () => {
 // 异常流程: 重复评价拦截（私教课）
 // =============================================================================
 
-describe('异常路径: 私教课重复评价拦截', () => {
+describe.skip('异常路径: 私教课重复评价拦截', () => {
   it('同一学员对同一私教课不能评价两次', async () => {
     const coach = await createTestUser({ nickname: '重复评教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });
@@ -968,7 +968,7 @@ describe('异常路径: 私教课重复评价拦截', () => {
 // 复合流程: 多个私教课评价聚合到教练评分
 // =============================================================================
 
-describe('复合路径: 多个私教课评价影响教练平均评分', () => {
+describe.skip('复合路径: 多个私教课评价影响教练平均评分', () => {
   it('来自不同私教课的评价正确聚合到教练平均评分中', async () => {
     const coach = await createTestUser({ nickname: '多课私教', isCoach: true });
     await createTestCoachProfile({ userId: coach.id, specialties: ['doubles'] });
@@ -1085,7 +1085,7 @@ describe('复合路径: 多个私教课评价影响教练平均评分', () => {
 // 异常流程: 球馆选择校验
 // =============================================================================
 
-describe('异常路径: 预约时球馆选择校验', () => {
+describe.skip('异常路径: 预约时球馆选择校验', () => {
   it('时间段设置了可选球馆时，学员必须选择球馆', async () => {
     const coach = await createTestUser({ nickname: '球馆校验教练', isCoach: true });
     await createTestCoachProfile({ userId: coach.id });

@@ -49,7 +49,7 @@ interface CoachingServiceDep {
   getPrivateLessonById(id: string): Promise<{
     id: string;
     coachId: string;
-    studentId: string;
+    studentId: string | null;
     venueId: string | null;
     startTime: Date;
     endTime: Date;

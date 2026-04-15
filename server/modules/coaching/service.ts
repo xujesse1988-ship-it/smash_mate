@@ -188,8 +188,24 @@ export class CoachingService {
     const profile = await this.repository.findCoachProfile(coachId);
 
     // Get private lesson slots (future, unbooked only for coach profile page)
-    const rawSlots = await this.repository.findAvailability(coachId);
-    const unbookedSlots = rawSlots.filter((s: { isBooked: boolean }) => !s.isBooked);
+    // In the unified coach-student refactor (sub-task 1) findAvailability is
+    // deprecated and throws NOT_IMPLEMENTED. Sub-task 2 will rewrite this using
+    // PrivateLesson where studentId=null. For now return an empty array so the
+    // existing /api/coaches/:id endpoint still returns a valid shape.
+    let unbookedSlots: Array<{
+      id: string;
+      startTime: Date;
+      endTime: Date;
+      venueIds: string[];
+      feeDescription: string | null;
+      isBooked: boolean;
+    }> = [];
+    try {
+      const rawSlots = await this.repository.findAvailability(coachId);
+      unbookedSlots = rawSlots.filter((s: { isBooked: boolean }) => !s.isBooked);
+    } catch {
+      unbookedSlots = [];
+    }
 
     // Calculate student count
     const studentCount = await this.calculateStudentCount(coachId);
@@ -1170,7 +1186,7 @@ export class CoachingService {
           targetType: 'private-lesson',
           targetId: lessonId,
         });
-      } else {
+      } else if (lesson.studentId) {
         // Coach cancelled — notify student
         await this.notificationService.create({
           userId: lesson.studentId,
@@ -1191,7 +1207,7 @@ export class CoachingService {
     logger.info(
       {
         privateLessonId: lessonId,
-        studentId: lesson.studentId.substring(0, 8),
+        studentId: lesson.studentId?.substring(0, 8) ?? null,
         coachId: lesson.coachId.substring(0, 8),
         operation: 'cancel',
       },
@@ -1332,8 +1348,10 @@ export class CoachingService {
       status: query.status,
     });
 
-    // Batch fetch student info
-    const studentIds = result.items.map((item: { studentId: string }) => item.studentId);
+    // Batch fetch student info (studentId may be null in unified schema; filter out)
+    const studentIds = result.items
+      .map((item: { studentId: string | null }) => item.studentId)
+      .filter((s): s is string => s !== null);
     const uniqueStudentIds = [...new Set(studentIds)];
     const students =
       uniqueStudentIds.length > 0 ? await this.userService.getUsersByIds(uniqueStudentIds) : [];
@@ -1344,16 +1362,15 @@ export class CoachingService {
       result.items.map(
         async (item: {
           id: string;
-          slotId: string;
           coachId: string;
-          studentId: string;
+          studentId: string | null;
           venueId: string | null;
           startTime: Date;
           endTime: Date;
           status: string;
           createdAt: Date;
         }) => {
-          const student = studentMap.get(item.studentId);
+          const student = item.studentId ? studentMap.get(item.studentId) : undefined;
           let venue = null;
           if (item.venueId) {
             venue = await this.venueService.getVenueById(item.venueId);

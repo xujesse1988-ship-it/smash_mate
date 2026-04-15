@@ -79,9 +79,10 @@ export async function getEnrollmentCount(groupClassId: string): Promise<number> 
 }
 
 /**
- * Create a private lesson slot in the database for testing.
- * Requires a valid coachId (create a user with isCoach=true first).
- * Returns the created slot record.
+ * Create a private lesson (unified schema) playing the role of an "open slot".
+ * In the unified model, a slot is just a PrivateLesson with studentId=null, source=null.
+ * This helper keeps the old export name so legacy tests still compile; sub-task 2
+ * will migrate call sites to use the new API directly.
  */
 export async function createTestPrivateLessonSlot(
   overrides: Partial<{
@@ -94,22 +95,33 @@ export async function createTestPrivateLessonSlot(
   }> & { coachId: string },
 ) {
   const defaults = {
-    startTime: new Date(Date.now() + 48 * 60 * 60 * 1000), // day after tomorrow
-    endTime: new Date(Date.now() + 50 * 60 * 60 * 1000), // day after tomorrow + 2h
+    startTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
     venueIds: [] as string[],
     feeDescription: null as string | null,
-    isBooked: false,
   };
 
-  return prisma.privateLessonSlot.create({
-    data: { ...defaults, ...overrides },
+  const merged = { ...defaults, ...overrides };
+  const lesson = await prisma.privateLesson.create({
+    data: {
+      coachId: merged.coachId,
+      startTime: merged.startTime,
+      endTime: merged.endTime,
+      venueIds: merged.venueIds,
+      feeDescription: merged.feeDescription,
+      studentId: null,
+      source: null,
+      status: 'scheduled',
+    },
   });
+  // Emulate the old shape so legacy assertions on `isBooked` do not crash at compile time
+  return { ...lesson, isBooked: overrides.isBooked ?? false };
 }
 
 /**
  * Create a private lesson in the database for testing.
- * Requires a valid slotId, coachId, and studentId.
- * Returns the created private lesson record.
+ * In the unified schema slotId has been removed; this helper keeps the old
+ * parameter for backward compatibility but ignores it.
  */
 export async function createTestPrivateLesson(
   overrides: Partial<{
@@ -120,7 +132,7 @@ export async function createTestPrivateLesson(
     startTime: Date;
     endTime: Date;
     status: string;
-  }> & { slotId: string; coachId: string; studentId: string },
+  }> & { slotId?: string; coachId: string; studentId: string },
 ) {
   const defaults = {
     venueId: null as string | null,
@@ -128,9 +140,19 @@ export async function createTestPrivateLesson(
     endTime: new Date(Date.now() + 50 * 60 * 60 * 1000),
     status: 'scheduled',
   };
+  const { slotId: _slotId, ...rest } = { ...defaults, ...overrides };
+  void _slotId;
 
   return prisma.privateLesson.create({
-    data: { ...defaults, ...overrides },
+    data: {
+      coachId: rest.coachId,
+      studentId: rest.studentId,
+      venueId: rest.venueId ?? null,
+      startTime: rest.startTime,
+      endTime: rest.endTime,
+      status: rest.status,
+      source: 'booked',
+    },
   });
 }
 
@@ -141,7 +163,6 @@ export async function createTestPrivateLesson(
 export async function cleanupCoachingTestData() {
   await prisma.groupClassEnrollment.deleteMany();
   await prisma.privateLesson.deleteMany();
-  await prisma.privateLessonSlot.deleteMany();
   await prisma.groupClass.deleteMany();
   await prisma.coachProfile.deleteMany();
 }

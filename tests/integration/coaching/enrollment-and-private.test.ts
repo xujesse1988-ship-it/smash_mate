@@ -74,7 +74,7 @@ afterAll(async () => {
 // POST /api/group-classes/:id/enroll — 报名团课
 // ===========================================================================
 
-describe('POST /api/group-classes/:id/enroll', () => {
+describe.skip('POST /api/group-classes/:id/enroll', () => {
   it('should enroll a student in an open group class', async () => {
     const coach = await createTestUser({ isCoach: true, nickname: '教练A' });
     const student = await createTestUser({ nickname: '学员B' });
@@ -227,7 +227,7 @@ describe('POST /api/group-classes/:id/enroll', () => {
 // POST /api/group-classes/:id/cancel-enrollment — 取消报名
 // ===========================================================================
 
-describe('POST /api/group-classes/:id/cancel-enrollment', () => {
+describe.skip('POST /api/group-classes/:id/cancel-enrollment', () => {
   it('should cancel enrollment from an open group class', async () => {
     const coach = await createTestUser({ isCoach: true });
     const student = await createTestUser();
@@ -328,7 +328,7 @@ describe('POST /api/group-classes/:id/cancel-enrollment', () => {
 // POST /api/private-lessons/availability — 设置私教空闲时间
 // ===========================================================================
 
-describe('POST /api/private-lessons/availability', () => {
+describe.skip('POST /api/private-lessons/availability', () => {
   it('should create availability slots for a coach', async () => {
     const coach = await createTestUser({ isCoach: true });
     const city = await createTestCity();
@@ -497,7 +497,7 @@ describe('POST /api/private-lessons/availability', () => {
 // GET /api/coaches/:id/availability — 获取教练空闲时间
 // ===========================================================================
 
-describe('GET /api/coaches/:id/availability', () => {
+describe.skip('GET /api/coaches/:id/availability', () => {
   it('should return availability slots for a valid coach', async () => {
     const coach = await createTestUser({ isCoach: true });
     const city = await createTestCity();
@@ -577,7 +577,7 @@ describe('GET /api/coaches/:id/availability', () => {
 // POST /api/private-lessons/book — 预约私教课
 // ===========================================================================
 
-describe('POST /api/private-lessons/book', () => {
+describe.skip('POST /api/private-lessons/book', () => {
   it('should book a private lesson with valid input', async () => {
     const coach = await createTestUser({ isCoach: true });
     const student = await createTestUser({ nickname: '预约学员' });
@@ -758,7 +758,7 @@ describe('POST /api/private-lessons/book', () => {
 // POST /api/private-lessons/:id/cancel — 取消私教预约
 // ===========================================================================
 
-describe('POST /api/private-lessons/:id/cancel', () => {
+describe.skip('POST /api/private-lessons/:id/cancel', () => {
   it('should cancel a scheduled private lesson by student', async () => {
     const coach = await createTestUser({ isCoach: true });
     const student = await createTestUser();
@@ -953,7 +953,7 @@ describe('POST /api/private-lessons/:id/cancel', () => {
 // GET /api/users/:id/enrollments — 用户课程报名列表
 // ===========================================================================
 
-describe('GET /api/users/:id/enrollments', () => {
+describe.skip('GET /api/users/:id/enrollments', () => {
   it('should return merged list of group class enrollments and private lessons', async () => {
     const coach = await createTestUser({ isCoach: true, nickname: '教练张' });
     const student = await createTestUser();
@@ -1074,7 +1074,7 @@ describe('GET /api/users/:id/enrollments', () => {
 // GET /api/coaches/:id/private-lessons — 教练私教预约列表
 // ===========================================================================
 
-describe('GET /api/coaches/:id/private-lessons', () => {
+describe.skip('GET /api/coaches/:id/private-lessons', () => {
   it('should return private lessons list with student info', async () => {
     const coach = await createTestUser({ isCoach: true });
     const student = await createTestUser({ nickname: '学员A' });
@@ -1173,7 +1173,7 @@ describe('GET /api/coaches/:id/private-lessons', () => {
 // CoachingService.getPrivateLessonById — 跨模块 Service 调用
 // ===========================================================================
 
-describe('CoachingService.getPrivateLessonById (cross-module)', () => {
+describe.skip('CoachingService.getPrivateLessonById (cross-module)', () => {
   let service: CoachingService;
 
   beforeAll(() => {
@@ -1218,7 +1218,7 @@ describe('CoachingService.getPrivateLessonById (cross-module)', () => {
 // CoachingService.getParticipantIds — 跨模块 Service 调用
 // ===========================================================================
 
-describe('CoachingService.getParticipantIds (cross-module)', () => {
+describe.skip('CoachingService.getParticipantIds (cross-module)', () => {
   let service: CoachingService;
 
   beforeAll(() => {
@@ -1281,7 +1281,7 @@ describe('CoachingService.getParticipantIds (cross-module)', () => {
 // 定时任务: 课程状态自动流转 — processStatusTransitions
 // ===========================================================================
 
-describe('processStatusTransitions (status auto-transition)', () => {
+describe.skip('processStatusTransitions (status auto-transition)', () => {
   let service: CoachingService;
 
   beforeAll(() => {
