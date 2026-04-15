@@ -7,6 +7,7 @@ const TYPE_FILTERS = [
   { value: null, label: '全部' },
   { value: 'group-class', label: '团课' },
   { value: 'private-lesson', label: '私教' },
+  { value: 'class-lesson', label: '学员班' },
 ] as const;
 
 const STATUS_FILTERS = [
@@ -46,7 +47,11 @@ export function MyEnrollmentListPage() {
     if (statusFilter === 'upcoming') {
       items = items.filter((item) => {
         const status =
-          item.type === 'group-class' ? item.groupClass?.status : item.privateLesson?.status;
+          item.type === 'group-class'
+            ? item.groupClass?.status
+            : item.type === 'private-lesson'
+              ? item.privateLesson?.status
+              : item.classLesson?.status;
         return status === 'open' || status === 'full' || status === 'scheduled';
       });
     }
@@ -132,33 +137,58 @@ export function MyEnrollmentListPage() {
           }}
         >
           {isLoading && (
-            <div style={{ color: 'var(--text-2)', textAlign: 'center', padding: 24 }}>加载中...</div>
+            <div style={{ color: 'var(--text-2)', textAlign: 'center', padding: 24 }}>
+              加载中...
+            </div>
           )}
 
           {error && (
-            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>加载失败，请重试</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>
+              加载失败，请重试
+            </div>
           )}
 
           {!isLoading && !error && allItems.length === 0 && data && (
-            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>暂无报名记录</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>
+              暂无报名记录
+            </div>
           )}
 
           {allItems.map((item) => {
-            const isGroupClass = item.type === 'group-class';
             const gc = item.groupClass;
             const pl = item.privateLesson;
+            const cl = item.classLesson;
+
+            const cardKey =
+              item.type === 'group-class'
+                ? gc?.id
+                : item.type === 'private-lesson'
+                  ? pl?.id
+                  : cl?.id;
+
+            const status =
+              item.type === 'group-class'
+                ? gc?.status
+                : item.type === 'private-lesson'
+                  ? pl?.status
+                  : cl?.status;
+
+            const handleClick = () => {
+              if (item.type === 'group-class' && gc) {
+                navigate(`/group-classes/${gc.id}`);
+              } else if (item.type === 'private-lesson' && pl) {
+                navigate(`/coaches/${pl.coachId}`);
+              } else if (item.type === 'class-lesson' && cl) {
+                // 学员班的学员没有专属排课详情页，跳教练主页查看课程信息
+                navigate(`/coaches/${cl.coachId}`);
+              }
+            };
 
             return (
               <div
-                key={isGroupClass ? gc?.id : pl?.id}
-                data-testid={`enrollment-card-${isGroupClass ? gc?.id : pl?.id}`}
-                onClick={() => {
-                  if (isGroupClass && gc) {
-                    navigate(`/group-classes/${gc.id}`);
-                  } else if (pl) {
-                    navigate(`/coaches/${pl.coachId}`);
-                  }
-                }}
+                key={`${item.type}-${cardKey}`}
+                data-testid={`enrollment-card-${cardKey}`}
+                onClick={handleClick}
                 style={{
                   padding: '16px 14px',
                   border: '1px solid var(--surface-2)',
@@ -177,7 +207,7 @@ export function MyEnrollmentListPage() {
                   }}
                 >
                   <div>
-                    {isGroupClass && gc ? (
+                    {item.type === 'group-class' && gc ? (
                       <>
                         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
                           {gc.title}
@@ -204,9 +234,11 @@ export function MyEnrollmentListPage() {
                           </div>
                         )}
                       </>
-                    ) : pl ? (
+                    ) : item.type === 'private-lesson' && pl ? (
                       <>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>私教课</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
+                          私教课
+                        </div>
                         <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
                           {new Date(pl.startTime).toLocaleString('zh-CN', {
                             month: '2-digit',
@@ -229,6 +261,36 @@ export function MyEnrollmentListPage() {
                           </div>
                         )}
                       </>
+                    ) : item.type === 'class-lesson' && cl ? (
+                      <>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
+                          {cl.studentClassName}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                          学员班排课
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
+                          {new Date(cl.startTime).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {' - '}
+                          {new Date(cl.endTime).toLocaleTimeString('zh-CN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
+                          教练：{cl.coachNickname}
+                        </div>
+                        {cl.venue && (
+                          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
+                            {cl.venue.name}
+                          </div>
+                        )}
+                      </>
                     ) : null}
                   </div>
 
@@ -239,21 +301,18 @@ export function MyEnrollmentListPage() {
                       borderRadius: 999,
                       whiteSpace: 'nowrap',
                       background: (() => {
-                        const status = isGroupClass ? gc?.status : pl?.status;
                         if (status === 'completed') return 'rgba(96,165,250,0.15)';
                         if (status === 'cancelled') return 'rgba(248,113,113,0.15)';
                         return 'var(--primary-dim)';
                       })(),
                       color: (() => {
-                        const status = isGroupClass ? gc?.status : pl?.status;
                         if (status === 'completed') return 'var(--blue)';
                         if (status === 'cancelled') return 'var(--danger)';
                         return 'var(--primary)';
                       })(),
                     }}
                   >
-                    {STATUS_MAP[(isGroupClass ? gc?.status : pl?.status) || ''] ||
-                      (isGroupClass ? gc?.status : pl?.status)}
+                    {STATUS_MAP[status || ''] || status}
                   </span>
                 </div>
               </div>

@@ -350,8 +350,8 @@ export class CoachingRepository {
     });
   }
 
-  // TODO: 当前实现将团课报名和私教预约全量加载到内存后合并排序、切片分页。
-  // 因为需要跨两张表按 startTime 统一排序，无法直接在 DB 层面完成分页。
+  // TODO: 当前实现将团课报名、私教预约和学员班排课全量加载到内存后合并排序、切片分页。
+  // 因为需要跨多张表按 startTime 统一排序，无法直接在 DB 层面完成分页。
   // 一期数据量小可接受，二期应优化为 DB 层分页（如分别限制查询量或使用 raw SQL union）。
   async findUserEnrollments(
     userId: string,
@@ -374,6 +374,17 @@ export class CoachingRepository {
       } | null;
       privateLesson: {
         id: string;
+        coachId: string;
+        startTime: Date;
+        endTime: Date;
+        status: string;
+        createdAt: Date;
+        venue?: { id: string; name: string } | null;
+      } | null;
+      classLesson: {
+        id: string;
+        studentClassId: string;
+        studentClassName: string;
         coachId: string;
         startTime: Date;
         endTime: Date;
@@ -419,6 +430,7 @@ export class CoachingRepository {
               : null,
           },
           privateLesson: null,
+          classLesson: null,
         });
       }
     }
@@ -451,14 +463,67 @@ export class CoachingRepository {
             createdAt: l.createdAt,
             venue: l.venue ? { id: l.venue.id, name: l.venue.name } : null,
           },
+          classLesson: null,
         });
+      }
+    }
+
+    // Collect student class lessons (排课 of classes the user is a member of)
+    if (!type || type === 'class-lesson') {
+      const memberships = await prisma.studentClassMember.findMany({
+        where: { studentId: userId },
+        select: { studentClassId: true },
+      });
+      const classIds = memberships.map((m) => m.studentClassId);
+
+      if (classIds.length > 0) {
+        const clWhere: Record<string, unknown> = { studentClassId: { in: classIds } };
+        if (status) {
+          clWhere.status = status;
+        }
+
+        const clLessons = await prisma.classLesson.findMany({
+          where: clWhere,
+          include: {
+            studentClass: { select: { id: true, name: true } },
+            venue: { select: { id: true, name: true } },
+          },
+          orderBy: { startTime: 'desc' },
+        });
+
+        for (const l of clLessons) {
+          items.push({
+            type: 'class-lesson',
+            groupClass: null,
+            privateLesson: null,
+            classLesson: {
+              id: l.id,
+              studentClassId: l.studentClassId,
+              studentClassName: l.studentClass.name,
+              coachId: l.coachId,
+              startTime: l.startTime,
+              endTime: l.endTime,
+              status: l.status,
+              createdAt: l.createdAt,
+              venue: l.venue ? { id: l.venue.id, name: l.venue.name } : null,
+            },
+          });
+        }
       }
     }
 
     // Sort by startTime descending
     items.sort((a, b) => {
-      const aTime = a.groupClass?.startTime ?? a.privateLesson?.startTime ?? new Date(0);
-      const bTime = b.groupClass?.startTime ?? b.privateLesson?.startTime ?? new Date(0);
+      const aTime =
+        a.groupClass?.startTime ??
+        a.privateLesson?.startTime ??
+        a.classLesson?.startTime ??
+        new Date(0);
+      const bTime =
+        b.groupClass?.startTime ??
+        b.privateLesson?.startTime ??
+        b.classLesson?.startTime ??
+        new Date(0);
       return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
 
@@ -1369,10 +1434,7 @@ export class CoachingRepository {
     return this.updatePrivateStudentActive(id, false);
   }
 
-  async findPrivateStudentsByCoach(
-    coachId: string,
-    options?: { includeInactive?: boolean },
-  ) {
+  async findPrivateStudentsByCoach(coachId: string, options?: { includeInactive?: boolean }) {
     return this.findPrivateStudentsByCoachId(coachId, options?.includeInactive);
   }
 
@@ -1380,10 +1442,7 @@ export class CoachingRepository {
     privateStudentId: string,
     options?: { page?: number; pageSize?: number; status?: string },
   ) {
-    const result = await this.findPrivateLessonsV2ByPrivateStudentId(
-      privateStudentId,
-      options,
-    );
+    const result = await this.findPrivateLessonsV2ByPrivateStudentId(privateStudentId, options);
     return result.items;
   }
 

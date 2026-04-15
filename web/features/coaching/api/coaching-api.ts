@@ -1,8 +1,4 @@
-import {
-  resolveUrl,
-  handleResponse,
-  getAuthHeaders,
-} from '../../../shared/utils/api-client';
+import { resolveUrl, handleResponse, getAuthHeaders } from '../../../shared/utils/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -176,10 +172,24 @@ export interface EnrollmentPrivateLesson {
   createdAt: string;
 }
 
+export interface EnrollmentClassLesson {
+  id: string;
+  studentClassId: string;
+  studentClassName: string;
+  coachId: string;
+  coachNickname: string;
+  venue: { id: string; name: string } | null;
+  startTime: string;
+  endTime: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface EnrollmentItem {
-  type: 'group-class' | 'private-lesson';
+  type: 'group-class' | 'private-lesson' | 'class-lesson';
   groupClass: EnrollmentGroupClass | null;
   privateLesson: EnrollmentPrivateLesson | null;
+  classLesson: EnrollmentClassLesson | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -194,10 +204,8 @@ export async function getCoaches(params: {
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
-  if (params.pageSize !== undefined)
-    searchParams.set('pageSize', String(params.pageSize));
-  if (params.specialty !== undefined)
-    searchParams.set('specialty', params.specialty);
+  if (params.pageSize !== undefined) searchParams.set('pageSize', String(params.pageSize));
+  if (params.specialty !== undefined) searchParams.set('specialty', params.specialty);
 
   const qs = searchParams.toString();
   const url = resolveUrl(`/api/coaches${qs ? `?${qs}` : ''}`);
@@ -326,9 +334,7 @@ export async function updateGroupClass(
 // POST /api/group-classes/:id/cancel
 // ---------------------------------------------------------------------------
 
-export async function cancelGroupClass(
-  id: string,
-): Promise<{ id: string; status: string }> {
+export async function cancelGroupClass(id: string): Promise<{ id: string; status: string }> {
   const response = await fetch(resolveUrl(`/api/group-classes/${id}/cancel`), {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -355,13 +361,10 @@ export async function enrollGroupClass(id: string): Promise<EnrollResult> {
 // ---------------------------------------------------------------------------
 
 export async function cancelEnrollment(id: string): Promise<CancelEnrollResult> {
-  const response = await fetch(
-    resolveUrl(`/api/group-classes/${id}/cancel-enrollment`),
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    },
-  );
+  const response = await fetch(resolveUrl(`/api/group-classes/${id}/cancel-enrollment`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
 
   return handleResponse<CancelEnrollResult>(response);
 }
@@ -389,14 +392,11 @@ export async function setAvailability(data: {
     createdAt: string;
   }>;
 }> {
-  const response = await fetch(
-    resolveUrl('/api/private-lessons/availability'),
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    },
-  );
+  const response = await fetch(resolveUrl('/api/private-lessons/availability'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   return handleResponse(response);
 }
@@ -415,9 +415,7 @@ export async function getCoachAvailability(
   if (params?.endDate) searchParams.set('endDate', params.endDate);
 
   const qs = searchParams.toString();
-  const url = resolveUrl(
-    `/api/coaches/${coachId}/availability${qs ? `?${qs}` : ''}`,
-  );
+  const url = resolveUrl(`/api/coaches/${coachId}/availability${qs ? `?${qs}` : ''}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -453,16 +451,11 @@ export async function bookPrivateLesson(data: {
 // POST /api/private-lessons/:id/cancel
 // ---------------------------------------------------------------------------
 
-export async function cancelPrivateLesson(
-  id: string,
-): Promise<{ id: string; status: string }> {
-  const response = await fetch(
-    resolveUrl(`/api/private-lessons/${id}/cancel`),
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    },
-  );
+export async function cancelPrivateLesson(id: string): Promise<{ id: string; status: string }> {
+  const response = await fetch(resolveUrl(`/api/private-lessons/${id}/cancel`), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
 
   return handleResponse(response);
 }
@@ -478,15 +471,12 @@ export async function getUserEnrollments(
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
-  if (params.pageSize !== undefined)
-    searchParams.set('pageSize', String(params.pageSize));
+  if (params.pageSize !== undefined) searchParams.set('pageSize', String(params.pageSize));
   if (params.type !== undefined) searchParams.set('type', params.type);
   if (params.status !== undefined) searchParams.set('status', params.status);
 
   const qs = searchParams.toString();
-  const url = resolveUrl(
-    `/api/users/${userId}/enrollments${qs ? `?${qs}` : ''}`,
-  );
+  const url = resolveUrl(`/api/users/${userId}/enrollments${qs ? `?${qs}` : ''}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -507,14 +497,11 @@ export async function getCoachPrivateLessons(
   const searchParams = new URLSearchParams();
 
   if (params.page !== undefined) searchParams.set('page', String(params.page));
-  if (params.pageSize !== undefined)
-    searchParams.set('pageSize', String(params.pageSize));
+  if (params.pageSize !== undefined) searchParams.set('pageSize', String(params.pageSize));
   if (params.status !== undefined) searchParams.set('status', params.status);
 
   const qs = searchParams.toString();
-  const url = resolveUrl(
-    `/api/coaches/${coachId}/private-lessons${qs ? `?${qs}` : ''}`,
-  );
+  const url = resolveUrl(`/api/coaches/${coachId}/private-lessons${qs ? `?${qs}` : ''}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -523,4 +510,3 @@ export async function getCoachPrivateLessons(
 
   return handleResponse<PaginatedResult<CoachPrivateLesson>>(response);
 }
-

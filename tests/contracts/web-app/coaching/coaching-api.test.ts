@@ -220,6 +220,7 @@ const mockEnrollmentGroupClass = {
     enrolledAt: '2026-04-03T09:00:00.000Z',
   },
   privateLesson: null,
+  classLesson: null,
 };
 
 const mockEnrollmentPrivateLesson = {
@@ -235,6 +236,7 @@ const mockEnrollmentPrivateLesson = {
     status: 'scheduled',
     createdAt: '2026-04-03T10:00:00.000Z',
   },
+  classLesson: null,
 };
 
 // ===========================================================================

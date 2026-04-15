@@ -1046,7 +1046,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 
 `GET /api/users/:id/enrollments`
 
-**描述**: 获取指定用户的课程报名列表（包含团课报名和私教预约）
+**描述**: 获取指定用户的课程报名列表（包含团课报名、私教预约和学员班排课）
 
 **认证**: 需要
 
@@ -1064,7 +1064,7 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 |------|------|------|------|
 | page | number | 否 | 页码（默认 1） |
 | pageSize | number | 否 | 每页条数（默认 20，最大 100） |
-| type | string | 否 | 类型筛选：group-class / private-lesson；不传则返回全部 |
+| type | string | 否 | 类型筛选：group-class / private-lesson / class-lesson；不传则返回全部 |
 | status | string | 否 | 状态筛选：open / full / scheduled / in_progress / completed / cancelled；不传则返回全部 |
 
 **Response 200**:
@@ -1088,7 +1088,8 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
           "status": "open",
           "enrolledAt": "2026-04-03T09:00:00.000Z"
         },
-        "privateLesson": null
+        "privateLesson": null,
+        "classLesson": null
       },
       {
         "type": "private-lesson",
@@ -1105,6 +1106,27 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
           "endTime": "2026-04-11T12:00:00.000Z",
           "status": "scheduled",
           "createdAt": "2026-04-03T10:00:00.000Z"
+        },
+        "classLesson": null
+      },
+      {
+        "type": "class-lesson",
+        "groupClass": null,
+        "privateLesson": null,
+        "classLesson": {
+          "id": "uuid",
+          "studentClassId": "uuid",
+          "studentClassName": "周末初级班",
+          "coachId": "uuid",
+          "coachNickname": "教练王",
+          "venue": {
+            "id": "uuid",
+            "name": "朝阳体育中心羽毛球馆"
+          },
+          "startTime": "2026-04-12T09:00:00.000Z",
+          "endTime": "2026-04-12T11:00:00.000Z",
+          "status": "scheduled",
+          "createdAt": "2026-04-03T11:00:00.000Z"
         }
       }
     ],
@@ -1118,11 +1140,12 @@ User 1 ← N PrivateLesson（学员维度，通过 studentId）
 **业务规则**:
 - 当 userId 对应的用户不存在时，返回空列表（不暴露用户是否存在）
 - 任何已登录用户均可查看其他用户的课程报名列表（公开信息）
-- 合并团课报名（GroupClassEnrollment）和私教预约（PrivateLesson）两种类型
-- type 筛选：仅返回指定类型的记录
+- 合并团课报名（GroupClassEnrollment）、私教预约（PrivateLesson）和学员班排课（ClassLesson，通过 StudentClassMember 查找用户所在的班）三种类型
+- type 筛选：仅返回指定类型的记录（group-class / private-lesson / class-lesson）
 - status 筛选：
   - 团课报名的状态取关联团课的 status
   - 私教预约取 PrivateLesson 的 status
+  - 学员班排课取 ClassLesson 的 status
 - 按各自的开始时间倒序排列（最近的排前面）
 - 教练昵称通过 UserService.getUsersByIds() 批量获取
 
