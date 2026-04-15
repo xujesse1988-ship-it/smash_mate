@@ -345,6 +345,30 @@ export class UserService {
   }
 
   /**
+   * Cross-module lookup: find a user by phone. Returns null when the phone is
+   * not registered. Used by coaching to power "add coach student by phone"
+   * (design doc coach-student-unified §4.1).
+   *
+   * The returned shape intentionally includes the full phone so the caller can
+   * compute its own masked representation; do not log this value.
+   */
+  async getUserByPhone(phone: string): Promise<{
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+    phone: string;
+  } | null> {
+    const user = await this.repo.findByPhone(phone);
+    if (!user) return null;
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+      phone: user.phone,
+    };
+  }
+
+  /**
    * Search users by nickname (fuzzy) or phone (last 4 / full match).
    * Returns items with id, nickname, avatarUrl, phoneLast4 (no full phone for privacy).
    */
