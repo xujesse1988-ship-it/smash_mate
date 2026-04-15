@@ -74,8 +74,11 @@ export async function register(
     const token: string = body.data.token;
     const userId: string = body.data.user.id;
 
-    await page.goto('/login');
-    await page.evaluate(
+    // Inject token into localStorage before any page script runs, then go
+    // directly to /activities without visiting /login (avoids leaving the
+    // /login route in a half-mounted state that would break the next test
+    // in a shared context).
+    await page.addInitScript(
       ({ token, userId }) => {
         localStorage.setItem('token', token);
         localStorage.setItem('userId', userId);
@@ -88,10 +91,12 @@ export async function register(
   }
 
   await page.goto('/login');
-  await page.waitForLoadState('networkidle');
 
-  // Switch to register tab
-  await page.getByRole('tab', { name: '注册' }).click();
+  // Switch to register tab — wait up to 20s for the React app to mount
+  // (Vite dev server cold-starts can be slow and networkidle is unreliable with HMR).
+  const registerTab = page.getByRole('tab', { name: '注册' });
+  await registerTab.waitFor({ state: 'visible', timeout: 20000 });
+  await registerTab.click();
 
   // Fill phone number
   const phoneInput = page.getByPlaceholder('请输入手机号');
