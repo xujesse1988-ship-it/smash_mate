@@ -5,7 +5,7 @@
 
 ## 1. Feature 概述
 
-- **职责**: 提供手机号+验证码的注册/登录流程，支持注册时勾选教练角色；管理用户认证状态（token 存储与清除）
+- **职责**: 提供手机号+验证码的注册/登录流程；管理用户认证状态（token 存储与清除）
 - **包含页面**: 注册/登录页（LoginPage）
 - **对应后端模块**: user
 
@@ -19,7 +19,7 @@
 
 **路由**: `/login`
 
-**功能**: 用户通过手机号+验证码完成注册或登录。页面包含"登录"和"注册"两个 Tab，登录 Tab 仅需手机号和验证码，注册 Tab 额外提供"我是教练"勾选项。两个 Tab 共用同一后端接口（`POST /api/auth/login`），通过 `isNewUser` 响应字段区分新注册和已有用户登录。
+**功能**: 用户通过手机号+验证码完成注册或登录。页面包含"登录"和"注册"两个 Tab，均仅需手机号和验证码。两个 Tab 共用同一后端接口（`POST /api/auth/login`），通过 `isNewUser` 响应字段区分新注册和已有用户登录。教练身份由注册后通过教练申请流程获得。
 
 **页面状态**:
 
@@ -28,7 +28,6 @@
 | activeTab | `'login' \| 'register'` | 用户切换 | 当前激活的 Tab（登录 / 注册），默认"登录" |
 | phone | string | 用户输入 | 手机号，最多 11 位数字 |
 | code | string | 用户输入 | 6 位数字验证码 |
-| isCoach | boolean | 用户输入 | 是否勾选"我是教练"（仅注册 Tab 可见），默认 false |
 | countdown | number | 定时器 | "获取验证码"按钮的倒计时秒数（60→0），为 0 时按钮可点击 |
 | sendingCode | boolean | API 请求状态 | 发送验证码请求进行中 |
 | submitting | boolean | API 请求状态 | 登录/注册请求进行中 |
@@ -79,13 +78,13 @@ Tab 切换:
 
 登录（登录 Tab）:
   1. 前端校验手机号格式和验证码格式（6 位数字）
-  2. 校验通过 → 调用 POST /api/auth/login { phone, code }（不传 isCoach）
+  2. 校验通过 → 调用 POST /api/auth/login { phone, code }
   3. 请求成功 → 将 token 和 userId 存入 authStore → 重定向到来源页面（默认 /activities）
   4. 请求失败 → 显示对应错误提示
 
 注册（注册 Tab）:
   1. 前端校验手机号格式和验证码格式（6 位数字）
-  2. 校验通过 → 调用 POST /api/auth/login { phone, code, isCoach }
+  2. 校验通过 → 调用 POST /api/auth/login { phone, code }
   3. 请求成功:
      a. isNewUser = true → 注册成功，存入 authStore → 重定向（默认 /activities）
      b. isNewUser = false → 该手机号已注册，提示"该手机号已注册，已自动登录" → 存入 authStore → 重定向
@@ -105,7 +104,6 @@ LoginPage
 │   └── RegisterForm           # 注册表单
 │       ├── PhoneInput         # 手机号输入框（与登录 Tab 共享输入值）
 │       ├── CodeInput          # 验证码输入框 + 获取验证码按钮
-│       ├── CoachCheckbox      # "我是教练"复选框
 │       └── SubmitButton       # "注册"按钮
 ```
 
@@ -118,7 +116,6 @@ LoginPage
 | AppLogo | 应用 Logo 和名称展示（羽毛球图标 + "羽约"文字），登录页顶部品牌区域 | LoginPage |
 | PhoneInput | 手机号输入框，限制为 11 位数字输入，显示 phoneError 错误提示 | LoginPage |
 | CodeInput | 验证码输入框 + "获取验证码"按钮组合组件；管理倒计时显示和按钮禁用状态；限制为 6 位数字输入 | LoginPage |
-| CoachCheckbox | "我是教练"复选框组件，仅在注册 Tab 中显示 | LoginPage |
 
 ## 4. Feature 私有 Hooks
 

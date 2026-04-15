@@ -323,59 +323,7 @@ describe('LoginPage Integration: 登录', () => {
 // ---------------------------------------------------------------------------
 
 describe('LoginPage Integration: 注册', () => {
-  it('should register new user with coach role', async () => {
-    const user = userEvent.setup();
-
-    server.use(
-      http.post('/api/auth/login', async ({ request }) => {
-        const body = await request.json() as { phone: string; code: string; isCoach?: boolean };
-        expect(body.phone).toBe('13900005678');
-        expect(body.code).toBe('654321');
-        expect(body.isCoach).toBe(true);
-        return HttpResponse.json({
-          data: {
-            token: 'jwt-token-new',
-            user: {
-              id: 'user-uuid-new',
-              phone: '139****5678',
-              nickname: '球友38291',
-              avatarUrl: null,
-              bio: null,
-              isCoach: true,
-              createdAt: '2026-04-01T10:00:00.000Z',
-            },
-            isNewUser: true,
-          },
-        });
-      }),
-    );
-
-    renderLoginPage();
-
-    // Switch to register tab
-    await user.click(screen.getByRole('tab', { name: /注册/i }));
-
-    // Fill form
-    await user.type(screen.getByPlaceholderText(/手机号/i), '13900005678');
-    await user.type(screen.getByPlaceholderText(/验证码/i), '654321');
-    await user.click(screen.getByRole('checkbox', { name: /教练/i }));
-
-    // Submit
-    await user.click(screen.getByRole('button', { name: /^注册$/i }));
-
-    // Verify auth store
-    await waitFor(() => {
-      const state = useAuthStore.getState();
-      expect(state.token).toBe('jwt-token-new');
-      expect(state.userId).toBe('user-uuid-new');
-      expect(state.isLoggedIn).toBe(true);
-    });
-
-    // Verify navigation
-    expect(mockNavigate).toHaveBeenCalledWith('/activities', { replace: true });
-  });
-
-  it('should register without coach role when checkbox is not checked', async () => {
+  it('should register new user', async () => {
     const user = userEvent.setup();
     let capturedBody: Record<string, unknown> | null = null;
 
@@ -405,7 +353,7 @@ describe('LoginPage Integration: 注册', () => {
     // Switch to register tab
     await user.click(screen.getByRole('tab', { name: /注册/i }));
 
-    // Fill form (do not check coach)
+    // Fill form
     await user.type(screen.getByPlaceholderText(/手机号/i), '13900005678');
     await user.type(screen.getByPlaceholderText(/验证码/i), '654321');
 
@@ -416,7 +364,19 @@ describe('LoginPage Integration: 注册', () => {
     await waitFor(() => {
       expect(capturedBody).not.toBeNull();
     });
+    expect(capturedBody).toMatchObject({ phone: '13900005678', code: '654321' });
     expect(capturedBody).not.toHaveProperty('isCoach');
+
+    // Verify auth store
+    await waitFor(() => {
+      const state = useAuthStore.getState();
+      expect(state.token).toBe('jwt-token-new');
+      expect(state.userId).toBe('user-uuid-new');
+      expect(state.isLoggedIn).toBe(true);
+    });
+
+    // Verify navigation
+    expect(mockNavigate).toHaveBeenCalledWith('/activities', { replace: true });
   });
 
   it('should show info message when registering with existing phone number', async () => {

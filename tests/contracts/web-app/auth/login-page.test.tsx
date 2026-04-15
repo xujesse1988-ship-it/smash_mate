@@ -185,21 +185,6 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /^注册$/i })).toBeInTheDocument();
   });
 
-  // 来源: web-app-auth.md §2 — 组件结构 — RegisterForm — CoachCheckbox
-  it('should show coach checkbox only in register tab', async () => {
-    const user = userEvent.setup();
-    renderLoginPage();
-
-    // 登录 Tab 不应显示教练复选框
-    expect(screen.queryByRole('checkbox', { name: /教练/i })).not.toBeInTheDocument();
-
-    // 切换到注册 Tab
-    await user.click(screen.getByRole('tab', { name: /注册/i }));
-
-    // 注册 Tab 应显示"我是教练"复选框
-    expect(screen.getByRole('checkbox', { name: /教练/i })).toBeInTheDocument();
-  });
-
   // 来源: web-app-auth.md §6.6 — 手机号和验证码跨 Tab 共享
   it('should preserve phone and code inputs when switching tabs', async () => {
     const user = userEvent.setup();
@@ -351,23 +336,7 @@ describe('LoginPage', () => {
   // =========================================================================
 
   // 来源: web-app-auth.md §2 — 交互流程 — 注册（注册 Tab）
-  it('should call login mutation with isCoach when registering with coach checked', async () => {
-    const user = userEvent.setup();
-    renderLoginPage();
-
-    await user.click(screen.getByRole('tab', { name: /注册/i }));
-    await user.type(screen.getByPlaceholderText(/手机号/i), '13800001234');
-    await user.type(screen.getByPlaceholderText(/验证码/i), '123456');
-    await user.click(screen.getByRole('checkbox', { name: /教练/i }));
-    await user.click(screen.getByRole('button', { name: /^注册$/i }));
-
-    expect(mockLogin).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: '13800001234', code: '123456', isCoach: true }),
-    );
-  });
-
-  // 来源: web-app-auth.md §2 — 交互流程 — 注册（注册 Tab，不勾选教练）
-  it('should call login mutation without isCoach when registering without coach checked', async () => {
+  it('should call login mutation when registering', async () => {
     const user = userEvent.setup();
     renderLoginPage();
 

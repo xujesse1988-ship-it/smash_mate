@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Button, Checkbox } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { Input, Button } from 'antd';
 import { useSendCode } from '../hooks/useSendCode';
 import { useLogin } from '../hooks/useLogin';
 
@@ -12,7 +11,6 @@ export function LoginPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [isCoach, setIsCoach] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
 
@@ -47,21 +45,13 @@ export function LoginPage() {
     const codeValid = validateCode();
     if (!phoneValid || !codeValid) return;
 
-    if (activeTab === 'register' && isCoach) {
-      loginMutation.mutate({ phone, code, isCoach: true });
-    } else {
-      loginMutation.mutate({ phone, code });
-    }
+    loginMutation.mutate({ phone, code });
   };
 
   const handleTabChange = (key: 'login' | 'register') => {
     setActiveTab(key);
     setPhoneError(null);
     setCodeError(null);
-  };
-
-  const handleCoachChange = (e: CheckboxChangeEvent) => {
-    setIsCoach(e.target.checked);
   };
 
   const sendCodeButtonText =
@@ -179,14 +169,6 @@ export function LoginPage() {
             </div>
           )}
         </div>
-
-        {activeTab === 'register' && (
-          <div style={{ marginTop: 16 }}>
-            <Checkbox checked={isCoach} onChange={handleCoachChange}>
-              我是教练
-            </Checkbox>
-          </div>
-        )}
 
         <Button
           type="primary"

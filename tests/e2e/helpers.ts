@@ -54,12 +54,39 @@ export async function login(page: Page, phone: string): Promise<void> {
 /**
  * Register a new user: navigate to /login, switch to register tab,
  * fill phone, send code, enter code, submit.
+ *
+ * When `options.isCoach` is true, the registration goes through the
+ * backend API directly (passing isCoach=true), since the UI no longer
+ * exposes a coach checkbox. The resulting token is injected into
+ * localStorage and the page is navigated to /activities.
  */
 export async function register(
   page: Page,
   phone: string,
   options?: { isCoach?: boolean },
 ): Promise<void> {
+  if (options?.isCoach) {
+    await page.request.post('/api/auth/send-code', { data: { phone } });
+    const resp = await page.request.post('/api/auth/login', {
+      data: { phone, code: DEV_CODE, isCoach: true },
+    });
+    const body = await resp.json();
+    const token: string = body.data.token;
+    const userId: string = body.data.user.id;
+
+    await page.goto('/login');
+    await page.evaluate(
+      ({ token, userId }) => {
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userId);
+      },
+      { token, userId },
+    );
+    await page.goto('/activities');
+    await page.waitForURL('**/activities', { timeout: 10000 });
+    return;
+  }
+
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
 
@@ -80,11 +107,6 @@ export async function register(
   // Fill verification code (DEV_VERIFICATION_CODE always works regardless of send-code result)
   const codeInput = page.getByPlaceholder('6 位验证码');
   await codeInput.fill(DEV_CODE);
-
-  // Optionally check "I am a coach"
-  if (options?.isCoach) {
-    await page.getByLabel('我是教练').check();
-  }
 
   // Click register and wait for login API response
   const loginResponse = page.waitForResponse(
