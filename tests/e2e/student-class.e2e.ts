@@ -43,9 +43,7 @@ async function adminLogin(page: Page): Promise<void> {
   await page.getByRole('button', { name: '获取验证码' }).click();
   await sendCodeResponse;
   await page.getByPlaceholder('验证码').fill(DEV_CODE);
-  const loginResponse = page.waitForResponse(
-    (resp) => resp.url().includes('/api/auth/login'),
-  );
+  const loginResponse = page.waitForResponse((resp) => resp.url().includes('/api/auth/login'));
   await page.getByRole('button', { name: '登录' }).click();
   await loginResponse;
   await page.waitForURL(`${ADMIN_BASE}/cities`, { timeout: 10000 });
@@ -129,14 +127,15 @@ test.describe('Student Class Management', () => {
       await register(page, studentPhone2);
     });
 
-    test('coach navigates to student class list page', async ({ page }) => {
+    test('coach navigates to student class list via course management tab', async ({ page }) => {
       await loginAsCoach(page, coachPhone);
 
-      await page.goto(`${WEB_BASE}/my-student-classes`);
+      // 新入口：课程管理页的"学员班" Tab
+      await page.goto(`${WEB_BASE}/my-courses`);
       await page.waitForLoadState('networkidle');
 
-      // Should see the page title
-      await expect(page.getByText('我的学员班')).toBeVisible();
+      // Switch to the 学员班 tab
+      await page.getByRole('button', { name: '学员班', exact: true }).click();
 
       // Should see empty state
       await expect(page.getByText('暂无学员班')).toBeVisible();

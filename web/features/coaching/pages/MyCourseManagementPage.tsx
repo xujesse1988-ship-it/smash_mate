@@ -14,6 +14,7 @@ import { useCancelPrivateLesson } from '../hooks/useCancelPrivateLesson';
 import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
+import { StudentClassListView } from '../components/StudentClassListView';
 
 export function MyCourseManagementPage() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export function MyCourseManagementPage() {
   const cancelPrivateLessonMutation = useCancelPrivateLesson();
 
   const [activeTab, setActiveTab] = useState<
-    'group-classes' | 'private-schedule' | 'private-lessons'
+    'group-classes' | 'private-schedule' | 'private-lessons' | 'student-classes'
   >('group-classes');
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
   const [showEditClassModal, setShowEditClassModal] = useState(false);
@@ -207,7 +208,13 @@ export function MyCourseManagementPage() {
   return (
     <div style={{ padding: '16px' }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-2)', marginBottom: '16px' }}>
+      <div
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--surface-2)',
+          marginBottom: '16px',
+        }}
+      >
         <button
           onClick={() => setActiveTab('group-classes')}
           style={{
@@ -233,7 +240,9 @@ export function MyCourseManagementPage() {
             background: 'none',
             cursor: 'pointer',
             borderBottom:
-              activeTab === 'private-schedule' ? '2px solid var(--primary)' : '2px solid transparent',
+              activeTab === 'private-schedule'
+                ? '2px solid var(--primary)'
+                : '2px solid transparent',
             fontWeight: activeTab === 'private-schedule' ? 600 : 400,
             color: activeTab === 'private-schedule' ? 'var(--text-1)' : 'var(--text-3)',
           }}
@@ -249,12 +258,32 @@ export function MyCourseManagementPage() {
             background: 'none',
             cursor: 'pointer',
             borderBottom:
-              activeTab === 'private-lessons' ? '2px solid var(--primary)' : '2px solid transparent',
+              activeTab === 'private-lessons'
+                ? '2px solid var(--primary)'
+                : '2px solid transparent',
             fontWeight: activeTab === 'private-lessons' ? 600 : 400,
             color: activeTab === 'private-lessons' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
           私教预约
+        </button>
+        <button
+          onClick={() => setActiveTab('student-classes')}
+          style={{
+            flex: 1,
+            padding: '8px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            borderBottom:
+              activeTab === 'student-classes'
+                ? '2px solid var(--primary)'
+                : '2px solid transparent',
+            fontWeight: activeTab === 'student-classes' ? 600 : 400,
+            color: activeTab === 'student-classes' ? 'var(--text-1)' : 'var(--text-3)',
+          }}
+        >
+          学员班
         </button>
       </div>
 
@@ -280,7 +309,9 @@ export function MyCourseManagementPage() {
           </button>
 
           {groupClasses.length === 0 && (
-            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无团课</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>
+              暂无团课
+            </div>
           )}
 
           {groupClasses.map((gc) => (
@@ -387,7 +418,9 @@ export function MyCourseManagementPage() {
           </button>
 
           {slots.length === 0 && (
-            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无时间段</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>
+              暂无时间段
+            </div>
           )}
 
           {slots.map((slot) => (
@@ -438,7 +471,9 @@ export function MyCourseManagementPage() {
       {activeTab === 'private-lessons' && (
         <div>
           {privateLessons.length === 0 && (
-            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>暂无预约</div>
+            <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: '24px' }}>
+              暂无预约
+            </div>
           )}
 
           {privateLessons.map((lesson) => (
@@ -457,7 +492,9 @@ export function MyCourseManagementPage() {
                 {new Date(lesson.slot.endTime).toLocaleTimeString()}
               </div>
               {lesson.venue && (
-                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>{lesson.venue.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+                  {lesson.venue.name}
+                </div>
               )}
               <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
                 {lesson.status === 'scheduled'
@@ -492,6 +529,9 @@ export function MyCourseManagementPage() {
           ))}
         </div>
       )}
+
+      {/* Student Classes Tab */}
+      {activeTab === 'student-classes' && <StudentClassListView />}
 
       {/* Create Group Class Modal */}
       {showCreateClassModal && (
