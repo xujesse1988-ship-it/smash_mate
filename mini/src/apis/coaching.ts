@@ -116,3 +116,90 @@ export function getCoachReviews(
     url: `/coaches/${coachId}/reviews${query ? `?${query}` : ''}`,
   })
 }
+
+// ---------------------------------------------------------------------------
+// 团课详情相关
+// ---------------------------------------------------------------------------
+
+export interface GroupClassEnrollment {
+  userId: string
+  nickname: string
+  avatarUrl: string | null
+  enrolledAt: string
+}
+
+export interface GroupClassDetail {
+  id: string
+  coachId: string
+  coach: { id: string; nickname: string; avatarUrl: string | null }
+  title: string
+  venue: { id: string; name: string; address: string } | null
+  startTime: string
+  endTime: string
+  maxParticipants: number
+  currentParticipants: number
+  feeDescription: string | null
+  status: 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled'
+  enrollments: GroupClassEnrollment[]
+  createdAt: string
+}
+
+/** 获取团课详情 */
+export function getGroupClassDetail(id: string): Promise<GroupClassDetail> {
+  return request<GroupClassDetail>({ url: `/group-classes/${id}` })
+}
+
+/** 报名团课 */
+export function enrollGroupClass(id: string): Promise<void> {
+  return request<void>({ url: `/group-classes/${id}/enroll`, method: 'POST' })
+}
+
+/** 取消报名团课 */
+export function cancelEnrollment(id: string): Promise<void> {
+  return request<void>({ url: `/group-classes/${id}/cancel-enrollment`, method: 'POST' })
+}
+
+// ---------------------------------------------------------------------------
+// 私教详情相关
+// ---------------------------------------------------------------------------
+
+export interface PrivateLessonDetail {
+  id: string
+  coachId: string
+  studentId: string | null
+  venueId: string | null
+  venueIds: string[]
+  venue: SlotVenue | null
+  startTime: string
+  endTime: string
+  feeDescription: string | null
+  trainingContent: string | null
+  source: 'booked' | 'scheduled' | null
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'expired'
+  createdAt: string
+  updatedAt: string
+}
+
+/** 获取私教课详情 */
+export function getPrivateLessonDetail(id: string): Promise<PrivateLessonDetail> {
+  return request<PrivateLessonDetail>({ url: `/private-lessons/${id}` })
+}
+
+/** 预约私教课（空闲时段） */
+export function bookPrivateLesson(id: string, venueId?: string): Promise<void> {
+  return request<void>({
+    url: `/private-lessons/${id}/book`,
+    method: 'POST',
+    data: venueId ? { venueId } : undefined,
+  })
+}
+
+/** 取消私教课 */
+export function cancelPrivateLesson(id: string): Promise<void> {
+  return request<void>({ url: `/private-lessons/${id}/cancel`, method: 'POST' })
+}
+
+/** 获取场馆详情 */
+export function getVenueDetail(id: string): Promise<SlotVenue> {
+  return request<SlotVenue>({ url: `/venues/${id}` })
+}
