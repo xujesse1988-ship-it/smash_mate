@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/auth-store';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { CoachGuard } from '../../../shared/components/CoachGuard';
@@ -16,8 +16,16 @@ import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
 import { StudentClassListView } from '../components/StudentClassListView';
 
+const VALID_TABS = ['group-classes', 'private-schedule', 'private-lessons', 'student-classes'] as const;
+type TabValue = (typeof VALID_TABS)[number];
+
+function isValidTab(value: string | null): value is TabValue {
+  return VALID_TABS.includes(value as TabValue);
+}
+
 export function MyCourseManagementPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const userId = useAuthStore((state) => state.userId);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
@@ -31,9 +39,11 @@ export function MyCourseManagementPage() {
   const setAvailabilityMutation = useSetAvailability();
   const cancelPrivateLessonMutation = useCancelPrivateLesson();
 
-  const [activeTab, setActiveTab] = useState<
-    'group-classes' | 'private-schedule' | 'private-lessons' | 'student-classes'
-  >('group-classes');
+  const tabParam = searchParams.get('tab');
+  const activeTab: TabValue = isValidTab(tabParam) ? tabParam : 'group-classes';
+  const setActiveTab = (tab: TabValue) => {
+    setSearchParams({ tab }, { replace: true });
+  };
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
   const [showEditClassModal, setShowEditClassModal] = useState(false);
   const [editingClassId, setEditingClassId] = useState<string | null>(null);

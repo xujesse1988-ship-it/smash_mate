@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
-import { CoachGuard } from '../../../shared/components/CoachGuard';
 import { BackButton } from '../../../shared/components/BackButton';
 import { StatusBadge } from '../../../shared/components/StatusBadge';
 import {
@@ -104,14 +103,7 @@ export function PrivateLessonDetailPage() {
     },
   });
 
-  if (isUserLoading) return <div>加载中...</div>;
-  if (currentUser && !currentUser.isCoach) {
-    return (
-      <CoachGuard onNavigateToSettings={() => navigate('/settings')} message="请先开启教练角色" />
-    );
-  }
-
-  if (isDetailLoading) {
+  if (isUserLoading || isDetailLoading) {
     return <div style={{ padding: 16, color: 'var(--text-3)', textAlign: 'center' }}>加载中...</div>;
   }
 
@@ -121,13 +113,14 @@ export function PrivateLessonDetailPage() {
 
   const notes = notesData?.items ?? [];
   const isCancelled = lessonDetail.status === 'cancelled';
+  const isCoachView = currentUser?.isCoach && lessonDetail.coachId === currentUser?.id;
 
   return (
     <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Header */}
         <BackButton
-          onClick={() => navigate(`/my-students/${theStudentId}`)}
+          onClick={() => theStudentId ? navigate(`/my-students/${theStudentId}`) : navigate(-1)}
           style={{ marginBottom: 12, padding: '6px 0' }}
         />
 
@@ -164,8 +157,8 @@ export function PrivateLessonDetailPage() {
             </div>
           )}
 
-          {/* Actions for scheduled lessons */}
-          {lessonDetail.status === 'scheduled' && (
+          {/* Actions for scheduled lessons (coach only) */}
+          {isCoachView && lessonDetail.status === 'scheduled' && (
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button
                 onClick={() => setShowCancelConfirm(true)}
@@ -225,7 +218,7 @@ export function PrivateLessonDetailPage() {
                   <span style={{ color: 'var(--text-3)' }}>暂无训练内容</span>
                 )}
               </div>
-              {!isCancelled && (
+              {isCoachView && !isCancelled && (
                 <button
                   onClick={() => {
                     setEditTrainingContent(lessonDetail.trainingContent || '');
@@ -252,7 +245,7 @@ export function PrivateLessonDetailPage() {
         {/* Notes section */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 8px' }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>课程笔记</div>
-          {!isCancelled && (
+          {isCoachView && !isCancelled && (
             <button
               onClick={() => setShowNoteModal(true)}
               style={{

@@ -177,6 +177,7 @@ export function AppRoutes() {
             />
             <Route path="/my-courses" element={<MyCourseManagementPage />} />
             <Route path="/my-enrollments" element={<MyEnrollmentListPage />} />
+            <Route path="/private-lessons/:lessonId" element={<PrivateLessonDetailPage />} />
             <Route
               path="/match-records/create"
               element={<CreateMatchRecordPage />}

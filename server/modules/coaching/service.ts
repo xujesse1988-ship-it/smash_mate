@@ -2084,8 +2084,13 @@ export class CoachingService {
   async getClassLessonDetail(coachId: string, classId: string, lessonId: string) {
     const studentClass = await this.repository.findStudentClassById(classId);
     if (!studentClass) throw new AppError(404, 'COACHING_STUDENT_CLASS_NOT_FOUND', '学员班不存在');
-    if (studentClass.coachId !== coachId)
-      throw new AppError(403, 'COACHING_NOT_COACH_OWNER', '非该学员班的教练');
+    if (studentClass.coachId !== coachId) {
+      // 检查是否是该班的学员
+      const isMember = await this.repository.findStudentClassMember(classId, coachId);
+      if (!isMember) {
+        throw new AppError(403, 'COACHING_NOT_AUTHORIZED', '无权查看该课程');
+      }
+    }
 
     const lesson = await this.repository.findClassLessonById(lessonId);
     if (!lesson || lesson.studentClassId !== classId)

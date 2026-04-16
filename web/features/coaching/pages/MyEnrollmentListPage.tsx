@@ -177,10 +177,9 @@ export function MyEnrollmentListPage() {
               if (item.type === 'group-class' && gc) {
                 navigate(`/group-classes/${gc.id}`);
               } else if (item.type === 'private-lesson' && pl) {
-                navigate(`/coaches/${pl.coachId}`);
+                navigate(`/private-lessons/${pl.id}`);
               } else if (item.type === 'class-lesson' && cl) {
-                // 学员班的学员没有专属排课详情页，跳教练主页查看课程信息
-                navigate(`/coaches/${cl.coachId}`);
+                navigate(`/my-student-classes/${cl.studentClassId}/lessons/${cl.id}`);
               }
             };
 

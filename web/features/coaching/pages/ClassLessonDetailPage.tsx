@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BackButton } from '../../../shared/components/BackButton';
 import { StatusBadge } from '../../../shared/components/StatusBadge';
+import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { useClassLessonDetail } from '../hooks/useClassLessonDetail';
 import { useLessonNotes } from '../hooks/useLessonNotes';
 import { useUpdateTrainingContent } from '../hooks/useUpdateTrainingContent';
@@ -18,6 +19,7 @@ const statusMap: Record<string, { label: string; variant: 'green' | 'blue' | 'gr
 export function ClassLessonDetailPage() {
   const { classId, lessonId } = useParams<{ classId: string; lessonId: string }>();
   const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser();
 
   const { data: lesson, isLoading } = useClassLessonDetail(classId || '', lessonId || '');
   const { data: notesData } = useLessonNotes(classId || '', lessonId || '');
@@ -36,6 +38,7 @@ export function ClassLessonDetailPage() {
   const statusInfo = statusMap[lesson.status] || { label: lesson.status, variant: 'gray' as const };
   const notes = notesData?.items ?? [];
   const isCancelled = lesson.status === 'cancelled';
+  const isCoachView = currentUser?.isCoach && lesson.coachId === currentUser?.id;
 
   const handleSaveTrainingContent = () => {
     if (!classId || !lessonId) return;
@@ -75,7 +78,7 @@ export function ClassLessonDetailPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      <BackButton onClick={() => navigate(`/my-student-classes/${classId}`)} />
+      <BackButton onClick={() => isCoachView ? navigate(`/my-student-classes/${classId}`) : navigate(-1)} />
 
       {/* Lesson Info */}
       <div style={{ margin: '16px 0', padding: 16, background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--surface-2)' }}>
@@ -94,7 +97,7 @@ export function ClassLessonDetailPage() {
           {lesson.venue?.address && ` · ${lesson.venue.address}`}
         </div>
 
-        {lesson.status === 'scheduled' && (
+        {isCoachView && lesson.status === 'scheduled' && (
           <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
             <button
               onClick={() => setShowCancelConfirm(true)}
@@ -118,7 +121,7 @@ export function ClassLessonDetailPage() {
       <div style={{ marginBottom: 16, padding: 16, background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--surface-2)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h3 style={{ margin: 0, fontSize: 16 }}>训练内容</h3>
-          {!isCancelled && !isEditingContent && (
+          {isCoachView && !isCancelled && !isEditingContent && (
             <button
               onClick={() => {
                 setTrainingContent(lesson.trainingContent || '');
@@ -185,7 +188,7 @@ export function ClassLessonDetailPage() {
       <div style={{ marginBottom: 16, padding: 16, background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--surface-2)' }}>
         <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>课程笔记</h3>
 
-        {!isCancelled && (
+        {isCoachView && !isCancelled && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input
               value={noteInput}

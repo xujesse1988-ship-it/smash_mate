@@ -152,7 +152,7 @@ export function StudentClassDetailPage() {
           WebkitBackdropFilter: 'blur(12px)',
         }}
       >
-        <BackButton onClick={() => navigate('/my-courses')} style={{ marginRight: 8 }} />
+        <BackButton onClick={() => navigate('/my-courses?tab=student-classes')} style={{ marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)', flex: 1 }}>{classDetail.name}</h2>
         <button
           onClick={() => {
