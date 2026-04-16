@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, Image, Button } from '@tarojs/components'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,6 +8,7 @@ import {
   cancelEnrollment,
   type GroupClassDetail,
 } from '../../apis/coaching'
+import ReviewModal from '../../shared/ReviewModal'
 import styles from './index.module.scss'
 
 // ---------------------------------------------------------------------------
@@ -57,6 +58,7 @@ function formatTime(iso: string): string {
 export default function GroupClassDetailPage() {
   const { id } = Taro.getCurrentInstance().router?.params || {}
   const queryClient = useQueryClient()
+  const [reviewVisible, setReviewVisible] = useState(false)
 
   const {
     data: groupClass,
@@ -316,16 +318,42 @@ export default function GroupClassDetailPage() {
             </Button>
           )}
 
-        {/* Enrolled but non-actionable states */}
+        {/* Enrolled + completed -> review coach */}
+        {isEnrolled && groupClass.status === 'completed' && (
+          <Button
+            className={styles.btnEnroll}
+            onClick={() => setReviewVisible(true)}
+          >
+            评价教练
+          </Button>
+        )}
+
+        {/* Enrolled but non-actionable states (excluding completed which shows review button) */}
         {isEnrolled &&
           groupClass.status !== 'open' &&
           groupClass.status !== 'full' &&
+          groupClass.status !== 'completed' &&
           DISABLED_STATUS_TEXT[groupClass.status] && (
             <Button className={styles.btnDisabled} disabled>
               {DISABLED_STATUS_TEXT[groupClass.status]}
             </Button>
           )}
       </View>
+
+      {/* Review modal */}
+      {groupClass.coach && (
+        <ReviewModal
+          visible={reviewVisible}
+          coachId={groupClass.coachId}
+          sourceType='group-class'
+          sourceId={groupClass.id}
+          onClose={() => setReviewVisible(false)}
+          onSuccess={() => {
+            setReviewVisible(false)
+            refreshDetail()
+          }}
+        />
+      )}
     </View>
   )
 }

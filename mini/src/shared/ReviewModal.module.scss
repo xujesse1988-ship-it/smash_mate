@@ -1,0 +1,168 @@
+// ---------------------------------------------------------------------------
+// 评价弹窗样式（暗色主题）
+// ---------------------------------------------------------------------------
+
+$bg: #0a0a0a;
+$card-bg: #1a1a1a;
+$border: #2a2a2a;
+$primary: #4ade80;
+$text-1: #ffffff;
+$text-2: #b3b3b3;
+$text-3: #666666;
+$star-active: #facc15;
+
+// ---------------------------------------------------------------------------
+// Overlay
+// ---------------------------------------------------------------------------
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+}
+
+// ---------------------------------------------------------------------------
+// Modal
+// ---------------------------------------------------------------------------
+
+.modal {
+  width: 100%;
+  background: $card-bg;
+  border-radius: 24px 24px 0 0;
+  padding: 32px 32px calc(32px + env(safe-area-inset-bottom));
+}
+
+// ---------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 34px;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.closeBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #333333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtnText {
+  font-size: 24px;
+  color: $text-2;
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// Rating section
+// ---------------------------------------------------------------------------
+
+.ratingSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.stars {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.starWrapper {
+  padding: 8px;
+}
+
+.star {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.starActive {
+  color: $star-active;
+}
+
+.starInactive {
+  color: $text-3;
+}
+
+.ratingLabel {
+  font-size: 24px;
+  color: $star-active;
+  font-weight: 500;
+}
+
+// ---------------------------------------------------------------------------
+// Comment section
+// ---------------------------------------------------------------------------
+
+.commentSection {
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.textarea {
+  width: 100%;
+  height: 200px;
+  background: #222222;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 28px;
+  color: $text-1;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.textareaPlaceholder {
+  color: $text-3;
+  font-size: 28px;
+}
+
+.charCount {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  font-size: 22px;
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// Submit button
+// ---------------------------------------------------------------------------
+
+.submitBtn {
+  width: 100%;
+  height: 88px;
+  border: none;
+  border-radius: 12px;
+  font-size: 32px;
+  font-weight: 600;
+  color: #052e16;
+  background: $primary;
+  line-height: 88px;
+}
+
+.submitBtnDisabled {
+  opacity: 0.5;
+}
