@@ -105,14 +105,14 @@ const CoachApplicationPage = React.lazy(() =>
     default: m.CoachApplicationPage,
   })),
 );
-const PrivateStudentListPage = React.lazy(() =>
-  import('./features/coaching/pages/PrivateStudentListPage').then((m) => ({
-    default: m.PrivateStudentListPage,
+const CoachStudentListPage = React.lazy(() =>
+  import('./features/coaching/pages/CoachStudentListPage').then((m) => ({
+    default: m.CoachStudentListPage,
   })),
 );
-const PrivateStudentDetailPage = React.lazy(() =>
-  import('./features/coaching/pages/PrivateStudentDetailPage').then((m) => ({
-    default: m.PrivateStudentDetailPage,
+const CoachStudentDetailPage = React.lazy(() =>
+  import('./features/coaching/pages/CoachStudentDetailPage').then((m) => ({
+    default: m.CoachStudentDetailPage,
   })),
 );
 const PrivateLessonDetailPage = React.lazy(() =>
@@ -188,12 +188,15 @@ export function AppRoutes() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<NotificationListPage />} />
             <Route path="/coach-apply" element={<CoachApplicationPage />} />
-            <Route path="/my-private-students" element={<PrivateStudentListPage />} />
-            <Route path="/my-private-students/:id" element={<PrivateStudentDetailPage />} />
+            <Route path="/my-students" element={<CoachStudentListPage />} />
+            <Route path="/my-students/:studentId" element={<CoachStudentDetailPage />} />
             <Route
-              path="/my-private-students/:id/lessons/:lessonId"
+              path="/my-students/:studentId/lessons/:lessonId"
               element={<PrivateLessonDetailPage />}
             />
+            {/* 旧路由 302 重定向 */}
+            <Route path="/my-private-students" element={<Navigate to="/my-students" replace />} />
+            <Route path="/my-private-students/:id" element={<Navigate to="/my-students" replace />} />
             <Route path="/my-student-classes" element={<StudentClassListPage />} />
             <Route path="/my-student-classes/:classId" element={<StudentClassDetailPage />} />
             <Route

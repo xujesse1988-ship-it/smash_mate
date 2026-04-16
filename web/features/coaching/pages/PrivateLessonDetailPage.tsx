@@ -11,8 +11,8 @@ import {
   getPrivateLessonNotes,
   addPrivateLessonNote,
   updatePrivateLessonTrainingContent,
-  cancelPrivateLessonV2,
-} from '../api/private-student-api';
+  cancelPrivateLesson,
+} from '../api/coach-student-api';
 
 function lessonStatusBadge(status: string) {
   switch (status) {
@@ -30,12 +30,12 @@ function lessonStatusBadge(status: string) {
 }
 
 export function PrivateLessonDetailPage() {
-  const { id, lessonId } = useParams<{ id: string; lessonId: string }>();
+  const { studentId, lessonId } = useParams<{ studentId: string; lessonId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
-  const privateStudentId = id || '';
+  const theStudentId = studentId || '';
   const privateLessonId = lessonId || '';
 
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -45,23 +45,23 @@ export function PrivateLessonDetailPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const { data: lessonDetail, isLoading: isDetailLoading } = useQuery({
-    queryKey: ['private-students', privateStudentId, 'lessons', privateLessonId],
-    queryFn: () => getPrivateLessonDetail(privateStudentId, privateLessonId),
-    enabled: !!privateStudentId && !!privateLessonId,
+    queryKey: ['private-lessons', privateLessonId],
+    queryFn: () => getPrivateLessonDetail(privateLessonId),
+    enabled: !!privateLessonId,
   });
 
   const { data: notesData } = useQuery({
-    queryKey: ['private-students', privateStudentId, 'lessons', privateLessonId, 'notes'],
-    queryFn: () => getPrivateLessonNotes(privateStudentId, privateLessonId),
-    enabled: !!privateStudentId && !!privateLessonId,
+    queryKey: ['private-lessons', privateLessonId, 'notes'],
+    queryFn: () => getPrivateLessonNotes(privateLessonId),
+    enabled: !!privateLessonId,
   });
 
   const addNoteMutation = useMutation({
     mutationFn: (content: string) =>
-      addPrivateLessonNote(privateStudentId, privateLessonId, content),
+      addPrivateLessonNote(privateLessonId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['private-students', privateStudentId, 'lessons', privateLessonId, 'notes'],
+        queryKey: ['private-lessons', privateLessonId, 'notes'],
       });
       setShowNoteModal(false);
       setNoteContent('');
@@ -74,10 +74,10 @@ export function PrivateLessonDetailPage() {
 
   const updateTrainingMutation = useMutation({
     mutationFn: (content: string) =>
-      updatePrivateLessonTrainingContent(privateStudentId, privateLessonId, content),
+      updatePrivateLessonTrainingContent(privateLessonId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['private-students', privateStudentId, 'lessons', privateLessonId],
+        queryKey: ['private-lessons', privateLessonId],
       });
       setIsEditingTraining(false);
       message.success('训练内容已更新');
@@ -88,13 +88,13 @@ export function PrivateLessonDetailPage() {
   });
 
   const cancelLessonMutation = useMutation({
-    mutationFn: () => cancelPrivateLessonV2(privateStudentId, privateLessonId),
+    mutationFn: () => cancelPrivateLesson(privateLessonId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['private-students', privateStudentId, 'lessons', privateLessonId],
+        queryKey: ['private-lessons', privateLessonId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['private-students', privateStudentId, 'lessons'],
+        queryKey: ['coach-students', theStudentId, 'lessons'],
       });
       setShowCancelConfirm(false);
       message.success('课程已取消');
@@ -127,7 +127,7 @@ export function PrivateLessonDetailPage() {
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Header */}
         <BackButton
-          onClick={() => navigate(`/my-private-students/${privateStudentId}`)}
+          onClick={() => navigate(`/my-students/${theStudentId}`)}
           style={{ marginBottom: 12, padding: '6px 0' }}
         />
 
@@ -303,7 +303,7 @@ export function PrivateLessonDetailPage() {
             <button
               onClick={() =>
                 navigate(
-                  `/match-records/create?sourceType=private_lesson_v2&sourceId=${privateLessonId}`,
+                  `/match-records/create?sourceType=private_lesson&sourceId=${privateLessonId}`,
                 )
               }
               className="btn-dark btn-outline btn-sm"

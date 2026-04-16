@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
@@ -7,45 +7,59 @@ import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { CoachGuard } from '../../../shared/components/CoachGuard';
 import { BackButton } from '../../../shared/components/BackButton';
 import {
-  getPrivateStudents,
-  addPrivateStudent,
-  getPrivateStudentTags,
-} from '../api/private-student-api';
-import type { PrivateStudentListItem } from '../api/private-student-api';
-import { searchUsers } from '../api/student-class-api';
-import type { UserSearchResult } from '../api/student-class-api';
+  getCoachStudents,
+  addCoachStudent,
+  searchStudentByPhone,
+} from '../api/coach-student-api';
+import type { CoachStudentListItem, StudentSearchResult } from '../api/coach-student-api';
 
-export function PrivateStudentListPage() {
+export function CoachStudentListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [phoneKeyword, setPhoneKeyword] = useState('');
+  const [searchResult, setSearchResult] = useState<StudentSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Filter state
+  const [filterTag, setFilterTag] = useState('');
+  const [searchText, setSearchText] = useState('');
+
   const { data: studentsData, isLoading: isStudentsLoading } = useQuery({
-    queryKey: ['private-students'],
-    queryFn: getPrivateStudents,
+    queryKey: ['coach-students', filterTag, searchText],
+    queryFn: () =>
+      getCoachStudents({
+        tag: filterTag || undefined,
+        search: searchText || undefined,
+      }),
     enabled: !!userId,
   });
 
+  // Collect all unique tags for the filter
+  const allTags = useMemo(() => {
+    const students = studentsData?.items ?? [];
+    const tagSet = new Set<string>();
+    students.forEach((s) => s.tags.forEach((t) => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [studentsData]);
+
   const addStudentMutation = useMutation({
-    mutationFn: (studentId: string) => addPrivateStudent(studentId),
+    mutationFn: (studentId: string) => addCoachStudent(studentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['private-students'] });
+      queryClient.invalidateQueries({ queryKey: ['coach-students'] });
       setShowAddModal(false);
-      setSearchKeyword('');
-      setSearchResults([]);
+      setPhoneKeyword('');
+      setSearchResult(null);
       setHasSearched(false);
       message.success('添加成功');
     },
     onError: (error: Error & { code?: string }) => {
-      if (error.code === 'COACHING_STUDENT_ALREADY_PRIVATE') {
-        message.error('该学员已是你的固定私教学员');
+      if (error.code === 'COACH_STUDENT_ALREADY_EXISTS') {
+        message.info('该用户已是你的学员');
       } else if (error.code === 'USER_NOT_FOUND') {
         message.error('用户不存在');
       } else {
@@ -54,16 +68,16 @@ export function PrivateStudentListPage() {
     },
   });
 
-  const handleSearch = async () => {
-    if (!searchKeyword.trim()) return;
+  const handlePhoneSearch = async () => {
+    if (!phoneKeyword.trim()) return;
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const result = await searchUsers(searchKeyword.trim());
-      setSearchResults(result.items);
+      const result = await searchStudentByPhone(phoneKeyword.trim());
+      setSearchResult(result);
     } catch {
-      setSearchResults([]);
-      message.error('搜索失败');
+      setSearchResult(null);
+      message.error('未找到该手机号对应的用户');
     } finally {
       setIsSearching(false);
     }
@@ -80,7 +94,7 @@ export function PrivateStudentListPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100%' }}>
-      {/* Header with back button — consistent with MyActivityListPage */}
+      {/* Header with back button */}
       <div
         style={{
           display: 'flex',
@@ -94,12 +108,67 @@ export function PrivateStudentListPage() {
       >
         <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>
-          我的私教学员
+          我的学员
         </h2>
       </div>
 
       <div style={{ padding: 16 }}>
         <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+          {/* Search bar */}
+          <div style={{ marginBottom: 12 }}>
+            <input
+              data-testid="coach-student-search-input"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="搜索学员昵称"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: 'var(--surface)',
+                border: '1.5px solid var(--surface-2)',
+                borderRadius: 10,
+                color: 'var(--text-1)',
+                fontSize: 14,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          {/* Tag filter */}
+          {allTags.length > 0 && (
+            <div
+              data-testid="coach-student-tag-filter"
+              style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}
+            >
+              <button
+                className={`btn-dark btn-sm ${!filterTag ? 'btn-primary' : ''}`}
+                style={{
+                  fontSize: 12,
+                  background: !filterTag ? undefined : 'var(--surface-2)',
+                  color: 'var(--text-1)',
+                }}
+                onClick={() => setFilterTag('')}
+              >
+                全部
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  className={`btn-dark btn-sm ${filterTag === tag ? 'btn-primary' : ''}`}
+                  style={{
+                    fontSize: 12,
+                    background: filterTag === tag ? undefined : 'var(--surface-2)',
+                    color: 'var(--text-1)',
+                  }}
+                  onClick={() => setFilterTag(filterTag === tag ? '' : tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
           {isStudentsLoading && (
             <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>
               加载中...
@@ -108,22 +177,22 @@ export function PrivateStudentListPage() {
 
           {!isStudentsLoading && students.length === 0 && (
             <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 24 }}>
-              暂无私教学员
+              暂无学员
             </div>
           )}
 
           {students.map((student) => (
-            <PrivateStudentCard
-              key={student.id}
+            <CoachStudentCard
+              key={student.studentId}
               student={student}
-              onClick={() => navigate(`/my-private-students/${student.id}`)}
+              onClick={() => navigate(`/my-students/${student.studentId}`)}
             />
           ))}
 
           {/* FAB */}
           <button
             className="fab"
-            data-testid="add-private-student-fab"
+            data-testid="coach-student-add-fab"
             onClick={() => setShowAddModal(true)}
           >
             +
@@ -156,13 +225,14 @@ export function PrivateStudentListPage() {
                   overflowY: 'auto',
                 }}
               >
-                <h3 style={{ marginBottom: 16 }}>添加私教学员</h3>
+                <h3 style={{ marginBottom: 16 }}>添加学员</h3>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                   <input
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    placeholder="输入昵称、手机号或手机号后 4 位"
+                    data-testid="coach-student-phone-input"
+                    value={phoneKeyword}
+                    onChange={(e) => setPhoneKeyword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handlePhoneSearch()}
+                    placeholder="输入手机号搜索"
                     style={{
                       flex: 1,
                       padding: '10px 14px',
@@ -175,7 +245,8 @@ export function PrivateStudentListPage() {
                     }}
                   />
                   <button
-                    onClick={handleSearch}
+                    data-testid="coach-student-phone-search-btn"
+                    onClick={handlePhoneSearch}
                     disabled={isSearching}
                     className="btn-dark btn-primary btn-sm"
                   >
@@ -189,15 +260,15 @@ export function PrivateStudentListPage() {
                   </div>
                 )}
 
-                {!isSearching && hasSearched && searchResults.length === 0 && (
+                {!isSearching && hasSearched && !searchResult && (
                   <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>
                     未找到匹配的用户
                   </div>
                 )}
 
-                {searchResults.map((user) => (
+                {searchResult && (
                   <div
-                    key={user.id}
+                    data-testid="coach-student-search-result"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -220,25 +291,26 @@ export function PrivateStudentListPage() {
                           justifyContent: 'center',
                           fontSize: 14,
                           fontWeight: 700,
-                          background: user.avatarUrl
-                            ? `url(${user.avatarUrl}) center/cover`
-                            : 'var(--surface-2)',
+                          background: 'var(--surface-2)',
                           color: 'var(--text-1)',
                         }}
                       >
-                        {!user.avatarUrl && user.nickname.charAt(0)}
+                        {searchResult.nickname.charAt(0)}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 600, fontSize: 14 }}>{user.nickname}</span>
-                        {user.phoneLast4 && (
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>
+                          {searchResult.nickname}
+                        </span>
+                        {searchResult.phoneLast4 && (
                           <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                            尾号 {user.phoneLast4}
+                            尾号 {searchResult.phoneLast4}
                           </span>
                         )}
                       </div>
                     </div>
                     <button
-                      onClick={() => addStudentMutation.mutate(user.id)}
+                      data-testid="coach-student-add-btn"
+                      onClick={() => addStudentMutation.mutate(searchResult.userId)}
                       disabled={addStudentMutation.isPending}
                       className="btn-dark btn-primary btn-sm"
                       style={{ fontSize: 12 }}
@@ -246,14 +318,14 @@ export function PrivateStudentListPage() {
                       添加
                     </button>
                   </div>
-                ))}
+                )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
                   <button
                     onClick={() => {
                       setShowAddModal(false);
-                      setSearchKeyword('');
-                      setSearchResults([]);
+                      setPhoneKeyword('');
+                      setSearchResult(null);
                       setHasSearched(false);
                     }}
                     className="btn-dark btn-sm"
@@ -278,25 +350,27 @@ export function PrivateStudentListPage() {
 // Student Card Sub-component
 // ---------------------------------------------------------------------------
 
-function PrivateStudentCard({
+function CoachStudentCard({
   student,
   onClick,
 }: {
-  student: PrivateStudentListItem;
+  student: CoachStudentListItem;
   onClick: () => void;
 }) {
-  // Fetch tags for display
-  const { data: tagsData } = useQuery({
-    queryKey: ['private-students', student.id, 'tags'],
-    queryFn: () => getPrivateStudentTags(student.id),
-  });
-
-  const tags = tagsData?.tags ?? [];
+  const tags = student.tags;
+  const sourceLabel =
+    student.source === 'manual'
+      ? '手动添加'
+      : student.source === 'private_lesson'
+        ? '私教课'
+        : student.source === 'group_class'
+          ? '团课'
+          : student.source;
 
   return (
     <div
       className="dark-card"
-      data-testid={`private-student-${student.id}`}
+      data-testid={`coach-student-${student.studentId}`}
       onClick={onClick}
       style={{ marginBottom: 10, cursor: 'pointer' }}
     >
@@ -333,7 +407,7 @@ function PrivateStudentCard({
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-            已上 {student.lessonCount} 节课
+            来源: {sourceLabel}
           </div>
         </div>
       </div>

@@ -10,15 +10,12 @@ import { DateTimePicker } from '../../../shared/components/DateTimePicker';
 import { VenueSearchInput } from '../../activity/components/venue-search-input';
 import type { VenueSearchItem } from '../../activity/api/venue-api';
 import {
-  getPrivateStudentDetail,
-  getPrivateLessons,
-  getPrivateStudentNotes,
-  getPrivateStudentTags,
-  addPrivateStudentNote,
-  setPrivateStudentTags,
-  removePrivateStudent,
-  createPrivateLesson,
-} from '../api/private-student-api';
+  getCoachStudentDetail,
+  getCoachStudentLessons,
+  setCoachStudentTags,
+  scheduleLessonForStudent,
+} from '../api/coach-student-api';
+// Types CoachStudentDetail and CoachStudentLesson are inferred from the API functions above
 
 function lessonStatusBadge(status: string) {
   switch (status) {
@@ -35,15 +32,12 @@ function lessonStatusBadge(status: string) {
   }
 }
 
-export function PrivateStudentDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export function CoachStudentDetailPage() {
+  const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const [showNoteModal, setShowNoteModal] = useState(false);
-  const [noteContent, setNoteContent] = useState('');
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [editingTags, setEditingTags] = useState<string[]>([]);
@@ -53,60 +47,24 @@ export function PrivateStudentDetailPage() {
   const [lessonVenue, setLessonVenue] = useState<VenueSearchItem | null>(null);
   const [lessonTrainingContent, setLessonTrainingContent] = useState('');
 
-  const privateStudentId = id || '';
+  const sid = studentId || '';
 
   const { data: studentDetail, isLoading: isDetailLoading } = useQuery({
-    queryKey: ['private-students', privateStudentId],
-    queryFn: () => getPrivateStudentDetail(privateStudentId),
-    enabled: !!privateStudentId,
+    queryKey: ['coach-students', sid],
+    queryFn: () => getCoachStudentDetail(sid),
+    enabled: !!sid,
   });
 
   const { data: lessonsData } = useQuery({
-    queryKey: ['private-students', privateStudentId, 'lessons'],
-    queryFn: () => getPrivateLessons(privateStudentId),
-    enabled: !!privateStudentId,
-  });
-
-  const { data: notesData } = useQuery({
-    queryKey: ['private-students', privateStudentId, 'notes'],
-    queryFn: () => getPrivateStudentNotes(privateStudentId),
-    enabled: !!privateStudentId,
-  });
-
-  const { data: tagsData } = useQuery({
-    queryKey: ['private-students', privateStudentId, 'tags'],
-    queryFn: () => getPrivateStudentTags(privateStudentId),
-    enabled: !!privateStudentId,
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: () => removePrivateStudent(privateStudentId),
-    onSuccess: () => {
-      message.success('已移除');
-      navigate('/my-private-students');
-    },
-    onError: (error: Error) => {
-      message.error(error.message || '移除失败');
-    },
-  });
-
-  const addNoteMutation = useMutation({
-    mutationFn: (content: string) => addPrivateStudentNote(privateStudentId, content),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['private-students', privateStudentId, 'notes'] });
-      setShowNoteModal(false);
-      setNoteContent('');
-      message.success('笔记添加成功');
-    },
-    onError: (error: Error) => {
-      message.error(error.message || '添加失败');
-    },
+    queryKey: ['coach-students', sid, 'lessons'],
+    queryFn: () => getCoachStudentLessons(sid),
+    enabled: !!sid,
   });
 
   const setTagsMutation = useMutation({
-    mutationFn: (tags: string[]) => setPrivateStudentTags(privateStudentId, tags),
+    mutationFn: (tags: string[]) => setCoachStudentTags(sid, tags),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['private-students', privateStudentId, 'tags'] });
+      queryClient.invalidateQueries({ queryKey: ['coach-students', sid] });
       setShowTagModal(false);
       message.success('标签已更新');
     },
@@ -119,12 +77,12 @@ export function PrivateStudentDetailPage() {
     mutationFn: (input: {
       startTime: string;
       endTime: string;
-      venueId: string;
+      venueId?: string;
       trainingContent?: string;
-    }) => createPrivateLesson(privateStudentId, input),
+    }) => scheduleLessonForStudent(sid, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['private-students', privateStudentId, 'lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['private-students', privateStudentId] });
+      queryClient.invalidateQueries({ queryKey: ['coach-students', sid, 'lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['coach-students', sid] });
       setShowCreateLessonModal(false);
       resetLessonForm();
       message.success('课程创建成功');
@@ -142,10 +100,6 @@ export function PrivateStudentDetailPage() {
   };
 
   const handleCreateLesson = () => {
-    if (!lessonVenue) {
-      message.error('请选择球馆');
-      return;
-    }
     if (!lessonStartTime || !lessonEndTime) {
       message.error('请选择时间');
       return;
@@ -153,7 +107,7 @@ export function PrivateStudentDetailPage() {
     createLessonMutation.mutate({
       startTime: new Date(lessonStartTime).toISOString(),
       endTime: new Date(lessonEndTime).toISOString(),
-      venueId: lessonVenue.id,
+      venueId: lessonVenue?.id || undefined,
       trainingContent: lessonTrainingContent || undefined,
     });
   };
@@ -197,15 +151,14 @@ export function PrivateStudentDetailPage() {
   }
 
   const lessons = lessonsData?.items ?? [];
-  const notes = notesData?.items ?? [];
-  const tags = tagsData?.tags ?? [];
+  const tags = studentDetail.tags ?? [];
 
   // Find the next upcoming lesson (scheduled, sorted by startTime ascending)
   const upcomingLesson = lessons
     .filter((l) => l.status === 'scheduled')
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
 
-  // Completed/in-progress lessons for history (non-scheduled, non-cancelled)
+  // All non-cancelled lessons for history, sorted by startTime descending
   const historyLessons = lessons
     .filter((l) => l.status !== 'cancelled')
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
@@ -215,23 +168,14 @@ export function PrivateStudentDetailPage() {
       <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <BackButton onClick={() => navigate('/my-private-students')} />
-          {studentDetail.isActive && (
-            <button
-              onClick={() => setShowRemoveConfirm(true)}
-              className="btn-dark btn-danger btn-sm"
-              data-testid="remove-student-btn"
-              style={{ fontSize: 11, padding: '4px 10px' }}
-            >
-              移除
-            </button>
-          )}
+          <BackButton onClick={() => navigate('/my-students')} />
         </div>
 
         {/* Student header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
           <div
             className="avatar-grad-ring"
+            data-testid="coach-student-avatar"
             style={{
               width: 52,
               height: 52,
@@ -251,7 +195,9 @@ export function PrivateStudentDetailPage() {
             {!studentDetail.avatarUrl && studentDetail.nickname.charAt(0)}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 700 }}>{studentDetail.nickname}</div>
+            <div style={{ fontSize: 17, fontWeight: 700 }} data-testid="coach-student-nickname">
+              {studentDetail.nickname}
+            </div>
             {tags.length > 0 && (
               <div
                 style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap', cursor: 'pointer' }}
@@ -259,6 +205,7 @@ export function PrivateStudentDetailPage() {
                   setEditingTags([...tags]);
                   setShowTagModal(true);
                 }}
+                data-testid="coach-student-tags"
               >
                 {tags.map((tag) => (
                   <span key={tag} className="tag-green">{tag}</span>
@@ -280,6 +227,7 @@ export function PrivateStudentDetailPage() {
                   cursor: 'pointer',
                   padding: 0,
                 }}
+                data-testid="coach-student-add-tag-btn"
               >
                 + 添加标签
               </button>
@@ -287,26 +235,52 @@ export function PrivateStudentDetailPage() {
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* Source info */}
         <div
           className="dark-card"
           style={{ marginBottom: 12, padding: 8, cursor: 'default' }}
+          data-testid="coach-student-info"
         >
           <div style={{ display: 'flex', textAlign: 'center' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary)' }}>
-                {studentDetail.lessonCount}
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>来源</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginTop: 2 }}>
+                {studentDetail.source === 'manual' ? '手动添加' :
+                 studentDetail.source === 'private_lesson' ? '私教课' :
+                 studentDetail.source === 'group_class' ? '团课' :
+                 studentDetail.source}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>已上课</div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary)' }}>
-                {notes.length}
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>首次接触</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginTop: 2 }}>
+                {new Date(studentDetail.firstMetAt).toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                })}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>笔记</div>
             </div>
           </div>
         </div>
+
+        {/* Student classes */}
+        {studentDetail.studentClasses && studentDetail.studentClasses.length > 0 && (
+          <>
+            <div style={{ fontSize: 14, fontWeight: 600, margin: '12px 0 8px' }}>所属学员班</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }} data-testid="coach-student-classes">
+              {studentDetail.studentClasses.map((cls) => (
+                <span
+                  key={cls.id}
+                  className="chip chip-active chip-sm"
+                  style={{ cursor: 'default' }}
+                >
+                  {cls.name}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Upcoming lesson */}
         {upcomingLesson && (
@@ -315,17 +289,16 @@ export function PrivateStudentDetailPage() {
             <div
               className="dark-card"
               style={{ marginBottom: 12, cursor: 'pointer' }}
-              onClick={() => navigate(`/my-private-students/${privateStudentId}/lessons/${upcomingLesson.id}`)}
-              data-testid="upcoming-lesson"
+              onClick={() => navigate(`/my-students/${sid}/lessons/${upcomingLesson.id}`)}
+              data-testid="coach-student-upcoming-lesson"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>
-                  第{studentDetail.lessonCount + 1}节课
+                  下节课
                 </div>
                 {lessonStatusBadge(upcomingLesson.status)}
               </div>
               <div className="info-row" style={{ marginTop: 6 }}>
-                <span className="icon">📅</span>
                 {new Date(upcomingLesson.startTime).toLocaleDateString('zh-CN', {
                   month: '2-digit',
                   day: '2-digit',
@@ -343,7 +316,6 @@ export function PrivateStudentDetailPage() {
               </div>
               {upcomingLesson.venue && (
                 <div className="info-row">
-                  <span className="icon">📍</span>
                   {upcomingLesson.venue.name}
                 </div>
               )}
@@ -357,65 +329,19 @@ export function PrivateStudentDetailPage() {
         )}
 
         {/* Quick actions */}
-        {studentDetail.isActive && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <button
-              className="btn-dark btn-outline btn-sm"
-              style={{ flex: 1 }}
-              onClick={() => {
-                resetLessonForm();
-                setShowCreateLessonModal(true);
-              }}
-              data-testid="create-lesson-btn"
-            >
-              + 创建课程
-            </button>
-            <button
-              className="btn-dark btn-outline btn-sm"
-              style={{ flex: 1 }}
-              onClick={() => setShowNoteModal(true)}
-              data-testid="write-note-btn"
-            >
-              + 写笔记
-            </button>
-            <button
-              className="btn-dark btn-outline btn-sm"
-              style={{ flex: 1 }}
-              onClick={() => navigate('/match-records/create')}
-              data-testid="record-match-btn"
-            >
-              + 录入战绩
-            </button>
-          </div>
-        )}
-
-        {/* Recent notes */}
-        {notes.length > 0 && (
-          <>
-            <div style={{ fontSize: 14, fontWeight: 600, margin: '12px 0 8px' }}>最近笔记</div>
-            {notes.slice(0, 3).map((note) => (
-              <div
-                key={note.id}
-                style={{
-                  padding: '8px 0',
-                  borderBottom: '1px solid var(--surface-2)',
-                }}
-              >
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
-                  {new Date(note.createdAt).toLocaleString('zh-CN', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                  {note.content}
-                </div>
-              </div>
-            ))}
-          </>
-        )}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <button
+            className="btn-dark btn-outline btn-sm"
+            style={{ flex: 1 }}
+            onClick={() => {
+              resetLessonForm();
+              setShowCreateLessonModal(true);
+            }}
+            data-testid="coach-student-create-lesson-btn"
+          >
+            + 给 TA 排课
+          </button>
+        </div>
 
         {/* Lesson history */}
         <div style={{ fontSize: 14, fontWeight: 600, margin: '12px 0 8px' }}>历史课程</div>
@@ -427,8 +353,8 @@ export function PrivateStudentDetailPage() {
             key={lesson.id}
             className="dark-card"
             style={{ marginBottom: 8, cursor: 'pointer' }}
-            onClick={() => navigate(`/my-private-students/${privateStudentId}/lessons/${lesson.id}`)}
-            data-testid={`lesson-${lesson.id}`}
+            onClick={() => navigate(`/my-students/${sid}/lessons/${lesson.id}`)}
+            data-testid={`coach-student-lesson-${lesson.id}`}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -456,127 +382,6 @@ export function PrivateStudentDetailPage() {
             </div>
           </div>
         ))}
-
-        {/* Remove confirmation modal */}
-        {showRemoveConfirm && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-          >
-            <div
-              style={{
-                background: 'var(--surface)',
-                borderRadius: 12,
-                padding: 24,
-                width: '80%',
-                maxWidth: 360,
-              }}
-            >
-              <p style={{ marginBottom: 16 }}>确定移除该私教学员？历史数据将保留。</p>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setShowRemoveConfirm(false)}
-                  className="btn-dark btn-sm"
-                  style={{ background: 'var(--surface-2)', color: 'var(--text-1)' }}
-                >
-                  取消
-                </button>
-                <button
-                  onClick={() => removeMutation.mutate()}
-                  className="btn-dark btn-sm"
-                  style={{ background: 'var(--danger)', color: '#fff' }}
-                  data-testid="confirm-remove-btn"
-                >
-                  确认移除
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Add note modal */}
-        {showNoteModal && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-          >
-            <div
-              style={{
-                background: 'var(--surface)',
-                borderRadius: 12,
-                padding: 24,
-                width: '90%',
-                maxWidth: 400,
-              }}
-            >
-              <h3 style={{ marginBottom: 12 }}>添加学员笔记</h3>
-              <textarea
-                value={noteContent}
-                onChange={(e) => setNoteContent(e.target.value)}
-                placeholder="输入笔记内容（最多 500 字符）"
-                maxLength={500}
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  background: 'var(--surface)',
-                  border: '1.5px solid var(--surface-2)',
-                  borderRadius: 10,
-                  color: 'var(--text-1)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                <button
-                  onClick={() => {
-                    setShowNoteModal(false);
-                    setNoteContent('');
-                  }}
-                  className="btn-dark btn-sm"
-                  style={{ background: 'var(--surface-2)', color: 'var(--text-1)' }}
-                >
-                  取消
-                </button>
-                <button
-                  onClick={() => {
-                    if (!noteContent.trim()) {
-                      message.error('笔记内容不能为空');
-                      return;
-                    }
-                    addNoteMutation.mutate(noteContent.trim());
-                  }}
-                  disabled={addNoteMutation.isPending}
-                  className="btn-dark btn-primary btn-sm"
-                >
-                  提交
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Tag management modal */}
         {showTagModal && (
@@ -638,6 +443,7 @@ export function PrivateStudentDetailPage() {
                     fontSize: 13,
                     outline: 'none',
                   }}
+                  data-testid="coach-student-tag-input"
                 />
                 <button onClick={handleAddTag} className="btn-dark btn-primary btn-sm">
                   添加
@@ -655,6 +461,7 @@ export function PrivateStudentDetailPage() {
                   onClick={() => setTagsMutation.mutate(editingTags)}
                   disabled={setTagsMutation.isPending}
                   className="btn-dark btn-primary btn-sm"
+                  data-testid="coach-student-save-tags-btn"
                 >
                   保存
                 </button>
@@ -691,9 +498,9 @@ export function PrivateStudentDetailPage() {
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              <h3 style={{ marginBottom: 12 }}>创建私教课程</h3>
+              <h3 style={{ marginBottom: 12 }}>给 TA 排课</h3>
               <div style={{ marginBottom: 12 }}>
-                <label>球馆</label>
+                <label>球馆（选填）</label>
                 <VenueSearchInput
                   selectedVenue={lessonVenue}
                   onChangeSelection={(venue) => setLessonVenue(venue)}
@@ -738,6 +545,7 @@ export function PrivateStudentDetailPage() {
                     marginTop: 4,
                     boxSizing: 'border-box',
                   }}
+                  data-testid="coach-student-training-content"
                 />
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -755,6 +563,7 @@ export function PrivateStudentDetailPage() {
                   onClick={handleCreateLesson}
                   disabled={createLessonMutation.isPending}
                   className="btn-dark btn-primary btn-sm"
+                  data-testid="coach-student-submit-lesson-btn"
                 >
                   提交
                 </button>
