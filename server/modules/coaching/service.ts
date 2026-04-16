@@ -2549,9 +2549,6 @@ export class CoachingService {
       if (gcStudents.has(r.studentId)) derived.push('团课学员');
       if (plStudents.has(r.studentId)) derived.push('私教学员');
       const classes = classesByStudent.get(r.studentId) ?? [];
-      for (const cls of classes) {
-        derived.push(`学员班: ${cls.name}`);
-      }
       const custom = customTagsByStudent.get(r.studentId) ?? [];
       const tags = [...derived, ...custom.filter((t) => !derived.includes(t))];
       return {
@@ -2595,7 +2592,6 @@ export class CoachingService {
     const derived: string[] = [];
     if (gcSet.has(studentId)) derived.push('团课学员');
     if (plSet.has(studentId)) derived.push('私教学员');
-    for (const cls of classes) derived.push(`学员班: ${cls.name}`);
 
     const customNames = customTags.map((t) => t.tag);
     const tags = [...derived, ...customNames.filter((t) => !derived.includes(t))];
