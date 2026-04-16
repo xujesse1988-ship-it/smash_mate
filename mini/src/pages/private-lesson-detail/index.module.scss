@@ -1,0 +1,401 @@
+// ---------------------------------------------------------------------------
+// 私教详情页样式（暗色主题）
+// ---------------------------------------------------------------------------
+
+$bg: #0a0a0a;
+$card-bg: #1a1a1a;
+$border: #2a2a2a;
+$primary: #4ade80;
+$text-1: #ffffff;
+$text-2: #b3b3b3;
+$text-3: #666666;
+
+// ---------------------------------------------------------------------------
+// Container
+// ---------------------------------------------------------------------------
+
+.container {
+  min-height: 100vh;
+  background: $bg;
+  padding-bottom: 140px;
+}
+
+// ---------------------------------------------------------------------------
+// 信息卡片
+// ---------------------------------------------------------------------------
+
+.card {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 20px 24px 0;
+}
+
+// Title row: status tag
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  font-size: 34px;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.statusTag {
+  flex-shrink: 0;
+  font-size: 22px;
+  padding: 4px 14px;
+  border-radius: 8px;
+}
+
+.statusScheduled {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.statusInProgress {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.statusCompleted {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.15);
+}
+
+.statusCancelled {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.statusExpired {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+// ---------------------------------------------------------------------------
+// 教练信息
+// ---------------------------------------------------------------------------
+
+.coachRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 24px;
+  background: #222222;
+  border-radius: 12px;
+  border: 1px solid $border;
+}
+
+.coachAvatarImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(74, 222, 128, 0.2);
+}
+
+.coachAvatarPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 600;
+  color: #052e16;
+  border: 2px solid rgba(74, 222, 128, 0.2);
+}
+
+.coachInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coachName {
+  font-size: 28px;
+  font-weight: 600;
+  color: $text-1;
+}
+
+.coachLabel {
+  font-size: 22px;
+  color: $text-3;
+}
+
+.coachArrow {
+  font-size: 26px;
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// 信息行
+// ---------------------------------------------------------------------------
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.infoIcon {
+  font-size: 30px;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.infoContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoMain {
+  font-size: 28px;
+  font-weight: 600;
+  color: $text-1;
+}
+
+.infoSub {
+  font-size: 24px;
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// 训练内容 & 学员信息卡片
+// ---------------------------------------------------------------------------
+
+.sectionCard {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 16px 24px 0;
+}
+
+.sectionTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: $text-1;
+  margin-bottom: 16px;
+}
+
+.sectionContent {
+  font-size: 26px;
+  color: $text-2;
+  line-height: 1.6;
+}
+
+.emptyText {
+  font-size: 26px;
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// 学员信息行
+// ---------------------------------------------------------------------------
+
+.studentRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.studentAvatarImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid $border;
+}
+
+.studentAvatarPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 600;
+  color: $primary;
+  border: 2px solid $border;
+}
+
+.studentName {
+  font-size: 28px;
+  font-weight: 500;
+  color: $text-1;
+}
+
+// ---------------------------------------------------------------------------
+// 可选场馆列表
+// ---------------------------------------------------------------------------
+
+.venuePickerCard {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 16px 24px 0;
+}
+
+.venueOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #222222;
+  border: 2px solid $border;
+}
+
+.venueOptionSelected {
+  border-color: $primary;
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.venueRadio {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid $text-3;
+  flex-shrink: 0;
+}
+
+.venueRadioChecked {
+  border-color: $primary;
+  background: $primary;
+}
+
+.venueName {
+  font-size: 26px;
+  font-weight: 500;
+  color: $text-1;
+  flex: 1;
+}
+
+// ---------------------------------------------------------------------------
+// 状态提示
+// ---------------------------------------------------------------------------
+
+.noticeInProgress {
+  margin: 16px 24px 0;
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 26px;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.noticeCancelled {
+  margin: 16px 24px 0;
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 26px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.noticeExpired {
+  margin: 16px 24px 0;
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 26px;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+// ---------------------------------------------------------------------------
+// 底部操作栏
+// ---------------------------------------------------------------------------
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 24px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  background: rgba(20, 20, 20, 0.95);
+  border-top: 1px solid $border;
+  display: flex;
+  gap: 16px;
+  z-index: 10;
+}
+
+.btnBook {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 600;
+  color: #052e16;
+  background: $primary;
+  line-height: 80px;
+}
+
+.btnCancel {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 600;
+  color: $text-2;
+  background: #333333;
+  line-height: 80px;
+}
+
+.btnDisabled {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 500;
+  color: $text-3;
+  background: #333333;
+  line-height: 80px;
+}
+
+// ---------------------------------------------------------------------------
+// 加载 & 错误
+// ---------------------------------------------------------------------------
+
+.loadingText {
+  color: $text-3;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}
