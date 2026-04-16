@@ -7,6 +7,42 @@ interface SubscribeMessageData {
   [key: string]: { value: string };
 }
 
+// In-memory access_token cache to avoid exceeding WeChat's 2000 calls/day limit
+let cachedAccessToken: { token: string; expiresAt: number } | null = null;
+
+async function getAccessToken(): Promise<string | null> {
+  // Return cached token if still valid (with 200s safety margin)
+  if (cachedAccessToken && Date.now() < cachedAccessToken.expiresAt) {
+    return cachedAccessToken.token;
+  }
+
+  try {
+    const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${config.wxAppId}&secret=${config.wxAppSecret}`;
+    const tokenRes = await fetch(tokenUrl, { signal: AbortSignal.timeout(5000) });
+    const tokenData = (await tokenRes.json()) as {
+      access_token?: string;
+      expires_in?: number;
+      errcode?: number;
+    };
+
+    if (!tokenData.access_token) {
+      logger.error({ errcode: tokenData.errcode }, 'Failed to get wx access_token');
+      return null;
+    }
+
+    // Cache with safety margin (200 seconds before actual expiry)
+    cachedAccessToken = {
+      token: tokenData.access_token,
+      expiresAt: Date.now() + ((tokenData.expires_in || 7200) - 200) * 1000,
+    };
+
+    return cachedAccessToken.token;
+  } catch (err) {
+    logger.error({ message: (err as Error).message }, 'Failed to get wx access_token');
+    return null;
+  }
+}
+
 /**
  * 发送微信订阅消息
  * 失败不抛异常，只记录日志
@@ -24,19 +60,13 @@ export async function sendWxSubscribeMessage(params: {
   }
 
   try {
-    // 1. 获取 access_token（简化版本，生产应缓存）
-    const tokenRes = await fetch(
-      `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${config.wxAppId}&secret=${config.wxAppSecret}`,
-    );
-    const tokenData = (await tokenRes.json()) as { access_token?: string; errcode?: number };
-    if (!tokenData.access_token) {
-      logger.error({ errcode: tokenData.errcode }, 'Failed to get wx access_token');
-      return;
-    }
+    // 1. 获取 access_token（带缓存）
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
 
     // 2. 发送订阅消息
     const msgRes = await fetch(
-      `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${tokenData.access_token}`,
+      `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${accessToken}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,7 +86,7 @@ export async function sendWxSubscribeMessage(params: {
       );
     }
   } catch (err) {
-    logger.error({ err }, 'Failed to send wx subscribe message');
+    logger.error({ message: (err as Error).message }, 'Failed to send wx subscribe message');
   }
 }
 

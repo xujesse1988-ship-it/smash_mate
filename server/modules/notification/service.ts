@@ -1,7 +1,6 @@
 import { AppError } from '../../infra/error-handler.js';
 import { createModuleLogger } from '../../infra/logger.js';
 import { registerTask } from '../../infra/scheduler.js';
-import { UserRepository } from '../user/repository.js';
 import { NotificationRepository } from './repository.js';
 import type {
   CreateNotificationInput,
@@ -58,11 +57,9 @@ const VALID_TARGET_TYPES: TargetType[] = [
 
 export class NotificationService {
   private repo: NotificationRepository;
-  private userRepo: UserRepository;
 
-  constructor(repo: NotificationRepository, userRepo?: UserRepository) {
+  constructor(repo: NotificationRepository) {
     this.repo = repo;
-    this.userRepo = userRepo ?? new UserRepository();
   }
 
   async getNotifications(userId: string, query: NotificationListQuery) {
@@ -143,7 +140,10 @@ export class NotificationService {
     );
 
     // Fire-and-forget: 微信订阅消息推送
-    this.pushWxSubscribeMessage(notification).catch(() => {
+    this.pushWxSubscribeMessage({
+      ...notification,
+      recipientWxOpenId: input.recipientWxOpenId,
+    }).catch(() => {
       // 已在 pushWxSubscribeMessage 内部记录日志，此处防止 unhandled rejection
     });
 
@@ -248,25 +248,22 @@ export class NotificationService {
   // --- 微信订阅消息推送（fire-and-forget） ---
 
   private async pushWxSubscribeMessage(notification: {
-    userId: string;
+    recipientWxOpenId?: string;
     title: string;
     content: string;
     targetType: string;
     targetId: string;
   }): Promise<void> {
     try {
+      if (!notification.recipientWxOpenId) return;
+
       const templateId = getTemplateIdByTargetType(notification.targetType);
       if (!templateId) {
         return;
       }
 
-      const user = await this.userRepo.findById(notification.userId);
-      if (!user?.wxOpenId) {
-        return;
-      }
-
       await sendWxSubscribeMessage({
-        openId: user.wxOpenId,
+        openId: notification.recipientWxOpenId,
         templateId,
         page: getPageByTargetType(notification.targetType, notification.targetId),
         data: {
@@ -275,7 +272,10 @@ export class NotificationService {
         },
       });
     } catch (err) {
-      logger.error({ err }, 'Failed to send wx subscribe message for notification');
+      logger.error(
+        { message: (err as Error).message },
+        'Failed to send wx subscribe message for notification',
+      );
     }
   }
 
