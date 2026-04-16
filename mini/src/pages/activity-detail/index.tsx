@@ -9,6 +9,7 @@ import {
   cancelActivity,
   type ActivityDetail,
 } from '../../apis/activity'
+import { requestSubscribe } from '../../utils/subscribe'
 import styles from './index.module.scss'
 
 // ---------------------------------------------------------------------------
@@ -84,6 +85,7 @@ export default function ActivityDetailPage() {
     if (!id) return
     try {
       await joinActivity(id)
+      await requestSubscribe(['activityUpdate'])
       Taro.showToast({ title: '参加成功', icon: 'success' })
       refreshDetail()
     } catch (err) {

@@ -12,6 +12,7 @@ import {
 } from '../../apis/coaching'
 import { getUserProfile } from '../../apis/user'
 import ReviewModal from '../../shared/ReviewModal'
+import { requestSubscribe } from '../../utils/subscribe'
 import styles from './index.module.scss'
 
 // ---------------------------------------------------------------------------
@@ -123,6 +124,7 @@ export default function PrivateLessonDetailPage() {
     setBooking(true)
     try {
       await bookPrivateLesson(id, selectedVenueId ?? undefined)
+      await requestSubscribe(['privateLessonUpdate'])
       Taro.showToast({ title: '预约成功', icon: 'success' })
       refreshDetail()
     } catch (err) {

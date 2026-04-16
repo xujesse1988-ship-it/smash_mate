@@ -9,6 +9,7 @@ import {
   type GroupClassDetail,
 } from '../../apis/coaching'
 import ReviewModal from '../../shared/ReviewModal'
+import { requestSubscribe } from '../../utils/subscribe'
 import styles from './index.module.scss'
 
 // ---------------------------------------------------------------------------
@@ -80,6 +81,7 @@ export default function GroupClassDetailPage() {
     if (!id) return
     try {
       await enrollGroupClass(id)
+      await requestSubscribe(['groupClassUpdate'])
       Taro.showToast({ title: '报名成功', icon: 'success' })
       refreshDetail()
     } catch (err) {
