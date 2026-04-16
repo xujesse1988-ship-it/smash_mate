@@ -6,6 +6,7 @@ export default defineAppConfig({
     'pages/profile/index',
     'pages/profile-edit/index',
     'pages/user-profile/index',
+    'pages/activity-detail/index',
     'pages/settings/index',
     'pages/login/index',
   ],

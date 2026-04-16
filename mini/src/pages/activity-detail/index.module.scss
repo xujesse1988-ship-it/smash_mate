@@ -1,0 +1,330 @@
+// ---------------------------------------------------------------------------
+// 活动详情页样式（暗色主题）
+// ---------------------------------------------------------------------------
+
+$bg: #0a0a0a;
+$card-bg: #1a1a1a;
+$border: #2a2a2a;
+$primary: #4ade80;
+$text-1: #ffffff;
+$text-2: #b3b3b3;
+$text-3: #666666;
+
+// ---------------------------------------------------------------------------
+// Container
+// ---------------------------------------------------------------------------
+
+.container {
+  min-height: 100vh;
+  background: $bg;
+  padding-bottom: 140px;
+}
+
+// ---------------------------------------------------------------------------
+// 信息卡片
+// ---------------------------------------------------------------------------
+
+.card {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 20px 24px 0;
+}
+
+// Title row: status tag + title
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statusTag {
+  flex-shrink: 0;
+  font-size: 22px;
+  padding: 4px 14px;
+  border-radius: 8px;
+}
+
+.statusOpen {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.statusFull {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.statusInProgress {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.statusCompleted {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.15);
+}
+
+.statusCancelled {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.title {
+  font-size: 28px;
+  color: $text-2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Info rows (venue, time, participants)
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.infoIcon {
+  font-size: 30px;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.infoContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoMain {
+  font-size: 28px;
+  font-weight: 600;
+  color: $text-1;
+}
+
+.infoSub {
+  font-size: 24px;
+  color: $text-3;
+}
+
+.participantCount {
+  font-size: 28px;
+  color: $text-1;
+}
+
+.participantCountHighlight {
+  font-weight: 700;
+}
+
+.participantCountMax {
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// 发起人
+// ---------------------------------------------------------------------------
+
+.creatorCard {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 16px 24px 0;
+}
+
+.sectionTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: $text-1;
+  margin-bottom: 20px;
+}
+
+.creatorRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatarImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid $border;
+}
+
+.avatarPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: $primary;
+  border: 2px solid $border;
+}
+
+.creatorName {
+  font-size: 28px;
+  font-weight: 500;
+  color: $text-1;
+}
+
+// ---------------------------------------------------------------------------
+// 参与者
+// ---------------------------------------------------------------------------
+
+.participantsCard {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 16px 24px 0;
+}
+
+.avatarList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.participantItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+}
+
+.participantAvatarImg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid $border;
+}
+
+.participantAvatarPlaceholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: $primary;
+  border: 2px solid $border;
+}
+
+.participantName {
+  margin-top: 8px;
+  font-size: 20px;
+  color: $text-3;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptyParticipants {
+  font-size: 26px;
+  color: $text-3;
+  text-align: center;
+  padding: 24px 0;
+}
+
+// ---------------------------------------------------------------------------
+// 底部操作栏
+// ---------------------------------------------------------------------------
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 24px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  background: rgba(20, 20, 20, 0.95);
+  border-top: 1px solid $border;
+  display: flex;
+  gap: 16px;
+  z-index: 10;
+}
+
+.btnJoin {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 600;
+  color: #052e16;
+  background: $primary;
+  line-height: 80px;
+}
+
+.btnLeave {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 600;
+  color: $text-2;
+  background: #333333;
+  line-height: 80px;
+}
+
+.btnCancel {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #ef4444;
+  line-height: 80px;
+}
+
+.btnDisabled {
+  flex: 1;
+  height: 80px;
+  border: none;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 500;
+  color: $text-3;
+  background: #333333;
+  line-height: 80px;
+}
+
+// ---------------------------------------------------------------------------
+// 加载 & 错误
+// ---------------------------------------------------------------------------
+
+.loadingText {
+  color: $text-3;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}

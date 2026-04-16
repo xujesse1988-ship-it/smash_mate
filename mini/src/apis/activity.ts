@@ -62,3 +62,60 @@ export async function getActivities(
     url: `/activities${query ? `?${query}` : ''}`,
   })
 }
+
+// ---------------------------------------------------------------------------
+// Activity Detail Types
+// ---------------------------------------------------------------------------
+
+export interface ActivityParticipant {
+  id: string
+  nickname: string
+  avatarUrl: string | null
+}
+
+export interface ActivityDetail {
+  id: string
+  title: string | null
+  startTime: string
+  endTime: string
+  maxParticipants: number
+  currentParticipants: number
+  status: 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled'
+  venue: Venue | null
+  creator: { id: string; nickname: string; avatarUrl: string | null }
+  participants: ActivityParticipant[]
+  isParticipant: boolean
+  createdAt: string
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/activities/:id
+// ---------------------------------------------------------------------------
+
+export function getActivityDetail(id: string): Promise<ActivityDetail> {
+  return request<ActivityDetail>({ url: `/activities/${id}` })
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/activities/:id/join
+// ---------------------------------------------------------------------------
+
+export function joinActivity(id: string): Promise<void> {
+  return request<void>({ url: `/activities/${id}/join`, method: 'POST' })
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/activities/:id/leave
+// ---------------------------------------------------------------------------
+
+export function leaveActivity(id: string): Promise<void> {
+  return request<void>({ url: `/activities/${id}/leave`, method: 'POST' })
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/activities/:id/cancel
+// ---------------------------------------------------------------------------
+
+export function cancelActivity(id: string): Promise<void> {
+  return request<void>({ url: `/activities/${id}/cancel`, method: 'POST' })
+}
