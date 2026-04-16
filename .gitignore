@@ -31,5 +31,8 @@ playwright-report/
 *.log
 npm-debug.log*
 
+# SWC cache
+.swc/
+
 # Uploads
 uploads/
