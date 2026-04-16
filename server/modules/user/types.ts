@@ -27,9 +27,8 @@ export interface UserPublicInfo {
 }
 
 export interface WxLoginInput {
-  code: string;
-  encryptedData: string;
-  iv: string;
+  code: string; // wx.login() code, for code2session
+  phoneCode: string; // getPhoneNumber() code, for phone number API
   isCoach?: boolean;
 }
 

@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { config } from '../../infra/config.js';
 import { AppError } from '../../infra/error-handler.js';
@@ -171,21 +170,26 @@ export class UserService {
   }
 
   async wxLogin(input: WxLoginInput): Promise<LoginResponse> {
-    const { code, encryptedData, iv, isCoach } = input;
+    const { code, phoneCode, isCoach } = input;
 
-    // 1. Call WeChat code2Session to get session_key and openid
+    // Config guard: ensure WeChat credentials are configured
+    if (!config.wxAppId || !config.wxAppSecret) {
+      throw new AppError(503, 'AUTH_WX_NOT_CONFIGURED', '微信登录服务未配置');
+    }
+
+    // 1. Call WeChat code2Session to get openid
     const sessionUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${encodeURIComponent(config.wxAppId)}&secret=${encodeURIComponent(config.wxAppSecret)}&js_code=${encodeURIComponent(code)}&grant_type=authorization_code`;
 
-    let sessionData: { session_key?: string; openid?: string; errcode?: number; errmsg?: string };
+    let sessionData: { openid?: string; errcode?: number; errmsg?: string };
     try {
-      const response = await fetch(sessionUrl);
+      const response = await fetch(sessionUrl, { signal: AbortSignal.timeout(5000) });
       sessionData = (await response.json()) as typeof sessionData;
     } catch (err) {
       logger.error({ error: (err as Error).message }, '微信 code2Session 网络请求失败');
       throw new AppError(502, 'AUTH_WX_SESSION_FAILED', '微信登录服务暂不可用');
     }
 
-    if (sessionData.errcode || !sessionData.session_key || !sessionData.openid) {
+    if ((sessionData.errcode && sessionData.errcode !== 0) || !sessionData.openid) {
       logger.error(
         { errcode: sessionData.errcode, errmsg: sessionData.errmsg },
         '微信 code2Session 返回错误',
@@ -193,64 +197,101 @@ export class UserService {
       throw new AppError(502, 'AUTH_WX_SESSION_FAILED', '微信登录授权失败');
     }
 
-    const { session_key: sessionKey, openid } = sessionData;
+    const { openid } = sessionData;
 
-    // 2. Decrypt encryptedData to get phone number
-    let phoneNumber: string;
+    // 2. Get access_token for phone number API
+    const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${encodeURIComponent(config.wxAppId)}&secret=${encodeURIComponent(config.wxAppSecret)}`;
+    let tokenData: { access_token?: string; errcode?: number };
     try {
-      const decipher = crypto.createDecipheriv(
-        'aes-128-cbc',
-        Buffer.from(sessionKey, 'base64'),
-        Buffer.from(iv, 'base64'),
-      );
-      let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
-      decrypted += decipher.final('utf8');
-      const decryptedData = JSON.parse(decrypted) as {
-        phoneNumber?: string;
-        purePhoneNumber?: string;
-      };
-      phoneNumber = decryptedData.purePhoneNumber || decryptedData.phoneNumber || '';
+      const tokenResponse = await fetch(tokenUrl, { signal: AbortSignal.timeout(5000) });
+      tokenData = (await tokenResponse.json()) as typeof tokenData;
     } catch (err) {
-      logger.error({ error: (err as Error).message }, '微信手机号解密失败');
-      throw new AppError(400, 'AUTH_WX_DECRYPT_FAILED', '手机号解密失败');
+      logger.error({ error: (err as Error).message }, '获取微信 access_token 网络请求失败');
+      throw new AppError(502, 'AUTH_WX_SESSION_FAILED', '微信登录服务暂不可用');
     }
+
+    if (!tokenData.access_token) {
+      logger.error({ errcode: tokenData.errcode }, '获取微信 access_token 失败');
+      throw new AppError(502, 'AUTH_WX_SESSION_FAILED', '微信登录服务暂不可用');
+    }
+
+    // 3. Call getPhoneNumber API with phoneCode
+    const phoneUrl = `https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=${tokenData.access_token}`;
+    let phoneData: {
+      errcode?: number;
+      phone_info?: { purePhoneNumber?: string; phoneNumber?: string };
+    };
+    try {
+      const phoneResponse = await fetch(phoneUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: phoneCode }),
+        signal: AbortSignal.timeout(5000),
+      });
+      phoneData = (await phoneResponse.json()) as typeof phoneData;
+    } catch (err) {
+      logger.error({ error: (err as Error).message }, '微信获取手机号网络请求失败');
+      throw new AppError(502, 'AUTH_WX_SESSION_FAILED', '微信登录服务暂不可用');
+    }
+
+    if (phoneData.errcode && phoneData.errcode !== 0) {
+      logger.error({ errcode: phoneData.errcode }, '微信获取手机号失败');
+      throw new AppError(400, 'AUTH_WX_PHONE_FAILED', '获取手机号失败');
+    }
+
+    const phoneNumber =
+      phoneData.phone_info?.purePhoneNumber || phoneData.phone_info?.phoneNumber || '';
 
     if (!phoneNumber) {
-      throw new AppError(400, 'AUTH_WX_DECRYPT_FAILED', '未能获取到手机号');
+      throw new AppError(400, 'AUTH_WX_PHONE_FAILED', '未能获取到手机号');
     }
 
-    // 3. Find or create user (reuse existing login logic)
+    // 4. Find or create user (catch-and-retry to handle race condition)
     let user = await this.repo.findByPhone(phoneNumber);
     let isNewUser = false;
 
     if (!user) {
-      isNewUser = true;
-      user = await this.repo.create({
-        phone: phoneNumber,
-        nickname: generateNickname(),
-        isCoach: isCoach ?? false,
-      });
+      try {
+        user = await this.repo.create({
+          phone: phoneNumber,
+          nickname: generateNickname(),
+          isCoach: isCoach ?? false,
+        });
+        isNewUser = true;
+      } catch (err) {
+        // Handle race condition: another request created the user between find and create
+        if ((err as { code?: string })?.code === 'P2002') {
+          user = await this.repo.findByPhone(phoneNumber);
+          if (!user) throw err; // Shouldn't happen, but be safe
+        } else {
+          throw err;
+        }
+      }
     }
 
-    // 4. Save openid to user record
+    // 5. Save openid to user record (check for conflict first)
     if (!user.wxOpenId || user.wxOpenId !== openid) {
+      const existingWxUser = await this.repo.findByWxOpenId(openid);
+      if (existingWxUser && existingWxUser.id !== user.id) {
+        throw new AppError(409, 'AUTH_WX_OPENID_CONFLICT', '该微信号已绑定其他账号');
+      }
       await this.repo.updateWxOpenId(user.id, openid);
     }
 
-    // 5. If isCoach and user is not yet a coach, enable coach role
+    // 6. If isCoach and user is not yet a coach, enable coach role
     if (isCoach && !user.isCoach) {
       await this.repo.updateCoachRole(user.id, true);
       user = { ...user, isCoach: true };
     }
 
-    // 6. Sign JWT
+    // 7. Sign JWT
     const token = jwt.sign({ userId: user.id, role: 'user' }, config.jwtSecret, {
       expiresIn: config.jwtExpiresIn,
     });
 
-    logger.info({ openid, isNewUser }, '微信快捷登录成功');
+    logger.info({ userId: user.id, isNewUser }, '微信快捷登录成功');
 
-    // 7. Return response (same format as login)
+    // 8. Return response (same format as login)
     return {
       token,
       user: {

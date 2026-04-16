@@ -39,8 +39,7 @@ export function createUserController(): Router {
   // POST /api/auth/wx-login
   const wxLoginSchema = z.object({
     code: z.string().min(1),
-    encryptedData: z.string().min(1),
-    iv: z.string().min(1),
+    phoneCode: z.string().min(1),
     isCoach: z.boolean().optional(),
   });
 
