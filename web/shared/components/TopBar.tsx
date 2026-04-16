@@ -14,10 +14,11 @@ import { BackButton } from './BackButton';
 interface TopBarProps {
   title: string;
   showBackBtn?: boolean;
+  backTo?: string;
   showLogo?: boolean;
 }
 
-export function TopBar({ title, showBackBtn, showLogo }: TopBarProps) {
+export function TopBar({ title, showBackBtn, backTo, showLogo }: TopBarProps) {
   const navigate = useNavigate();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
@@ -39,7 +40,7 @@ export function TopBar({ title, showBackBtn, showLogo }: TopBarProps) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        {showBackBtn && <BackButton onClick={() => navigate(-1)} style={{ marginRight: 12, padding: 0 }} />}
+        {showBackBtn && <BackButton onClick={() => backTo ? navigate(backTo) : navigate(-1)} style={{ marginRight: 12, padding: 0 }} />}
         {showLogo ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 22 }}>🏸</span>

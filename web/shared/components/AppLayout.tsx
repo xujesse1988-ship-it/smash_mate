@@ -88,6 +88,8 @@ export function AppLayout() {
   const showBackBtnInTopBar =
     location.pathname === '/my-courses' ||
     /^\/coaches\/[^/]+\/private-lessons$/.test(location.pathname);
+  const backTo =
+    location.pathname === '/my-courses' && userId ? `/users/${userId}` : undefined;
   const showLogo = location.pathname === '/activities';
 
   return (
@@ -100,7 +102,7 @@ export function AppLayout() {
         color: 'var(--text-1)',
       }}
     >
-      {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} showLogo={showLogo} />}
+      {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} backTo={backTo} showLogo={showLogo} />}
       <div style={{ flex: 1, overflow: 'auto' }}>
         <Outlet />
       </div>
