@@ -20,9 +20,9 @@ async function updateTabBarBadge() {
   try {
     const { count } = await getUnreadCount()
     if (count > 0) {
-      Taro.setTabBarBadge({ index: 1, text: count > 99 ? '99+' : String(count) })
+      Taro.setTabBarBadge({ index: 2, text: count > 99 ? '99+' : String(count) })
     } else {
-      Taro.removeTabBarBadge({ index: 1 })
+      Taro.removeTabBarBadge({ index: 2 })
     }
   } catch {
     // 静默失败
