@@ -2,12 +2,15 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/coach-list/index',
+    'pages/coach-detail/index',
     'pages/notification-list/index',
     'pages/profile/index',
     'pages/profile-edit/index',
     'pages/user-profile/index',
+    'pages/activity-detail/index',
     'pages/settings/index',
     'pages/login/index',
+    'pages/activity-create/index',
   ],
   tabBar: {
     color: '#999999',
