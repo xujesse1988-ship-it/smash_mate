@@ -260,8 +260,9 @@ export function CoachStudentDetailPage() {
               <div style={{ fontSize: 12, color: 'var(--text-3)' }}>来源</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginTop: 2 }}>
                 {studentDetail.source === 'manual' ? '手动添加' :
-                 studentDetail.source === 'private_lesson' ? '私教课' :
-                 studentDetail.source === 'group_class' ? '团课' :
+                 studentDetail.source === 'private_lesson' || studentDetail.source === 'private-lesson' ? '私教课' :
+                 studentDetail.source === 'group_class' || studentDetail.source === 'group-class' ? '团课' :
+                 studentDetail.source === 'class_lesson' || studentDetail.source === 'class-lesson' ? '学员班' :
                  studentDetail.source}
               </div>
             </div>

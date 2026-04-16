@@ -361,11 +361,13 @@ function CoachStudentCard({
   const sourceLabel =
     student.source === 'manual'
       ? '手动添加'
-      : student.source === 'private_lesson'
+      : student.source === 'private_lesson' || student.source === 'private-lesson'
         ? '私教课'
-        : student.source === 'group_class'
+        : student.source === 'group_class' || student.source === 'group-class'
           ? '团课'
-          : student.source;
+          : student.source === 'class_lesson' || student.source === 'class-lesson'
+            ? '学员班'
+            : student.source;
 
   return (
     <div
