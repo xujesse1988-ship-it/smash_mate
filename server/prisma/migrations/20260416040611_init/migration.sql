@@ -127,29 +127,17 @@ CREATE TABLE "GroupClassEnrollment" (
 );
 
 -- CreateTable
-CREATE TABLE "PrivateLessonSlot" (
-    "id" TEXT NOT NULL,
-    "coachId" TEXT NOT NULL,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
-    "venueIds" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "feeDescription" TEXT,
-    "isBooked" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "PrivateLessonSlot_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "PrivateLesson" (
     "id" TEXT NOT NULL,
-    "slotId" TEXT NOT NULL,
     "coachId" TEXT NOT NULL,
-    "studentId" TEXT NOT NULL,
+    "studentId" TEXT,
     "venueId" TEXT,
+    "venueIds" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
+    "feeDescription" TEXT,
+    "trainingContent" TEXT,
+    "source" TEXT,
     "status" TEXT NOT NULL DEFAULT 'scheduled',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -230,6 +218,106 @@ CREATE TABLE "Review" (
     CONSTRAINT "Review_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "CoachApplication" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "certificateUrls" TEXT[],
+    "description" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "rejectReason" TEXT,
+    "reviewedBy" TEXT,
+    "reviewedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CoachApplication_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StudentClass" (
+    "id" TEXT NOT NULL,
+    "coachId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "StudentClass_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StudentClassMember" (
+    "id" TEXT NOT NULL,
+    "studentClassId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StudentClassMember_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ClassLesson" (
+    "id" TEXT NOT NULL,
+    "studentClassId" TEXT NOT NULL,
+    "coachId" TEXT NOT NULL,
+    "venueId" TEXT,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "trainingContent" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'scheduled',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ClassLesson_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CoachStudent" (
+    "id" TEXT NOT NULL,
+    "coachId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "firstMetAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CoachStudent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LessonNote" (
+    "id" TEXT NOT NULL,
+    "classLessonId" TEXT,
+    "privateLessonId" TEXT,
+    "coachId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "LessonNote_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StudentNote" (
+    "id" TEXT NOT NULL,
+    "coachId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "studentClassId" TEXT,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StudentNote_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StudentTag" (
+    "id" TEXT NOT NULL,
+    "coachId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "tag" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StudentTag_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
@@ -306,28 +394,16 @@ CREATE INDEX "GroupClassEnrollment_userId_idx" ON "GroupClassEnrollment"("userId
 CREATE UNIQUE INDEX "GroupClassEnrollment_groupClassId_userId_key" ON "GroupClassEnrollment"("groupClassId", "userId");
 
 -- CreateIndex
-CREATE INDEX "PrivateLessonSlot_coachId_idx" ON "PrivateLessonSlot"("coachId");
+CREATE INDEX "PrivateLesson_coachId_status_idx" ON "PrivateLesson"("coachId", "status");
 
 -- CreateIndex
-CREATE INDEX "PrivateLessonSlot_coachId_startTime_idx" ON "PrivateLessonSlot"("coachId", "startTime");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PrivateLesson_slotId_key" ON "PrivateLesson"("slotId");
-
--- CreateIndex
-CREATE INDEX "PrivateLesson_coachId_idx" ON "PrivateLesson"("coachId");
-
--- CreateIndex
-CREATE INDEX "PrivateLesson_studentId_idx" ON "PrivateLesson"("studentId");
-
--- CreateIndex
-CREATE INDEX "PrivateLesson_status_idx" ON "PrivateLesson"("status");
+CREATE INDEX "PrivateLesson_studentId_status_idx" ON "PrivateLesson"("studentId", "status");
 
 -- CreateIndex
 CREATE INDEX "PrivateLesson_status_startTime_idx" ON "PrivateLesson"("status", "startTime");
 
 -- CreateIndex
-CREATE INDEX "PrivateLesson_status_endTime_idx" ON "PrivateLesson"("status", "endTime");
+CREATE INDEX "PrivateLesson_coachId_studentId_idx" ON "PrivateLesson"("coachId", "studentId");
 
 -- CreateIndex
 CREATE INDEX "MatchRecord_sourceType_sourceId_idx" ON "MatchRecord"("sourceType", "sourceId");
@@ -362,6 +438,72 @@ CREATE INDEX "Review_coachId_createdAt_idx" ON "Review"("coachId", "createdAt");
 -- CreateIndex
 CREATE UNIQUE INDEX "Review_reviewerId_courseType_courseId_key" ON "Review"("reviewerId", "courseType", "courseId");
 
+-- CreateIndex
+CREATE INDEX "CoachApplication_userId_idx" ON "CoachApplication"("userId");
+
+-- CreateIndex
+CREATE INDEX "CoachApplication_status_idx" ON "CoachApplication"("status");
+
+-- CreateIndex
+CREATE INDEX "CoachApplication_status_createdAt_idx" ON "CoachApplication"("status", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "StudentClass_coachId_idx" ON "StudentClass"("coachId");
+
+-- CreateIndex
+CREATE INDEX "StudentClassMember_studentId_idx" ON "StudentClassMember"("studentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StudentClassMember_studentClassId_studentId_key" ON "StudentClassMember"("studentClassId", "studentId");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_studentClassId_idx" ON "ClassLesson"("studentClassId");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_coachId_idx" ON "ClassLesson"("coachId");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_status_idx" ON "ClassLesson"("status");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_status_startTime_idx" ON "ClassLesson"("status", "startTime");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_status_endTime_idx" ON "ClassLesson"("status", "endTime");
+
+-- CreateIndex
+CREATE INDEX "ClassLesson_venueId_idx" ON "ClassLesson"("venueId");
+
+-- CreateIndex
+CREATE INDEX "CoachStudent_coachId_idx" ON "CoachStudent"("coachId");
+
+-- CreateIndex
+CREATE INDEX "CoachStudent_studentId_idx" ON "CoachStudent"("studentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CoachStudent_coachId_studentId_key" ON "CoachStudent"("coachId", "studentId");
+
+-- CreateIndex
+CREATE INDEX "LessonNote_classLessonId_idx" ON "LessonNote"("classLessonId");
+
+-- CreateIndex
+CREATE INDEX "LessonNote_privateLessonId_idx" ON "LessonNote"("privateLessonId");
+
+-- CreateIndex
+CREATE INDEX "LessonNote_coachId_idx" ON "LessonNote"("coachId");
+
+-- CreateIndex
+CREATE INDEX "StudentNote_coachId_studentId_idx" ON "StudentNote"("coachId", "studentId");
+
+-- CreateIndex
+CREATE INDEX "StudentNote_studentClassId_idx" ON "StudentNote"("studentClassId");
+
+-- CreateIndex
+CREATE INDEX "StudentTag_coachId_studentId_idx" ON "StudentTag"("coachId", "studentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StudentTag_coachId_studentId_tag_key" ON "StudentTag"("coachId", "studentId", "tag");
+
 -- AddForeignKey
 ALTER TABLE "Venue" ADD CONSTRAINT "Venue_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -393,16 +535,10 @@ ALTER TABLE "GroupClassEnrollment" ADD CONSTRAINT "GroupClassEnrollment_groupCla
 ALTER TABLE "GroupClassEnrollment" ADD CONSTRAINT "GroupClassEnrollment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PrivateLessonSlot" ADD CONSTRAINT "PrivateLessonSlot_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PrivateLesson" ADD CONSTRAINT "PrivateLesson_slotId_fkey" FOREIGN KEY ("slotId") REFERENCES "PrivateLessonSlot"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "PrivateLesson" ADD CONSTRAINT "PrivateLesson_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PrivateLesson" ADD CONSTRAINT "PrivateLesson_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PrivateLesson" ADD CONSTRAINT "PrivateLesson_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PrivateLesson" ADD CONSTRAINT "PrivateLesson_venueId_fkey" FOREIGN KEY ("venueId") REFERENCES "Venue"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -430,3 +566,51 @@ ALTER TABLE "Review" ADD CONSTRAINT "Review_reviewerId_fkey" FOREIGN KEY ("revie
 
 -- AddForeignKey
 ALTER TABLE "Review" ADD CONSTRAINT "Review_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CoachApplication" ADD CONSTRAINT "CoachApplication_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentClassMember" ADD CONSTRAINT "StudentClassMember_studentClassId_fkey" FOREIGN KEY ("studentClassId") REFERENCES "StudentClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentClassMember" ADD CONSTRAINT "StudentClassMember_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ClassLesson" ADD CONSTRAINT "ClassLesson_studentClassId_fkey" FOREIGN KEY ("studentClassId") REFERENCES "StudentClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ClassLesson" ADD CONSTRAINT "ClassLesson_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ClassLesson" ADD CONSTRAINT "ClassLesson_venueId_fkey" FOREIGN KEY ("venueId") REFERENCES "Venue"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CoachStudent" ADD CONSTRAINT "CoachStudent_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CoachStudent" ADD CONSTRAINT "CoachStudent_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LessonNote" ADD CONSTRAINT "LessonNote_classLessonId_fkey" FOREIGN KEY ("classLessonId") REFERENCES "ClassLesson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LessonNote" ADD CONSTRAINT "LessonNote_privateLessonId_fkey" FOREIGN KEY ("privateLessonId") REFERENCES "PrivateLesson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LessonNote" ADD CONSTRAINT "LessonNote_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentNote" ADD CONSTRAINT "StudentNote_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentNote" ADD CONSTRAINT "StudentNote_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentTag" ADD CONSTRAINT "StudentTag_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StudentTag" ADD CONSTRAINT "StudentTag_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
