@@ -51,3 +51,16 @@ export async function uploadAvatar(filePath: string): Promise<string> {
   const result = await uploadFile({ url: '/upload/avatar', filePath, name: 'avatar' })
   return result.avatarUrl
 }
+
+/** 用户搜索结果 */
+export interface UserSearchResult {
+  id: string
+  nickname: string
+  avatarUrl: string | null
+  phoneLast4: string
+}
+
+/** 搜索用户 */
+export function searchUsers(keyword: string): Promise<{ items: UserSearchResult[] }> {
+  return request<{ items: UserSearchResult[] }>({ url: `/users/search?q=${encodeURIComponent(keyword)}` })
+}

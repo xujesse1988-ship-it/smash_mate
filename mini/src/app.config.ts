@@ -11,6 +11,9 @@ export default defineAppConfig({
     'pages/settings/index',
     'pages/login/index',
     'pages/activity-create/index',
+    'pages/group-class-detail/index',
+    'pages/match-record-create/index',
+    'pages/private-lesson-detail/index',
   ],
   tabBar: {
     color: '#999999',

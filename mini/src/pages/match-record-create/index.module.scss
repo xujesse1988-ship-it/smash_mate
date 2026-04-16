@@ -1,0 +1,257 @@
+// ---------------------------------------------------------------------------
+// 战绩录入页样式（暗色主题）
+// ---------------------------------------------------------------------------
+
+$bg: #0a0a0a;
+$card-bg: #1a1a1a;
+$border: #2a2a2a;
+$primary: #4ade80;
+$text-1: #ffffff;
+$text-2: #b3b3b3;
+$text-3: #666666;
+$danger: #ef4444;
+
+.container {
+  min-height: 100vh;
+  background: $bg;
+  padding: 32px;
+}
+
+// ---------------------------------------------------------------------------
+// 通用表单区块
+// ---------------------------------------------------------------------------
+
+.fieldGroup {
+  margin-bottom: 40px;
+}
+
+.label {
+  font-size: 26px;
+  color: $text-3;
+  margin-bottom: 16px;
+}
+
+.inputWrap {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 4px 16px;
+}
+
+.inputError {
+  border-color: $danger;
+}
+
+.errorText {
+  font-size: 22px;
+  color: $danger;
+  margin-top: 8px;
+}
+
+// ---------------------------------------------------------------------------
+// 比赛类型 Tab
+// ---------------------------------------------------------------------------
+
+.tabRow {
+  display: flex;
+  gap: 16px;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 20px 0;
+  font-size: 28px;
+  color: $text-2;
+  transition: all 0.2s;
+}
+
+.tabItemActive {
+  border-color: $primary;
+  color: $primary;
+  background: rgba($primary, 0.08);
+}
+
+// ---------------------------------------------------------------------------
+// 选手区域
+// ---------------------------------------------------------------------------
+
+.sideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sideLabel {
+  font-size: 28px;
+  color: $text-1;
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// 选手卡片
+// ---------------------------------------------------------------------------
+
+.playerCard {
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.playerTypeRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.playerTypeBtn {
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 12px 0;
+  font-size: 24px;
+  color: $text-3;
+}
+
+.playerTypeBtnActive {
+  border-color: $primary;
+  color: $primary;
+  background: rgba($primary, 0.08);
+}
+
+// 搜索相关
+.searchWrap {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 16px;
+  margin-top: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid $border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: rgba($primary, 0.1);
+  }
+}
+
+.dropdownName {
+  font-size: 28px;
+  color: $text-1;
+}
+
+.dropdownPhone {
+  font-size: 22px;
+  color: $text-3;
+}
+
+.dropdownEmpty {
+  padding: 24px;
+  text-align: center;
+  font-size: 24px;
+  color: $text-3;
+}
+
+// 已选用户
+.selectedUser {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selectedNickname {
+  font-size: 28px;
+  color: $text-1;
+}
+
+.clearBtn {
+  font-size: 24px;
+  color: $text-3;
+  padding: 8px;
+}
+
+// ---------------------------------------------------------------------------
+// 比分录入
+// ---------------------------------------------------------------------------
+
+.gameRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.gameLabel {
+  font-size: 26px;
+  color: $text-2;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.scoreInputWrap {
+  flex: 1;
+  background: $card-bg;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 4px 12px;
+}
+
+.scoreSeparator {
+  font-size: 28px;
+  color: $text-3;
+  flex-shrink: 0;
+}
+
+.removeGameBtn {
+  font-size: 24px;
+  color: $danger;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.addGameBtn {
+  font-size: 26px;
+  color: $primary;
+  padding: 12px 0;
+  text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// 提交按钮
+// ---------------------------------------------------------------------------
+
+.submitBtn {
+  margin-top: 48px;
+  width: 100%;
+  height: 88px;
+  border-radius: 16px;
+  font-size: 32px;
+  font-weight: 600;
+}
