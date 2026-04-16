@@ -107,7 +107,7 @@ export function AppLayout() {
       }}
     >
       {showTopBar && <TopBar title={title} showBackBtn={showBackBtnInTopBar} backTo={backTo} showLogo={showLogo} />}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'auto', paddingBottom: showTabBar ? 56 : 0 }}>
         <Outlet />
       </div>
       {showTabBar && <BottomTabBar />}

@@ -57,12 +57,17 @@ export function BottomTabBar() {
   return (
     <div
       style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: 'flex',
         background: 'rgba(15,23,42,.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderTop: '1px solid var(--surface-2)',
-        padding: '6px 0 8px',
+        padding: '6px 0',
+        zIndex: 100,
       }}
     >
       {tabs.map((tab) => {
@@ -76,27 +81,17 @@ export function BottomTabBar() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 4,
+              gap: 2,
               cursor: 'pointer',
               color: isActive ? 'var(--primary)' : 'var(--text-3)',
               fontSize: 11,
               fontWeight: 500,
-              padding: '4px 0',
+              padding: '2px 0',
               transition: 'var(--transition)',
             }}
           >
             <span style={{ fontSize: 22, lineHeight: 1 }}>{tab.icon}</span>
             <span>{tab.label}</span>
-            <div
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: '50%',
-                background: 'var(--primary)',
-                marginTop: 2,
-                opacity: isActive ? 1 : 0,
-              }}
-            />
           </div>
         );
       })}
