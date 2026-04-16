@@ -1,6 +1,9 @@
 import Taro from '@tarojs/taro'
+import { useAuthStore } from '../stores/auth-store'
 
 const BASE_URL = process.env.TARO_APP_API_BASE_URL || ''
+
+let isRedirecting = false
 
 export class ApiRequestError extends Error {
   code: string
@@ -13,11 +16,20 @@ export class ApiRequestError extends Error {
 
 /** 获取存储的 token */
 function getToken(): string | null {
-  try {
-    return Taro.getStorageSync('token') || null
-  } catch {
-    return null
+  return useAuthStore.getState().token
+}
+
+/** 处理 401 未授权响应 */
+function handle401(): never {
+  useAuthStore.getState().clearAuth()
+  if (!isRedirecting) {
+    isRedirecting = true
+    Taro.redirectTo({ url: '/pages/login/index' })
+    setTimeout(() => {
+      isRedirecting = false
+    }, 2000)
   }
+  throw new ApiRequestError('AUTH_REQUIRED', '请重新登录')
 }
 
 /** 统一请求封装 */
@@ -47,14 +59,7 @@ export async function request<T>(options: {
   })
 
   if (response.statusCode === 401) {
-    // 清除登录态
-    try {
-      Taro.removeStorageSync('token')
-      Taro.removeStorageSync('userId')
-    } catch {}
-    // 跳转登录页
-    Taro.redirectTo({ url: '/pages/login/index' })
-    throw new ApiRequestError('AUTH_REQUIRED', '请重新登录')
+    handle401()
   }
 
   if (response.statusCode >= 400) {
@@ -71,11 +76,11 @@ export async function request<T>(options: {
 }
 
 /** 图片上传封装 */
-export async function uploadFile(options: {
+export async function uploadFile<T = { avatarUrl: string }>(options: {
   url: string
   filePath: string
   name: string
-}): Promise<{ avatarUrl: string }> {
+}): Promise<T> {
   const { url, filePath, name } = options
   const token = getToken()
   const header: Record<string, string> = {}
@@ -90,10 +95,14 @@ export async function uploadFile(options: {
     header,
   })
 
+  if (response.statusCode === 401) {
+    handle401()
+  }
+
   if (response.statusCode >= 400) {
     throw new ApiRequestError('UPLOAD_FAILED', '上传失败')
   }
 
-  const body = JSON.parse(response.data) as { data: { avatarUrl: string } }
+  const body = JSON.parse(response.data) as { data: T }
   return body.data
 }
