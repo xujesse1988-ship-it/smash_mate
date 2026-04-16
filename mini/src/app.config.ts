@@ -1,6 +1,11 @@
 export default defineAppConfig({
   pages: [
     'pages/index/index',
+    'pages/notification-list/index',
+    'pages/profile/index',
+    'pages/profile-edit/index',
+    'pages/user-profile/index',
+    'pages/settings/index',
     'pages/login/index',
   ],
   tabBar: {
@@ -9,6 +14,8 @@ export default defineAppConfig({
     backgroundColor: '#1a1a1a',
     list: [
       { pagePath: 'pages/index/index', text: '约球' },
+      { pagePath: 'pages/notification-list/index', text: '消息' },
+      { pagePath: 'pages/profile/index', text: '我的' },
     ],
   },
   window: {

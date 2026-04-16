@@ -1,0 +1,125 @@
+.container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  padding: 0 32px 32px;
+}
+
+/* Header / Avatar area */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0 32px;
+}
+
+.avatarWrap {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: #1a1a1a;
+  border: 4px solid #2a2a2a;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #4ADE80;
+  background: #1a1a1a;
+}
+
+.nickname {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.coachTag {
+  display: inline-block;
+  font-size: 22px;
+  color: #4ADE80;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  padding: 4px 16px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.bio {
+  font-size: 26px;
+  color: #999;
+  text-align: center;
+  line-height: 1.5;
+  padding: 0 32px;
+}
+
+/* Match stats card */
+.statsCard {
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 24px;
+  padding: 32px 24px;
+}
+
+.statsTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 24px;
+}
+
+.statsGrid {
+  display: flex;
+  justify-content: space-around;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 40px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.statValueGreen {
+  font-size: 40px;
+  font-weight: 700;
+  color: #4ADE80;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 22px;
+  color: #666;
+}
+
+/* Error / Loading */
+.loadingText {
+  color: #999;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 28px;
+  text-align: center;
+  padding-top: 120px;
+}
