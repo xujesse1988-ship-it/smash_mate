@@ -289,7 +289,7 @@ export function CoachStudentDetailPage() {
               </div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>首次接触</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>首次录入</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginTop: 2 }}>
                 {new Date(studentDetail.firstMetAt).toLocaleDateString('zh-CN', {
                   year: 'numeric',
