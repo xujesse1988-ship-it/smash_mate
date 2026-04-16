@@ -1,6 +1,7 @@
 export default defineAppConfig({
   pages: [
     'pages/index/index',
+    'pages/login/index',
   ],
   tabBar: {
     color: '#999999',

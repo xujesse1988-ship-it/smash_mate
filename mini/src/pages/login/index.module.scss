@@ -1,0 +1,85 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0a0a0a;
+  padding: 0 48px;
+}
+
+/* Logo area */
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120px 0 80px;
+}
+
+.logoIcon {
+  font-size: 96px;
+  margin-bottom: 8px;
+}
+
+.appName {
+  font-size: 56px;
+  font-weight: 800;
+  color: #4ADE80;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+}
+
+.slogan {
+  font-size: 24px;
+  color: #666;
+  letter-spacing: 4px;
+}
+
+/* Form area */
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 26px;
+  color: #999;
+  margin-bottom: 12px;
+}
+
+.fieldGroup {
+  margin-bottom: 32px;
+}
+
+.codeRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.codeInputWrap {
+  flex: 1;
+}
+
+.errorText {
+  font-size: 22px;
+  color: #ef4444;
+  margin-top: 8px;
+}
+
+.loginBtn {
+  margin-top: 16px;
+  height: 88px;
+  border-radius: 16px;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.agreement {
+  text-align: center;
+  font-size: 22px;
+  color: #555;
+  margin-top: 32px;
+}
+
+.link {
+  color: #4ADE80;
+}
