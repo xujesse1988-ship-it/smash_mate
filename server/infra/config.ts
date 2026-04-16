@@ -25,4 +25,6 @@ export const config = {
   codeResendIntervalSeconds: parseInt(process.env.CODE_RESEND_INTERVAL_SECONDS || '60', 10),
   devVerificationCode: process.env.DEV_VERIFICATION_CODE || undefined,
   publicUrl: process.env.PUBLIC_URL || '',
+  wxAppId: process.env.WX_APP_ID || '',
+  wxAppSecret: process.env.WX_APP_SECRET || '',
 };

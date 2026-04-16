@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { authMiddleware, AuthRequest } from '../../infra/auth.js';
 import { adminAuthMiddleware } from '../../infra/admin-auth.js';
+import { AppError } from '../../infra/error-handler.js';
 import { success } from '../../infra/response.js';
 import { UserService } from './service.js';
 import { UserRepository } from './repository.js';
@@ -28,6 +30,27 @@ export function createUserController(): Router {
         code: req.body.code,
         isCoach: req.body.isCoach,
       });
+      success(res, result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /api/auth/wx-login
+  const wxLoginSchema = z.object({
+    code: z.string().min(1),
+    encryptedData: z.string().min(1),
+    iv: z.string().min(1),
+    isCoach: z.boolean().optional(),
+  });
+
+  router.post('/auth/wx-login', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = wxLoginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError(400, 'AUTH_INVALID_PARAMS', '请求参数不合法');
+      }
+      const result = await service.wxLogin(parsed.data);
       success(res, result);
     } catch (err) {
       next(err);

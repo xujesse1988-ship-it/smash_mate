@@ -26,6 +26,13 @@ export interface UserPublicInfo {
   isCoach: boolean;
 }
 
+export interface WxLoginInput {
+  code: string;
+  encryptedData: string;
+  iv: string;
+  isCoach?: boolean;
+}
+
 export interface LoginResponse {
   token: string;
   user: {

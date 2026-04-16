@@ -16,7 +16,7 @@ export class UserRepository {
 
   async findAllUsers() {
     return prisma.user.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -35,8 +35,16 @@ export class UserRepository {
     });
   }
 
+  async findByWxOpenId(wxOpenId: string) {
+    return prisma.user.findUnique({ where: { wxOpenId } });
+  }
+
   async update(id: string, data: { nickname?: string; avatarUrl?: string; bio?: string }) {
     return prisma.user.update({ where: { id }, data });
+  }
+
+  async updateWxOpenId(id: string, wxOpenId: string) {
+    return prisma.user.update({ where: { id }, data: { wxOpenId } });
   }
 
   async updateCoachRole(id: string, isCoach: boolean) {
