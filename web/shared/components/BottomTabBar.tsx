@@ -62,7 +62,7 @@ export function BottomTabBar() {
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderTop: '1px solid var(--surface-2)',
-        padding: '10px 0 16px',
+        padding: '6px 0 8px',
       }}
     >
       {tabs.map((tab) => {
