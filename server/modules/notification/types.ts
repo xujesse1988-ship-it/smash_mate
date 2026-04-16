@@ -42,6 +42,7 @@ export interface CreateNotificationInput {
   content: string;
   targetType: TargetType;
   targetId: string;
+  recipientWxOpenId?: string;
 }
 
 export interface NotificationListQuery {
