@@ -53,6 +53,7 @@ function hasLocalTopBar(pathname: string, userId: string | null): boolean {
   if (/^\/group-classes\/[^/]+$/.test(pathname)) return true;
   if (/^\/users\/[^/]+\/match-records$/.test(pathname)) return true;
   if (/^\/my-students\/[^/]+/.test(pathname)) return true;
+  if (/^\/my-student-classes\/[^/]+/.test(pathname)) return true;
 
   if (userId && /^\/users\/[^/]+$/.test(pathname) && pathname !== `/users/${userId}`) {
     return true;

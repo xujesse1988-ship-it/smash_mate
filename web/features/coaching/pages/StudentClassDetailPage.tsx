@@ -139,12 +139,21 @@ export function StudentClassDetailPage() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      <BackButton onClick={() => navigate('/my-student-classes')} />
-
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
-        <h2 style={{ margin: 0, fontSize: 18, flex: 1 }}>{classDetail.name}</h2>
+    <div style={{ background: 'var(--bg)', minHeight: '100%' }}>
+      {/* Header with back button — consistent with MyActivityListPage */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '14px 18px',
+          borderBottom: '1px solid var(--surface-2)',
+          background: 'rgba(15,23,42,.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
+        <BackButton onClick={() => navigate('/my-courses')} style={{ marginRight: 8 }} />
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)', flex: 1 }}>{classDetail.name}</h2>
         <button
           onClick={() => {
             setEditName(classDetail.name);
@@ -164,6 +173,7 @@ export function StudentClassDetailPage() {
         </button>
       </div>
 
+      <div style={{ padding: 16 }}>
       <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16 }}>
         {classDetail.memberCount} 名学员 | {classDetail.lessonCount} 节课程
       </div>
@@ -622,6 +632,7 @@ export function StudentClassDetailPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
