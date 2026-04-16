@@ -265,7 +265,7 @@ export function MyCourseManagementPage() {
             color: activeTab === 'private-lessons' ? 'var(--text-1)' : 'var(--text-3)',
           }}
         >
-          私教预约
+          私教课
         </button>
         <button
           onClick={() => setActiveTab('student-classes')}
