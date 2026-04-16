@@ -1,19 +1,231 @@
-.container {
+// ---------------------------------------------------------------------------
+// 约球列表页样式（暗色主题）
+// ---------------------------------------------------------------------------
+
+$bg: #0a0a0a;
+$card-bg: #1a1a1a;
+$border: #2a2a2a;
+$primary: #4ade80;
+$text-1: #ffffff;
+$text-2: #b3b3b3;
+$text-3: #666666;
+
+// ---------------------------------------------------------------------------
+// 筛选栏
+// ---------------------------------------------------------------------------
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  gap: 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid $border;
+  background: $bg;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 8px 24px;
+  border-radius: 32px;
+  font-size: 26px;
+  color: $text-2;
+  background: $card-bg;
+  border: 1px solid $border;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.chipActive {
+  color: #0a0a0a;
+  background: $primary;
+  border-color: $primary;
+}
+
+.slotFilter {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.slotLabel {
+  font-size: 24px;
+  color: $text-2;
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// 活动列表
+// ---------------------------------------------------------------------------
+
+.listContainer {
+  padding: 16px 24px;
+}
+
+// ---------------------------------------------------------------------------
+// 活动卡片
+// ---------------------------------------------------------------------------
+
+.card {
+  background: $card-bg;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.venueName {
+  font-size: 30px;
+  font-weight: 600;
+  color: $text-1;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusTag {
+  flex-shrink: 0;
+  font-size: 22px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  margin-left: 12px;
+}
+
+.statusOpen {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.statusFull {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.statusInProgress {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.statusCompleted {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.15);
+}
+
+.statusCancelled {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoIcon {
+  font-size: 26px;
+  width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.infoText {
+  font-size: 26px;
+  color: $text-2;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid $border;
+}
+
+.creatorInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.creatorName {
+  font-size: 24px;
+  color: $text-3;
+}
+
+.distance {
+  font-size: 24px;
+  color: $text-3;
+}
+
+// ---------------------------------------------------------------------------
+// 空状态 & 加载
+// ---------------------------------------------------------------------------
+
+.emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  padding: 120px 0;
 }
 
-.title {
-  font-size: 48px;
-  font-weight: bold;
-  color: #4ADE80;
-  margin-bottom: 16px;
+.emptyIcon {
+  font-size: 80px;
+  margin-bottom: 24px;
 }
 
-.subtitle {
+.emptyText {
   font-size: 28px;
-  color: #999;
+  color: $text-3;
+}
+
+.loading {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.loadingText {
+  font-size: 28px;
+  color: $text-3;
+}
+
+.loadMore {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.loadMoreText {
+  font-size: 24px;
+  color: $text-3;
+}
+
+.errorState {
+  text-align: center;
+  padding: 120px 0;
+}
+
+.errorText {
+  font-size: 28px;
+  color: #ef4444;
 }
