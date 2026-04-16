@@ -27,4 +27,7 @@ export const config = {
   publicUrl: process.env.PUBLIC_URL || '',
   wxAppId: process.env.WX_APP_ID || '',
   wxAppSecret: process.env.WX_APP_SECRET || '',
+  wxSubscribeTemplateActivity: process.env.WX_SUBSCRIBE_TEMPLATE_ACTIVITY || '',
+  wxSubscribeTemplateGroupClass: process.env.WX_SUBSCRIBE_TEMPLATE_GROUP_CLASS || '',
+  wxSubscribeTemplatePrivateLesson: process.env.WX_SUBSCRIBE_TEMPLATE_PRIVATE_LESSON || '',
 };
