@@ -11,6 +11,7 @@ import {
   type SlotVenue,
 } from '../../apis/coaching'
 import { getUserProfile } from '../../apis/user'
+import ReviewModal from '../../shared/ReviewModal'
 import styles from './index.module.scss'
 
 // ---------------------------------------------------------------------------
@@ -62,6 +63,7 @@ export default function PrivateLessonDetailPage() {
   const queryClient = useQueryClient()
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null)
   const [booking, setBooking] = useState(false)
+  const [reviewVisible, setReviewVisible] = useState(false)
 
   // --- Fetch lesson detail ---
 
@@ -359,13 +361,38 @@ export default function PrivateLessonDetailPage() {
           </Button>
         )}
 
-        {/* Disabled states */}
-        {lesson.status !== 'scheduled' && DISABLED_STATUS_TEXT[lesson.status] && (
-          <Button className={styles.btnDisabled} disabled>
-            {DISABLED_STATUS_TEXT[lesson.status]}
+        {/* Student + completed -> review coach */}
+        {isStudent && lesson.status === 'completed' && (
+          <Button
+            className={styles.btnBook}
+            onClick={() => setReviewVisible(true)}
+          >
+            评价教练
           </Button>
         )}
+
+        {/* Disabled states (excluding completed for students which shows review button) */}
+        {lesson.status !== 'scheduled' &&
+          !(isStudent && lesson.status === 'completed') &&
+          DISABLED_STATUS_TEXT[lesson.status] && (
+            <Button className={styles.btnDisabled} disabled>
+              {DISABLED_STATUS_TEXT[lesson.status]}
+            </Button>
+          )}
       </View>
+
+      {/* Review modal */}
+      <ReviewModal
+        visible={reviewVisible}
+        coachId={lesson.coachId}
+        sourceType='private-lesson'
+        sourceId={lesson.id}
+        onClose={() => setReviewVisible(false)}
+        onSuccess={() => {
+          setReviewVisible(false)
+          refreshDetail()
+        }}
+      />
     </View>
   )
 }
