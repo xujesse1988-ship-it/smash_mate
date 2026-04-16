@@ -164,13 +164,27 @@ export function CoachStudentDetailPage() {
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
   return (
-    <div style={{ padding: 16, background: 'var(--bg)', minHeight: '100%' }}>
-      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <BackButton onClick={() => navigate('/my-students')} />
-        </div>
+    <div style={{ background: 'var(--bg)', minHeight: '100%' }}>
+      {/* Header with back button — consistent with MyActivityListPage */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '14px 18px',
+          borderBottom: '1px solid var(--surface-2)',
+          background: 'rgba(15,23,42,.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
+        <BackButton onClick={() => navigate('/my-students')} style={{ marginRight: 8 }} />
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>
+          {studentDetail?.nickname ?? '学员详情'}
+        </h2>
+      </div>
 
+      <div style={{ padding: 16 }}>
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
         {/* Student header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
           <div
@@ -571,6 +585,7 @@ export function CoachStudentDetailPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

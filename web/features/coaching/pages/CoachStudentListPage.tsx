@@ -106,7 +106,7 @@ export function CoachStudentListPage() {
           WebkitBackdropFilter: 'blur(12px)',
         }}
       >
-        <BackButton onClick={() => navigate(-1)} style={{ marginRight: 8 }} />
+        <BackButton onClick={() => navigate(`/users/${userId}`)} style={{ marginRight: 8 }} />
         <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>
           我的学员
         </h2>

@@ -43,7 +43,8 @@ function hasLocalTopBar(pathname: string, userId: string | null): boolean {
     pathname === '/profile/edit' ||
     pathname === '/profile/coach-edit' ||
     pathname === '/settings' ||
-    pathname === '/match-records/create'
+    pathname === '/match-records/create' ||
+    pathname === '/my-students'
   ) {
     return true;
   }
@@ -51,6 +52,7 @@ function hasLocalTopBar(pathname: string, userId: string | null): boolean {
   if (/^\/coaches\/[^/]+$/.test(pathname)) return true;
   if (/^\/group-classes\/[^/]+$/.test(pathname)) return true;
   if (/^\/users\/[^/]+\/match-records$/.test(pathname)) return true;
+  if (/^\/my-students\/[^/]+/.test(pathname)) return true;
 
   if (userId && /^\/users\/[^/]+$/.test(pathname) && pathname !== `/users/${userId}`) {
     return true;
