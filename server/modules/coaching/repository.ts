@@ -1225,6 +1225,13 @@ export class CoachingRepository {
     });
   }
 
+  async updateCoachStudentSource(coachId: string, studentId: string, source: string) {
+    return prisma.coachStudent.update({
+      where: { coachId_studentId: { coachId, studentId } },
+      data: { source },
+    });
+  }
+
   async findCoachStudentDetail(coachId: string, studentId: string) {
     return prisma.coachStudent.findUnique({
       where: { coachId_studentId: { coachId, studentId } },

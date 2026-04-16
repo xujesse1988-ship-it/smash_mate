@@ -14,6 +14,7 @@ import {
   getCoachStudentLessons,
   setCoachStudentTags,
   scheduleLessonForStudent,
+  updateCoachStudentSource,
 } from '../api/coach-student-api';
 // Types CoachStudentDetail and CoachStudentLesson are inferred from the API functions above
 
@@ -41,6 +42,7 @@ export function CoachStudentDetailPage() {
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [editingTags, setEditingTags] = useState<string[]>([]);
+  const [showSourceModal, setShowSourceModal] = useState(false);
   const [showCreateLessonModal, setShowCreateLessonModal] = useState(false);
   const [lessonStartTime, setLessonStartTime] = useState('');
   const [lessonEndTime, setLessonEndTime] = useState('');
@@ -67,6 +69,26 @@ export function CoachStudentDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['coach-students', sid] });
       setShowTagModal(false);
       message.success('标签已更新');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '更新失败');
+    },
+  });
+
+  const sourceOptions = [
+    { value: 'group-class', label: '团课' },
+    { value: 'private-lesson', label: '固定私教' },
+    { value: 'class-lesson', label: '学员班' },
+    { value: 'manual', label: '手工添加' },
+    { value: 'other', label: '其他' },
+  ];
+
+  const updateSourceMutation = useMutation({
+    mutationFn: (source: string) => updateCoachStudentSource(sid, source),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coach-students', sid] });
+      setShowSourceModal(false);
+      message.success('来源已更新');
     },
     onError: (error: Error) => {
       message.error(error.message || '更新失败');
@@ -256,14 +278,14 @@ export function CoachStudentDetailPage() {
           data-testid="coach-student-info"
         >
           <div style={{ display: 'flex', textAlign: 'center' }}>
-            <div style={{ flex: 1 }}>
+            <div
+              style={{ flex: 1, cursor: 'pointer' }}
+              onClick={() => setShowSourceModal(true)}
+            >
               <div style={{ fontSize: 12, color: 'var(--text-3)' }}>来源</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginTop: 2 }}>
-                {studentDetail.source === 'manual' ? '手动添加' :
-                 studentDetail.source === 'private_lesson' || studentDetail.source === 'private-lesson' ? '私教课' :
-                 studentDetail.source === 'group_class' || studentDetail.source === 'group-class' ? '团课' :
-                 studentDetail.source === 'class_lesson' || studentDetail.source === 'class-lesson' ? '学员班' :
-                 studentDetail.source}
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--primary)', marginTop: 2 }}>
+                {sourceOptions.find((o) => o.value === studentDetail.source)?.label
+                  ?? studentDetail.source}
               </div>
             </div>
             <div style={{ flex: 1 }}>
@@ -583,6 +605,70 @@ export function CoachStudentDetailPage() {
                   提交
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Source edit modal */}
+        {showSourceModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                background: 'var(--surface)',
+                borderRadius: 12,
+                padding: 24,
+                width: '90%',
+                maxWidth: 360,
+              }}
+            >
+              <h3 style={{ marginBottom: 16 }}>修改来源</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {sourceOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => updateSourceMutation.mutate(opt.value)}
+                    disabled={updateSourceMutation.isPending}
+                    className="btn-dark btn-sm"
+                    style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: 15,
+                      background: studentDetail.source === opt.value ? 'var(--primary)' : 'var(--surface-2)',
+                      color: studentDetail.source === opt.value ? '#052e16' : 'var(--text-1)',
+                      fontWeight: studentDetail.source === opt.value ? 600 : 400,
+                      borderRadius: 10,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowSourceModal(false)}
+                className="btn-dark btn-sm"
+                style={{
+                  marginTop: 16,
+                  width: '100%',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-1)',
+                }}
+              >
+                取消
+              </button>
             </div>
           </div>
         )}

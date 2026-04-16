@@ -150,6 +150,25 @@ export async function setCoachStudentTags(
 }
 
 // ---------------------------------------------------------------------------
+// PUT /api/coach-students/:studentId/source
+// ---------------------------------------------------------------------------
+
+export async function updateCoachStudentSource(
+  studentId: string,
+  source: string,
+): Promise<{ source: string }> {
+  const response = await fetch(
+    resolveUrl(`/api/coach-students/${studentId}/source`),
+    {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ source }),
+    },
+  );
+  return handleResponse(response);
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/coach-students/:studentId/lessons
 // ---------------------------------------------------------------------------
 

@@ -2633,6 +2633,19 @@ export class CoachingService {
     return { tags };
   }
 
+  async updateCoachStudentSource(coachId: string, studentId: string, source: string) {
+    const validSources = ['manual', 'group-class', 'private-lesson', 'class-lesson', 'other'];
+    if (!validSources.includes(source)) {
+      throw new AppError(400, 'COACHING_INVALID_SOURCE', '无效的来源类型');
+    }
+    const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
+    if (!cs) {
+      throw new AppError(404, 'COACHING_COACH_STUDENT_NOT_FOUND', '学员记录不存在');
+    }
+    await this.repository.updateCoachStudentSource(coachId, studentId, source);
+    return { source };
+  }
+
   async getCoachStudentTags(coachId: string, studentId: string) {
     const cs = await this.repository.findCoachStudentByCoachAndStudent(coachId, studentId);
     if (!cs) {

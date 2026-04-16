@@ -528,6 +528,24 @@ export function createCoachingController(): Router {
     },
   );
 
+  router.put(
+    '/coach-students/:studentId/source',
+    authMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as AuthRequest).userId!;
+        const result = await service.updateCoachStudentSource(
+          userId,
+          String(req.params.studentId),
+          req.body.source,
+        );
+        success(res, result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.post(
     '/coach-students/:studentId/lessons',
     authMiddleware,
