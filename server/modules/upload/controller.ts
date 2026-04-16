@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { authMiddleware } from '../../infra/auth.js';
+import { config } from '../../infra/config.js';
 import { success } from '../../infra/response.js';
 import { AppError } from '../../infra/error-handler.js';
 
@@ -56,7 +57,8 @@ export function createUploadController(): Router {
         }
 
         // Build the public URL for the uploaded file
-        const avatarUrl = `/api/uploads/avatars/${req.file.filename}`;
+        const relativePath = `/api/uploads/avatars/${req.file.filename}`;
+        const avatarUrl = config.publicUrl ? `${config.publicUrl}${relativePath}` : relativePath;
 
         success(res, { avatarUrl });
       } catch (err) {
