@@ -1,9 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
-import { Input, Button } from '@nutui/nutui-react-taro'
+import { View, Text, Button } from '@tarojs/components'
+import { Input, Button as NutButton } from '@nutui/nutui-react-taro'
 import { useAuthStore } from '../../stores/auth-store'
-import { sendCode, login } from '../../apis/auth'
+import { sendCode, login, wxLogin } from '../../apis/auth'
 import styles from './index.module.scss'
 
 const PHONE_REGEX = /^1\d{10}$/
@@ -65,6 +65,29 @@ export default function LoginPage() {
     return true
   }
 
+  const handleGetPhoneNumber = async (e) => {
+    if (e.detail.errMsg !== 'getPhoneNumber:ok') {
+      // 用户拒绝授权，不阻塞
+      return
+    }
+    try {
+      // 1. 获取 wx.login code
+      const loginRes = await Taro.login()
+      // 2. 调用后端 wx-login
+      const result = await wxLogin({
+        code: loginRes.code,
+        encryptedData: e.detail.encryptedData,
+        iv: e.detail.iv,
+      })
+      // 3. 存储登录态
+      useAuthStore.getState().setAuth(result.token, result.user.id)
+      // 4. 跳转首页
+      Taro.switchTab({ url: '/pages/index/index' })
+    } catch (err) {
+      Taro.showToast({ title: '登录失败，请使用验证码登录', icon: 'none' })
+    }
+  }
+
   const handleSendCode = async () => {
     if (!validatePhone()) return
     if (sendingCode || countdown > 0) return
@@ -113,6 +136,24 @@ export default function LoginPage() {
         <Text className={styles.slogan}>找球友 · 约场地 · 练技术</Text>
       </View>
 
+      {/* 微信快捷登录 */}
+      <View className={styles.wxLoginSection}>
+        <Button
+          className={styles.wxLoginBtn}
+          openType="getPhoneNumber"
+          onGetPhoneNumber={handleGetPhoneNumber}
+        >
+          微信手机号快捷登录
+        </Button>
+      </View>
+
+      {/* 分隔线 */}
+      <View className={styles.divider}>
+        <View className={styles.dividerLine} />
+        <Text className={styles.dividerText}>或使用手机号登录</Text>
+        <View className={styles.dividerLine} />
+      </View>
+
       {/* Form */}
       <View className={styles.form}>
         {/* Phone */}
@@ -147,28 +188,27 @@ export default function LoginPage() {
                 }}
               />
             </View>
-            <Button
+            <NutButton
               size="small"
               disabled={sendCodeDisabled}
               onClick={handleSendCode}
             >
               {sendCodeText}
-            </Button>
+            </NutButton>
           </View>
           {codeError && <Text className={styles.errorText}>{codeError}</Text>}
         </View>
 
         {/* Login button */}
-        <Button
+        <NutButton
           type="primary"
           block
           className={styles.loginBtn}
           disabled={loggingIn}
           onClick={handleLogin}
-          style={{ background: '#4ADE80', borderColor: '#4ADE80' }}
         >
           登录
-        </Button>
+        </NutButton>
 
         <Text className={styles.agreement}>
           继续即表示同意{' '}
