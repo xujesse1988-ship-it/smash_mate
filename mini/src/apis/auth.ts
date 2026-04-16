@@ -31,3 +31,30 @@ export function login(phone: string, code: string, isCoach?: boolean): Promise<L
     needAuth: false,
   })
 }
+
+interface WxLoginResponse {
+  token: string
+  user: {
+    id: string
+    nickname: string
+    avatarUrl: string | null
+    phone: string
+    isCoach: boolean
+  }
+  isNewUser: boolean
+}
+
+/** 微信快捷手机号登录 */
+export function wxLogin(params: {
+  code: string
+  encryptedData: string
+  iv: string
+  isCoach?: boolean
+}): Promise<WxLoginResponse> {
+  return request<WxLoginResponse>({
+    url: '/auth/wx-login',
+    method: 'POST',
+    data: params as Record<string, unknown>,
+    needAuth: false,
+  })
+}
