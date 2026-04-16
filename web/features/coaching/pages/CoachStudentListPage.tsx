@@ -17,6 +17,7 @@ export function CoachStudentListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
+  const coachMode = useAuthStore((state) => state.coachMode);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -94,23 +95,25 @@ export function CoachStudentListPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100%' }}>
-      {/* Header with back button */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '14px 18px',
-          borderBottom: '1px solid var(--surface-2)',
-          background: 'rgba(15,23,42,.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-        }}
-      >
-        <BackButton onClick={() => navigate(`/users/${userId}`)} style={{ marginRight: 8 }} />
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>
-          我的学员
-        </h2>
-      </div>
+      {/* Header with back button — hidden in coach mode (global TopBar handles it) */}
+      {!coachMode && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '14px 18px',
+            borderBottom: '1px solid var(--surface-2)',
+            background: 'rgba(15,23,42,.95)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
+          <BackButton onClick={() => navigate(`/users/${userId}`)} style={{ marginRight: 8 }} />
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-1)' }}>
+            我的学员
+          </h2>
+        </div>
+      )}
 
       <div style={{ padding: 16 }}>
         <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
