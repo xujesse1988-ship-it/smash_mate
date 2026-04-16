@@ -13,6 +13,7 @@ export function UserProfilePage() {
   const { id: userId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const currentUserId = useAuthStore((state) => state.userId);
+  const coachMode = useAuthStore((state) => state.coachMode);
 
   const isOwnProfile = userId === currentUserId;
 
@@ -77,7 +78,7 @@ export function UserProfilePage() {
         </section>
 
         {isOwnProfile ? (
-          <QuickLinkList userId={userId || ''} isCoach={isCoach} navigate={navigate} />
+          <QuickLinkList userId={userId || ''} isCoach={isCoach} coachMode={coachMode} navigate={navigate} />
         ) : userInfo.bio ? (
           <section
             style={{

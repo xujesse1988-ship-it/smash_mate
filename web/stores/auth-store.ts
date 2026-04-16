@@ -27,14 +27,17 @@ interface AuthState {
   token: string | null;
   userId: string | null;
   isLoggedIn: boolean;
+  coachMode: boolean;
   setAuth: (token: string, userId: string) => void;
   clearAuth: () => void;
+  setCoachMode: (enabled: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: getStoredValue('token'),
   userId: getStoredValue('userId'),
   isLoggedIn: !!getStoredValue('token'),
+  coachMode: getStoredValue('coachMode') === 'true',
   setAuth: (token: string, userId: string) => {
     setStoredValue('token', token);
     setStoredValue('userId', userId);
@@ -43,6 +46,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearAuth: () => {
     removeStoredValue('token');
     removeStoredValue('userId');
-    set({ token: null, userId: null, isLoggedIn: false });
+    removeStoredValue('coachMode');
+    set({ token: null, userId: null, isLoggedIn: false, coachMode: false });
+  },
+  setCoachMode: (enabled: boolean) => {
+    if (enabled) {
+      setStoredValue('coachMode', 'true');
+    } else {
+      removeStoredValue('coachMode');
+    }
+    set({ coachMode: enabled });
   },
 }));

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import { message, Switch } from 'antd';
 import { useCurrentUser } from '../../../shared/hooks/useCurrentUser';
 import { BackButton } from '../../../shared/components/BackButton';
 import { useAuthStore } from '../../../stores/auth-store';
@@ -12,6 +12,8 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const coachMode = useAuthStore((state) => state.coachMode);
+  const setCoachMode = useAuthStore((state) => state.setCoachMode);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -54,6 +56,27 @@ export function SettingsPage() {
             label={isCoach ? '教练资质（已认证）' : '申请成为教练'}
             onClick={handleCoachEntryClick}
           />
+
+          {isCoach && (
+            <>
+              <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 20px' }} />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '18px 20px',
+                  color: 'var(--text-1)',
+                  fontSize: 16,
+                  fontWeight: 500,
+                  background: 'var(--surface)',
+                }}
+              >
+                <span>教练模式</span>
+                <Switch checked={coachMode} onChange={setCoachMode} />
+              </div>
+            </>
+          )}
 
           <div style={{ height: 1, background: 'var(--surface-2)', margin: '0 20px' }} />
 

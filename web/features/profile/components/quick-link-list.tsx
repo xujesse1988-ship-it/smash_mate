@@ -12,11 +12,30 @@ import { QuickLinkItem } from './quick-link-item';
 interface QuickLinkListProps {
   userId: string;
   isCoach: boolean;
+  coachMode: boolean;
   navigate: (path: string) => void;
 }
 
-export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps) {
-  const items = [
+export function QuickLinkList({ userId, isCoach, coachMode, navigate }: QuickLinkListProps) {
+  const coachModeItems = [
+    {
+      label: '教练资料',
+      icon: <TeamOutlined />,
+      onClick: () => navigate('/profile/coach-edit'),
+    },
+    {
+      label: '个人资料',
+      icon: <UserOutlined />,
+      onClick: () => navigate('/profile/edit'),
+    },
+    {
+      label: '设置',
+      icon: <SettingOutlined />,
+      onClick: () => navigate('/settings'),
+    },
+  ];
+
+  const normalItems = [
     {
       label: '我的活动',
       icon: <CalendarOutlined />,
@@ -68,6 +87,8 @@ export function QuickLinkList({ userId, isCoach, navigate }: QuickLinkListProps)
       onClick: () => navigate('/settings'),
     },
   ];
+
+  const items = coachMode ? coachModeItems : normalItems;
 
   return (
     <div
