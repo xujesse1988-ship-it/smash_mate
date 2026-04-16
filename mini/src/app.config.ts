@@ -13,6 +13,7 @@ export default defineAppConfig({
     'pages/activity-create/index',
     'pages/group-class-detail/index',
     'pages/match-record-create/index',
+    'pages/match-record-list/index',
     'pages/private-lesson-detail/index',
   ],
   tabBar: {

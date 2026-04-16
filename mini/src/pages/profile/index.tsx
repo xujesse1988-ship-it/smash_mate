@@ -95,6 +95,14 @@ export default function ProfilePage() {
       <View className={styles.menuList}>
         <View
           className={styles.menuItem}
+          onClick={() => Taro.navigateTo({ url: '/pages/match-record-list/index' })}
+        >
+          <Text>战绩历史</Text>
+          <Text className={styles.menuArrow}>{'>'}</Text>
+        </View>
+        <View className={styles.menuDivider} />
+        <View
+          className={styles.menuItem}
           onClick={() => Taro.navigateTo({ url: '/pages/profile-edit/index' })}
         >
           <Text>编辑资料</Text>
