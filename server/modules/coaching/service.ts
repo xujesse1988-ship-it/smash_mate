@@ -2047,12 +2047,21 @@ export class CoachingService {
       status: options?.status,
     });
     const items = Array.isArray(lessons) ? lessons : lessons.items || [];
+
+    const venueIds = [...new Set(items
+      .map((l: { venueId: string | null }) => l.venueId)
+      .filter((id): id is string => id !== null))];
+    const venues = await Promise.all(
+      venueIds.map((id) => this.venueService.getVenueById(id)),
+    );
+    const venueMap = new Map(
+      venues.filter(Boolean).map((v) => [v!.id, { id: v!.id, name: v!.name, address: v!.address }]),
+    );
+
     return {
       items: items.map(
         (l: {
           id: string;
-          studentClassId: string;
-          coachId: string;
           venueId: string | null;
           startTime: Date;
           endTime: Date;
@@ -2061,9 +2070,7 @@ export class CoachingService {
           createdAt: Date;
         }) => ({
           id: l.id,
-          studentClassId: l.studentClassId,
-          coachId: l.coachId,
-          venueId: l.venueId,
+          venue: l.venueId ? (venueMap.get(l.venueId) ?? null) : null,
           startTime: l.startTime,
           endTime: l.endTime,
           trainingContent: l.trainingContent,
