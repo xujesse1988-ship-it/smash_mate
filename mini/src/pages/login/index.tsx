@@ -76,8 +76,7 @@ export default function LoginPage() {
       // 2. 调用后端 wx-login
       const result = await wxLogin({
         code: loginRes.code,
-        encryptedData: e.detail.encryptedData,
-        iv: e.detail.iv,
+        phoneCode: e.detail.code,
       })
       // 3. 存储登录态
       useAuthStore.getState().setAuth(result.token, result.user.id)

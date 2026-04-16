@@ -47,8 +47,7 @@ interface WxLoginResponse {
 /** 微信快捷手机号登录 */
 export function wxLogin(params: {
   code: string
-  encryptedData: string
-  iv: string
+  phoneCode: string
   isCoach?: boolean
 }): Promise<WxLoginResponse> {
   return request<WxLoginResponse>({
