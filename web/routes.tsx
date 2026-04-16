@@ -3,6 +3,12 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { AuthGuard } from './shared/components/AuthGuard';
 import { AppLayout } from './shared/components/AppLayout';
+import { useAuthStore } from './stores/auth-store';
+
+function RootRedirect() {
+  const coachMode = useAuthStore((state) => state.coachMode);
+  return <Navigate to={coachMode ? '/my-courses' : '/activities'} replace />;
+}
 
 // Lazy-loaded page components (route-level code splitting)
 const LoginPage = React.lazy(() =>
@@ -210,7 +216,7 @@ export function AppRoutes() {
           </Route>
         </Route>
 
-        <Route path="/" element={<Navigate to="/activities" replace />} />
+        <Route path="/" element={<RootRedirect />} />
       </Routes>
     </Suspense>
   );

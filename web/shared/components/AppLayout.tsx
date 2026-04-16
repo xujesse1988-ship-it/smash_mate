@@ -17,6 +17,7 @@ const pageTitles: Record<string, string> = {
   '/coaches': '找教练',
   '/my-activities': '我的活动',
   '/my-courses': '课程管理',
+  '/my-students': '我的学员',
   '/my-enrollments': '我的报名',
   '/match-records/create': '录入战绩',
   '/profile/edit': '编辑资料',
@@ -27,14 +28,16 @@ const pageTitles: Record<string, string> = {
 
 /** Pages that display the bottom tab bar */
 const MAIN_PAGES = ['/activities', '/coaches'];
+const COACH_MODE_MAIN_PAGES = ['/my-courses', '/my-students'];
 
-function isMainPage(pathname: string, userId: string | null): boolean {
-  if (MAIN_PAGES.includes(pathname)) return true;
+function isMainPage(pathname: string, userId: string | null, coachMode: boolean): boolean {
+  const mainPages = coachMode ? COACH_MODE_MAIN_PAGES : MAIN_PAGES;
+  if (mainPages.includes(pathname)) return true;
   if (userId && pathname === `/users/${userId}`) return true;
   return false;
 }
 
-function hasLocalTopBar(pathname: string, userId: string | null): boolean {
+function hasLocalTopBar(pathname: string, userId: string | null, coachMode: boolean): boolean {
   if (
     pathname === '/activities/create' ||
     pathname === '/my-activities' ||
@@ -44,7 +47,7 @@ function hasLocalTopBar(pathname: string, userId: string | null): boolean {
     pathname === '/profile/coach-edit' ||
     pathname === '/settings' ||
     pathname === '/match-records/create' ||
-    pathname === '/my-students'
+    (!coachMode && pathname === '/my-students')
   ) {
     return true;
   }
@@ -81,15 +84,16 @@ function resolveTitle(pathname: string, userId: string | null): string {
 export function AppLayout() {
   const location = useLocation();
   const userId = useAuthStore((state) => state.userId);
+  const coachMode = useAuthStore((state) => state.coachMode);
 
   const title = resolveTitle(location.pathname, userId);
-  const showTabBar = isMainPage(location.pathname, userId);
-  const showTopBar = !hasLocalTopBar(location.pathname, userId);
+  const showTabBar = isMainPage(location.pathname, userId, coachMode);
+  const showTopBar = !hasLocalTopBar(location.pathname, userId, coachMode);
   const showBackBtnInTopBar =
-    location.pathname === '/my-courses' ||
+    (!coachMode && location.pathname === '/my-courses') ||
     /^\/coaches\/[^/]+\/private-lessons$/.test(location.pathname);
   const backTo =
-    location.pathname === '/my-courses' && userId ? `/users/${userId}` : undefined;
+    !coachMode && location.pathname === '/my-courses' && userId ? `/users/${userId}` : undefined;
   const showLogo = location.pathname === '/activities';
 
   return (

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CalendarOutlined,
+  ReadOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -25,16 +26,28 @@ export function BottomTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const userId = useAuthStore((state) => state.userId);
+  const coachMode = useAuthStore((state) => state.coachMode);
 
-  const tabs: TabItem[] = [
-    { key: 'activities', label: '约球', icon: <CalendarOutlined />, path: '/activities' },
-    { key: 'coaches', label: '找教练', icon: <TeamOutlined />, path: '/coaches' },
-    { key: 'profile', label: '我的', icon: <UserOutlined />, path: `/users/${userId}` },
-  ];
+  const tabs: TabItem[] = coachMode
+    ? [
+        { key: 'courses', label: '课程', icon: <ReadOutlined />, path: '/my-courses' },
+        { key: 'students', label: '学员', icon: <TeamOutlined />, path: '/my-students' },
+        { key: 'profile', label: '我的', icon: <UserOutlined />, path: `/users/${userId}` },
+      ]
+    : [
+        { key: 'activities', label: '约球', icon: <CalendarOutlined />, path: '/activities' },
+        { key: 'coaches', label: '找教练', icon: <TeamOutlined />, path: '/coaches' },
+        { key: 'profile', label: '我的', icon: <UserOutlined />, path: `/users/${userId}` },
+      ];
 
   function getActiveKey(): string {
-    if (location.pathname === '/activities') return 'activities';
-    if (location.pathname === '/coaches') return 'coaches';
+    if (coachMode) {
+      if (location.pathname === '/my-courses') return 'courses';
+      if (location.pathname === '/my-students') return 'students';
+    } else {
+      if (location.pathname === '/activities') return 'activities';
+      if (location.pathname === '/coaches') return 'coaches';
+    }
     if (location.pathname === `/users/${userId}`) return 'profile';
     return '';
   }
