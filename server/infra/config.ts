@@ -24,4 +24,6 @@ export const config = {
   phoneLockMaxFailures: parseInt(process.env.PHONE_LOCK_MAX_FAILURES || '5', 10),
   codeResendIntervalSeconds: parseInt(process.env.CODE_RESEND_INTERVAL_SECONDS || '60', 10),
   devVerificationCode: process.env.DEV_VERIFICATION_CODE || undefined,
+  wxAppId: process.env.WX_APP_ID || '',
+  wxAppSecret: process.env.WX_APP_SECRET || '',
 };

@@ -16,6 +16,7 @@ model User {
   avatarUrl String?
   bio       String?
   isCoach   Boolean  @default(false)
+  wxOpenId  String?  @unique @map("wx_open_id")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
