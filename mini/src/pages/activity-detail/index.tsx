@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { View, Text, Image, Button } from '@tarojs/components'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -58,6 +58,11 @@ function formatTime(iso: string): string {
 export default function ActivityDetailPage() {
   const { id } = Taro.getCurrentInstance().router?.params || {}
   const queryClient = useQueryClient()
+
+  useShareAppMessage(() => ({
+    title: activity?.title || '来一起打球！',
+    path: `/pages/activity-detail/index?id=${id}`,
+  }))
 
   const {
     data: activity,

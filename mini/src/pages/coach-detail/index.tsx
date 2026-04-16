@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { View, Text, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { useQuery } from '@tanstack/react-query'
 import {
   getCoachProfile,
@@ -218,6 +218,11 @@ function ReviewList({
 export default function CoachDetailPage() {
   const { id } = Taro.getCurrentInstance().router?.params || {}
   const [activeTab, setActiveTab] = useState<TabKey>('group')
+
+  useShareAppMessage(() => ({
+    title: `推荐教练：${coach?.nickname || ''}`,
+    path: `/pages/coach-detail/index?id=${id}`,
+  }))
 
   const {
     data: coach,

@@ -1,5 +1,5 @@
 import { View, Text, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { useQuery } from '@tanstack/react-query'
 import { useLoginCheck } from '../../hooks/use-login-check'
 import { useAuthStore } from '../../stores/auth-store'
@@ -9,6 +9,11 @@ import styles from './index.module.scss'
 export default function ProfilePage() {
   const isLoggedIn = useLoginCheck()
   const userId = useAuthStore((s) => s.userId)
+
+  useShareAppMessage(() => ({
+    title: `${userInfo?.nickname || ''} 的羽球战绩`,
+    path: `/pages/user-profile/index?id=${userId}`,
+  }))
 
   const {
     data: userInfo,
