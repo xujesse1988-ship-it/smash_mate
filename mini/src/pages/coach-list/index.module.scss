@@ -1,0 +1,188 @@
+.container {
+  min-height: 100vh;
+  background-color: #0a0a0a;
+}
+
+/* ---------- 筛选栏 ---------- */
+.filterBar {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  border-bottom: 1px solid #1f1f1f;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.filterTag {
+  flex-shrink: 0;
+  padding: 8px 24px;
+  border-radius: 32px;
+  font-size: 26px;
+  color: #999;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.filterTagActive {
+  color: #0a0a0a;
+  background: #4ade80;
+  border-color: #4ade80;
+  font-weight: 600;
+}
+
+/* ---------- 列表区域 ---------- */
+.list {
+  padding: 20px 24px 0;
+}
+
+/* ---------- 教练卡片 ---------- */
+.card {
+  background: #141414;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #1f1f1f;
+}
+
+.cardInner {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid #2a2a2a;
+}
+
+.avatarPlaceholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #1f1f1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid #2a2a2a;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nickname {
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bio {
+  font-size: 24px;
+  color: #999;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.specialties {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.specialtyTag {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 22px;
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+  line-height: 1.4;
+}
+
+.ratingArea {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ratingScore {
+  font-size: 28px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.ratingStar {
+  color: #facc15;
+}
+
+.reviewCount {
+  font-size: 22px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.noRating {
+  font-size: 28px;
+  font-weight: 700;
+  color: #666;
+}
+
+.noReview {
+  font-size: 22px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ---------- 状态提示 ---------- */
+.loading,
+.error,
+.empty {
+  text-align: center;
+  padding: 96px 0;
+  font-size: 28px;
+}
+
+.loading {
+  color: #999;
+}
+
+.error {
+  color: #f87171;
+}
+
+.empty {
+  color: #666;
+}
+
+.loadingMore {
+  text-align: center;
+  padding: 24px 0;
+  font-size: 24px;
+  color: #666;
+}
+
+.noMore {
+  text-align: center;
+  padding: 24px 0;
+  font-size: 24px;
+  color: #444;
+}
