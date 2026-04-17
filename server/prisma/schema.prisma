@@ -46,6 +46,7 @@ model User {
   studentNotesReceived    StudentNote[]        @relation("StudentNotesReceived")
   coachStudentTags        StudentTag[]         @relation("CoachStudentTags")
   studentTagsReceived     StudentTag[]         @relation("StudentTagsReceived")
+  operationLogs           OperationLog[]
 }
 
 model VerificationCode {
@@ -454,4 +455,24 @@ model StudentTag {
 
   @@unique([coachId, studentId, tag])
   @@index([coachId, studentId])
+}
+
+// ===== Audit Module =====
+
+model OperationLog {
+  id         String   @id @default(uuid())
+  userId     String? // nullable: 支持登录失败/未登录操作
+  action     String // 如 "activity.cancel"、"auth.login.wx"
+  targetType String? // "Activity" | "User" | "MatchRecord" ...
+  targetId   String?
+  metadata   Json? // 业务语义字段：原因、关键快照（不做全量 diff）
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
 }

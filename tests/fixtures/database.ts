@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 export async function resetTestDatabase() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
+      "OperationLog",
       "Notification",
       "Review",
       "MatchGame",
