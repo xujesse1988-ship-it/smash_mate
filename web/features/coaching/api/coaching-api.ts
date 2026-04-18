@@ -144,7 +144,7 @@ export interface CoachPrivateLesson {
     id: string;
     nickname: string;
     avatarUrl: string | null;
-  };
+  } | null;
   status: string;
   createdAt: string;
 }

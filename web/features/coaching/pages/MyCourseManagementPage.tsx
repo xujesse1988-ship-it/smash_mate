@@ -496,7 +496,9 @@ export function MyCourseManagementPage() {
                 marginBottom: '8px',
               }}
             >
-              <div style={{ fontWeight: 600 }}>{lesson.student.nickname}</div>
+              <div style={{ fontWeight: 600, color: lesson.student ? undefined : 'var(--text-3)' }}>
+                {lesson.student ? lesson.student.nickname : '空闲时段'}
+              </div>
               <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 {new Date(lesson.slot.startTime).toLocaleString()} -{' '}
                 {new Date(lesson.slot.endTime).toLocaleTimeString()}
