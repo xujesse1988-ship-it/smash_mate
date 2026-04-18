@@ -90,7 +90,7 @@ export class MatchRecordRepository {
     });
   }
 
-  async findBySource(sourceType: string, sourceId: string, _query: Record<string, unknown>) {
+  async findBySource(sourceType: string, sourceId: string, _query?: unknown) {
     return this.db.matchRecord.findMany({
       where: {
         sourceType,

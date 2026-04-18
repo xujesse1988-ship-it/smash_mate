@@ -126,7 +126,7 @@ export function createUserController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getUserPublicInfo(req.params.id);
+        const result = await service.getUserPublicInfo(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);

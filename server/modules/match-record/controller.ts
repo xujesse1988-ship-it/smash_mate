@@ -64,7 +64,7 @@ export function createMatchRecordController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.deleteMatchRecord(req.params.id, userId);
+        const result = await service.deleteMatchRecord(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -78,7 +78,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getSourceMatchRecords('activity', req.params.id, {});
+        const result = await service.getSourceMatchRecords('activity', String(req.params.id), {});
         success(res, result);
       } catch (err) {
         next(err);
@@ -92,7 +92,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getSourceMatchRecords('group-class', req.params.id, {});
+        const result = await service.getSourceMatchRecords('group-class', String(req.params.id), {});
         success(res, result);
       } catch (err) {
         next(err);
@@ -106,7 +106,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getSourceMatchRecords('private-lesson', req.params.id, {});
+        const result = await service.getSourceMatchRecords('private-lesson', String(req.params.id), {});
         success(res, result);
       } catch (err) {
         next(err);
@@ -120,7 +120,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getSourceMatchRecords('class_lesson', req.params.id, {});
+        const result = await service.getSourceMatchRecords('class_lesson', String(req.params.id), {});
         success(res, result);
       } catch (err) {
         next(err);
@@ -134,7 +134,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getSourceMatchRecords('private_lesson_v2', req.params.id, {});
+        const result = await service.getSourceMatchRecords('private_lesson_v2', String(req.params.id), {});
         success(res, result);
       } catch (err) {
         next(err);
@@ -159,7 +159,7 @@ export function createMatchRecordController(): Router {
             | 'private_lesson_v2'
             | undefined,
         };
-        const result = await service.getUserMatchRecords(req.params.id, query);
+        const result = await service.getUserMatchRecords(String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -173,7 +173,7 @@ export function createMatchRecordController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getUserMatchStats(req.params.id);
+        const result = await service.getUserMatchStats(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);

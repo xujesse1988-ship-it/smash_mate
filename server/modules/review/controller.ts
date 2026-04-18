@@ -73,7 +73,7 @@ export function createReviewController(): Router {
           page: req.query.page !== undefined ? Number(req.query.page) : undefined,
           pageSize: req.query.pageSize !== undefined ? Number(req.query.pageSize) : undefined,
         };
-        const result = await service.getCoachReviews(req.params.id, query);
+        const result = await service.getCoachReviews(String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -87,7 +87,7 @@ export function createReviewController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getCoachRating(req.params.id);
+        const result = await service.getCoachRating(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);

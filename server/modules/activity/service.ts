@@ -544,11 +544,8 @@ export class ActivityService {
     const updated = await this.repo.update(activityId, updateData);
 
     // Get venue info for response — prefer repo-included venue, fall back to venueService
-    const venue = updated.venue ?? (
-      (input.venueId ?? activity.venueId)
-        ? await this.venueService.getVenueById(input.venueId ?? activity.venueId)
-        : null
-    );
+    const fallbackVenueId = input.venueId ?? activity.venueId;
+    const venue = updated.venue ?? (fallbackVenueId ? await this.venueService.getVenueById(fallbackVenueId) : null);
 
     logger.info(
       { activityId, userId: userId.slice(0, 8), action: 'update' },

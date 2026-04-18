@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { config } from '../../infra/config.js';
 import { AppError } from '../../infra/error-handler.js';
 import { createModuleLogger } from '../../infra/logger.js';
@@ -150,7 +150,7 @@ export class UserService {
 
     // 7. Sign JWT
     const token = jwt.sign({ userId: user.id, role: 'user' }, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn,
+      expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'],
     });
 
     // 8. Return response
@@ -286,7 +286,7 @@ export class UserService {
 
     // 7. Sign JWT
     const token = jwt.sign({ userId: user.id, role: 'user' }, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn,
+      expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'],
     });
 
     logger.info({ userId: user.id, isNewUser }, '微信快捷登录成功');

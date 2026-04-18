@@ -71,7 +71,7 @@ export function createActivityController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getActivityDetail(req.params.id);
+        const result = await service.getActivityDetail(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -86,7 +86,7 @@ export function createActivityController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.joinActivity(req.params.id, userId);
+        const result = await service.joinActivity(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -101,7 +101,7 @@ export function createActivityController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.leaveActivity(req.params.id, userId);
+        const result = await service.leaveActivity(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -116,7 +116,7 @@ export function createActivityController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.updateActivity(req.params.id, userId, req.body);
+        const result = await service.updateActivity(String(req.params.id), userId, req.body);
         success(res, result);
       } catch (err) {
         next(err);
@@ -131,7 +131,7 @@ export function createActivityController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const result = await service.cancelActivity(req.params.id, userId);
+        const result = await service.cancelActivity(String(req.params.id), userId);
         success(res, result);
       } catch (err) {
         next(err);
@@ -152,7 +152,7 @@ export function createActivityController(): Router {
           status: req.query.status as 'open' | 'full' | 'in_progress' | 'completed' | 'cancelled' | undefined,
         };
 
-        const result = await service.getUserActivities(req.params.id, query);
+        const result = await service.getUserActivities(String(req.params.id), query);
         success(res, result);
       } catch (err) {
         next(err);
@@ -166,7 +166,7 @@ export function createActivityController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getUserRecentVenues(req.params.id);
+        const result = await service.getUserRecentVenues(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);

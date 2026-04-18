@@ -80,7 +80,7 @@ export function createNotificationController(): Router {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as AuthRequest).userId!;
-        const notificationId = req.params.id;
+        const notificationId = String(req.params.id);
         const result = await service.markAsRead(notificationId, userId);
         success(res, result);
       } catch (err) {

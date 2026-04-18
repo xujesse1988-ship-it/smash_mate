@@ -45,7 +45,7 @@ export function createVenueController(): Router {
     authMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.getVenueDetail(req.params.id);
+        const result = await service.getVenueDetail(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -113,7 +113,7 @@ export function createVenueController(): Router {
     adminAuthMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.deleteVenue(req.params.id);
+        const result = await service.deleteVenue(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
@@ -128,7 +128,7 @@ export function createVenueController(): Router {
     adminAuthMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const result = await service.syncCityVenues(req.params.id);
+        const result = await service.syncCityVenues(String(req.params.id));
         success(res, result);
       } catch (err) {
         next(err);
