@@ -28,10 +28,18 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-antd': ['antd', '@ant-design/icons'],
-          'vendor-query': ['@tanstack/react-query'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) {
+              return 'vendor-react';
+            }
+            if (/node_modules\/(antd|@ant-design)\//.test(id)) {
+              return 'vendor-antd';
+            }
+            if (/node_modules\/@tanstack\//.test(id)) {
+              return 'vendor-query';
+            }
+          }
         },
       },
     },
