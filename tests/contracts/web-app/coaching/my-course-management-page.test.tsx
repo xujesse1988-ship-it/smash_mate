@@ -21,6 +21,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
 // Mock Modules
@@ -216,7 +217,11 @@ const mockCompletedPrivateLesson = {
 // ---------------------------------------------------------------------------
 
 function renderPage() {
-  return render(<MyCourseManagementPage />);
+  return render(
+    <MemoryRouter>
+      <MyCourseManagementPage />
+    </MemoryRouter>,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -259,7 +264,7 @@ describe('MyCourseManagementPage', () => {
     // "团课" appears in both the tab and "发布团课" button, so use exact match for tab
     expect(screen.getByRole('button', { name: '团课' })).toBeInTheDocument();
     expect(screen.getByText(/私教时间/i)).toBeInTheDocument();
-    expect(screen.getByText(/私教预约/i)).toBeInTheDocument();
+    expect(screen.getByText(/私教课/i)).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -408,7 +413,7 @@ describe('MyCourseManagementPage', () => {
     renderPage();
 
     // Click private lessons tab
-    const lessonsTab = screen.getByText(/私教预约/i);
+    const lessonsTab = screen.getByText(/私教课/i);
     await userEvent.click(lessonsTab);
 
     // Should render the private lesson card
@@ -425,7 +430,7 @@ describe('MyCourseManagementPage', () => {
     };
     renderPage();
 
-    const lessonsTab = screen.getByText(/私教预约/i);
+    const lessonsTab = screen.getByText(/私教课/i);
     await userEvent.click(lessonsTab);
 
     // Scheduled private lesson should have cancel button
@@ -442,7 +447,7 @@ describe('MyCourseManagementPage', () => {
     };
     renderPage();
 
-    const lessonsTab = screen.getByText(/私教预约/i);
+    const lessonsTab = screen.getByText(/私教课/i);
     await userEvent.click(lessonsTab);
 
     const cancelButton = screen.getByText(/取消/i);
@@ -462,7 +467,7 @@ describe('MyCourseManagementPage', () => {
     };
     renderPage();
 
-    const lessonsTab = screen.getByText(/私教预约/i);
+    const lessonsTab = screen.getByText(/私教课/i);
     await userEvent.click(lessonsTab);
 
     // Completed private lesson should not have cancel button
