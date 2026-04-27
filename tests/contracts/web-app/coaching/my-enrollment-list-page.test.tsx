@@ -340,7 +340,7 @@ describe('MyEnrollmentListPage', () => {
       await userEvent.click(card);
     }
 
-    expect(mockNavigate).toHaveBeenCalledWith('/coaches/coach-uuid-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/private-lessons/pl-uuid-1');
   });
 
   // =========================================================================

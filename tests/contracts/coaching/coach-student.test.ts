@@ -230,8 +230,9 @@ describe('GET /api/coach-students — CoachingService.getCoachStudents', () => {
     const item = result.items[0];
     expect(item.studentId).toBe(STUDENT_ID);
     expect(item.tags).toEqual(
-      expect.arrayContaining(['团课学员', '私教学员', '学员班: 周三进阶班', '固定私教']),
+      expect.arrayContaining(['团课学员', '私教学员', '固定私教']),
     );
+    // 学员班归属现以结构化字段返回，不再混入 tags
     expect(item.studentClasses).toEqual([{ id: 'class-1', name: '周三进阶班' }]);
     expect(item.phoneLast4).toBe('2222');
   });
@@ -341,8 +342,9 @@ describe('GET /api/coach-students/:studentId — CoachingService.getCoachStudent
     expect(detail.studentId).toBe(STUDENT_ID);
     expect(detail.source).toBe('group-class');
     expect(detail.tags).toEqual(
-      expect.arrayContaining(['团课学员', '学员班: 周三进阶班', '固定私教']),
+      expect.arrayContaining(['团课学员', '固定私教']),
     );
+    // 学员班归属现以结构化字段返回，不再混入 tags
     expect(detail.studentClasses).toEqual([{ id: 'cls-1', name: '周三进阶班' }]);
     expect(detail.phoneLast4).toBe('2222');
   });

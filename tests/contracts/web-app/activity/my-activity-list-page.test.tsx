@@ -145,7 +145,9 @@ describe('MyActivityListPage', () => {
   it('should render status filter dropdown', () => {
     renderPage();
 
-    expect(screen.getByText(/状态/i)).toBeInTheDocument();
+    // Status filter is rendered as chips: 全部 / 报名中 / 已满员 / 进行中 / 已结束 / 已取消
+    expect(screen.getByText('全部')).toBeInTheDocument();
+    expect(screen.getByText('报名中')).toBeInTheDocument();
   });
 
   // =========================================================================
@@ -218,7 +220,9 @@ describe('MyActivityListPage', () => {
     };
     renderPage();
 
-    expect(screen.getByText(/已结束/i)).toBeInTheDocument();
+    // "已结束" appears in both the chip filter and the activity card status tag
+    const ended = screen.getAllByText(/已结束/i);
+    expect(ended.length).toBeGreaterThanOrEqual(2);
   });
 
   it('should request all activities without role filter', () => {

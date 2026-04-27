@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Input, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { useSendCode } from '../hooks/useSendCode';
 import { useLogin } from '../hooks/useLogin';
+import { useRedirectUrl } from '../hooks/useRedirectUrl';
+import { useAuthStore } from '../../../stores/auth-store';
 
 const PHONE_REGEX = /^1\d{10}$/;
 const CODE_REGEX = /^\d{6}$/;
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const redirectUrl = useRedirectUrl();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(redirectUrl, { replace: true });
+    }
+  }, [isLoggedIn, redirectUrl, navigate]);
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [phone, setPhone] = useState('');

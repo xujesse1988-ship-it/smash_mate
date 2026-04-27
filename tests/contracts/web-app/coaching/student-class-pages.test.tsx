@@ -1011,6 +1011,7 @@ describe('StudentClassDetailPage', () => {
 describe('ClassLessonDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCurrentUserState = { data: { id: 'coach-uuid-1', isCoach: true, nickname: '教练张' }, isLoading: false };
     mockClassLessonDetailState = { data: null, isLoading: false, error: null };
     mockLessonNotesState = { data: null, isLoading: false, error: null };
   });

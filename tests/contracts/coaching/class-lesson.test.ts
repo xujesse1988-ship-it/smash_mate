@@ -618,15 +618,16 @@ describe('GET /api/student-classes/:id/lessons/:lessonId — CoachingService.get
     });
   });
 
-  it('should throw COACHING_NOT_COACH_OWNER when user is not the class coach', async () => {
+  it('should throw COACHING_NOT_AUTHORIZED when user is neither the coach nor a class member', async () => {
     repo.findStudentClassById.mockResolvedValue(
       createStudentClassRecord({ coachId: 'user-uuid-other-coach' }),
     );
+    repo.findStudentClassMember.mockResolvedValue(null);
 
     await expect(
       service.getClassLessonDetail('user-uuid-coach', 'student-class-uuid-1', 'class-lesson-uuid-1'),
     ).rejects.toMatchObject({
-      code: 'COACHING_NOT_COACH_OWNER',
+      code: 'COACHING_NOT_AUTHORIZED',
       statusCode: 403,
     });
   });

@@ -32,7 +32,12 @@ export default defineConfig({
           ],
           setupFiles: ['tests/setup-jsdom.ts'],
         },
-        resolve: sharedResolve,
+        resolve: {
+          alias: {
+            ...sharedResolve.alias,
+            '@': path.resolve(__dirname, 'web'),
+          },
+        },
       },
       {
         test: {
@@ -45,7 +50,12 @@ export default defineConfig({
           ],
           setupFiles: ['tests/setup-jsdom.ts'],
         },
-        resolve: sharedResolve,
+        resolve: {
+          alias: {
+            ...sharedResolve.alias,
+            '@': path.resolve(__dirname, 'admin'),
+          },
+        },
       },
       {
         test: {

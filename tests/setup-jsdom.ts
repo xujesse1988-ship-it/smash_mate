@@ -1,3 +1,7 @@
+// Pin tests to Beijing time so toLocaleTimeString renders deterministically
+// (production users are in CN; some fixtures assume +8).
+process.env.TZ = 'Asia/Shanghai';
+
 // Polyfill ResizeObserver for jsdom environment (required by Ant Design components)
 if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = class ResizeObserver {
